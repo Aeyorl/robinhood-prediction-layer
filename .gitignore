@@ -34,3 +34,8 @@ Thumbs.db
 
 # Local data
 data/
+
+# Playwright
+.e2e/
+test-results/
+playwright-report/

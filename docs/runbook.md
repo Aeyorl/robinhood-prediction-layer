@@ -87,7 +87,44 @@ the browser, import an anvil account into your wallet (chain 46630, RPC
 USDG (local only)” faucet (public `MockUSDG.mint`).
 
 Oracle rule reminder: the resolver rejects stale answers, so `setAnswer` must
-happen *after* the final time warp (it stamps `updatedAt = block.timestamp`).
+happen _after_ the final time warp (it stamps `updatedAt = block.timestamp`).
+
+## Browser E2E (Playwright)
+
+The same vertical slice runs in a real Chromium browser against a fresh local
+environment (anvil + deploy + web on :3100), with an injected EIP-1193 wallet
+that signs with an anvil dev key. It covers: connect → faucet → approve →
+enter YES → opposing wallet enters NO → lock → resolve → claim in the UI →
+portfolio shows the claimed position.
+
+```bash
+pnpm exec playwright install chromium   # one-time browser download
+pnpm test:e2e                           # boots + tears down its own env
+pnpm typecheck:e2e                      # typecheck the suite standalone
+```
+
+Reuse an already-running local env instead of booting a fresh one:
+
+```bash
+E2E_REUSE=1 E2E_WEB_URL=http://127.0.0.1:3100 pnpm test:e2e
+```
+
+### Windows quirks handled in the tooling
+
+- **forge poller hang**: `forge script --broadcast` can stay alive (or get
+  killed by `timeout`) _after_ the onchain execution finished. The env script
+  therefore judges success by `eth_getCode` at every manifest address and
+  retries, never by forge's exit code.
+- **MSYS paths vs Node**: `require('/c/Project folder/...')` fails under Node
+  on Windows (and backslashes corrupt JS strings, e.g. `\r`). The manifest
+  path is converted with `cygpath -m` before reading.
+- **Next dev cross-origin block**: Next 16 blocks `/_next/hmr` websockets for
+  non-localhost origins; `apps/web/next.config.ts` sets
+  `allowedDevOrigins: ["127.0.0.1", "localhost"]`. Without it, hydration
+  stalls and the Connect button stays disabled.
+- **wagmi session persistence**: wagmi persists the connection in
+  localStorage, so after a reload the header may auto-reconnect and never show
+  the Connect button; `ensureConnected` waits for the address first.
 
 ## Known honest gaps (current milestones)
 
@@ -97,13 +134,13 @@ happen *after* the final time warp (it stamps `updatedAt = block.timestamp`).
 
 ## Failure playbooks
 
-| Symptom                                   | Action                                                                                                                                                        |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm install` fails                      | Slow registry: `.npmrc` fetch timeouts are set for this machine; retry (`pnpm install` resumes). Lockfile is the source of truth in CI (`--frozen-lockfile`). |
-| `forge test` red                          | Run `forge test -vvvv`; oracle-health tests depend on feed timestamps being stamped after the final `vm.warp` (fresh round) — see `test/Base.t.sol`.          |
-| API starts but `/v1/markets` returns 503  | Postgres down — `pnpm dev:infra`, then `pnpm db:migrate`.                                                                                                     |
-| Market resolves to CANCELLED unexpectedly | Check for price == strike (strict equality cancels), or an empty winning side, or stale/sequencer/paused oracle states via `resolver.health(assetKey)`.       |
-| Worker cursor stuck                       | Redis key `pl:worker:cursor`; delete it to backfill from the default start.                                                                                   |
-| Wrong chain shown                         | `CHAIN_ID` / `NEXT_PUBLIC_CHAIN_ID` mismatch across apps — both must be 4663 or 46630.                                                                        |
-| Web shows “Local chain offline”           | Manifest or chain missing. Run `pnpm dev:chain` + `pnpm contracts:local`, or point `PL_LOCAL_MANIFEST` at an existing `deployments/local.json`.                    |
-| Page errors `ChainDoesNotSupportContract: multicall3` | Client/server reads no longer use multicall3 (anvil doesn't deploy it); if this reappears, check no new code path calls `client.multicall`.                     |
+| Symptom                                               | Action                                                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install` fails                                  | Slow registry: `.npmrc` fetch timeouts are set for this machine; retry (`pnpm install` resumes). Lockfile is the source of truth in CI (`--frozen-lockfile`). |
+| `forge test` red                                      | Run `forge test -vvvv`; oracle-health tests depend on feed timestamps being stamped after the final `vm.warp` (fresh round) — see `test/Base.t.sol`.          |
+| API starts but `/v1/markets` returns 503              | Postgres down — `pnpm dev:infra`, then `pnpm db:migrate`.                                                                                                     |
+| Market resolves to CANCELLED unexpectedly             | Check for price == strike (strict equality cancels), or an empty winning side, or stale/sequencer/paused oracle states via `resolver.health(assetKey)`.       |
+| Worker cursor stuck                                   | Redis key `pl:worker:cursor`; delete it to backfill from the default start.                                                                                   |
+| Wrong chain shown                                     | `CHAIN_ID` / `NEXT_PUBLIC_CHAIN_ID` mismatch across apps — both must be 4663 or 46630.                                                                        |
+| Web shows “Local chain offline”                       | Manifest or chain missing. Run `pnpm dev:chain` + `pnpm contracts:local`, or point `PL_LOCAL_MANIFEST` at an existing `deployments/local.json`.               |
+| Page errors `ChainDoesNotSupportContract: multicall3` | Client/server reads no longer use multicall3 (anvil doesn't deploy it); if this reappears, check no new code path calls `client.multicall`.                   |

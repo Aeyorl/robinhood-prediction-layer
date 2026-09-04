@@ -5,11 +5,7 @@ import Link from "next/link";
 import { Badge, Card, StatusBadge } from "@pl/ui";
 
 import { Countdown, useFormatDate, useNow } from "@/components/countdown";
-import {
-  groupedAmount,
-  type MarketStatus,
-  type MarketView,
-} from "@/lib/market-view";
+import { groupedAmount, type MarketStatus, type MarketView } from "@/lib/market-view";
 
 const statusTone: Record<MarketStatus, "green" | "red" | "amber" | "slate" | "indigo"> = {
   OPEN: "green",

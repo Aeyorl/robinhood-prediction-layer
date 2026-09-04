@@ -20,11 +20,7 @@ const STATUS_TONE: Record<MarketView["status"], "green" | "red" | "amber" | "sla
   CANCELLED: "red",
 };
 
-export default async function MarketDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function MarketDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   let market: MarketView | null = null;
@@ -116,10 +112,22 @@ export default async function MarketDetailPage({
                 mono={false}
               />
               <Term label="Strike decimals" value="18" mono />
-              <Term label="Collateral" value={`${market.collateralSymbol} (${market.collateral})`} mono />
+              <Term
+                label="Collateral"
+                value={`${market.collateralSymbol} (${market.collateral})`}
+                mono
+              />
               <Term label="Price feed" value={market.feed} mono />
-              <Term label="Min entry" value={`${groupedAmount(market.minEntry)} USDG`} mono={false} />
-              <Term label="Fee (on profit)" value={`${BigInt(market.feeBps) / 100n}%`} mono={false} />
+              <Term
+                label="Min entry"
+                value={`${groupedAmount(market.minEntry)} USDG`}
+                mono={false}
+              />
+              <Term
+                label="Fee (on profit)"
+                value={`${BigInt(market.feeBps) / 100n}%`}
+                mono={false}
+              />
             </dl>
             <p className="text-xs text-slate-500">
               Terms are frozen onchain at creation. In v0 there is no early exit; winners share the
@@ -175,15 +183,7 @@ export default async function MarketDetailPage({
   );
 }
 
-function Term({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: string;
-  mono: boolean;
-}) {
+function Term({ label, value, mono }: { label: string; value: string; mono: boolean }) {
   return (
     <div>
       <dt className="text-xs text-slate-500">{label}</dt>

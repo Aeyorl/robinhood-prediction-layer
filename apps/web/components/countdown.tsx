@@ -71,12 +71,14 @@ export function useFormatDate(seconds: number | null): string {
       setLabel("—");
       return;
     }
-    setLabel(new Date(seconds * 1000).toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }));
+    setLabel(
+      new Date(seconds * 1000).toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    );
   }, [seconds]);
   return label;
 }

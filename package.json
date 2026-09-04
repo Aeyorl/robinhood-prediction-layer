@@ -2,6 +2,7 @@
   "name": "prediction-layer",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Wallet-native binary prediction markets on Robinhood Chain",
   "packageManager": "pnpm@11.25.0",
   "engines": {
@@ -21,9 +22,16 @@
     "contracts:local": "pnpm --filter @pl/contracts run local:deploy",
     "db:generate": "pnpm --filter @pl/database run generate",
     "db:migrate": "pnpm --filter @pl/database run migrate",
-    "seed": "pnpm --filter @pl/database run seed"
+    "seed": "pnpm --filter @pl/database run seed",
+    "test:e2e": "playwright test",
+    "typecheck:e2e": "tsc -p e2e/tsconfig.json"
   },
   "devDependencies": {
+    "@pl/sdk": "workspace:*",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.24.0",
+    "viem": "2.56.3",
     "eslint": "^9.0.0",
     "prettier": "3.9.6",
     "turbo": "2.10.12",

@@ -79,10 +79,10 @@ function MarketActionsInner({ market }: { market: MarketView }) {
   const losingPool = market.side === "YES" ? BigInt(market.noPool) : BigInt(market.yesPool);
 
   const claimPreview = useMemo(() => {
-    if (market.status !== "RESOLVED" || stakeOnWinningSide == null || stakeOnWinningSide <= 0n) return null;
+    if (market.status !== "RESOLVED" || stakeOnWinningSide == null || stakeOnWinningSide <= 0n)
+      return null;
     return computePayout(stakeOnWinningSide, winningPool, losingPool, BigInt(market.feeBps));
   }, [market.status, market.feeBps, stakeOnWinningSide, winningPool, losingPool]);
-
 
   // ------------------------------------------------------------------
   // Writes
@@ -133,16 +133,31 @@ function MarketActionsInner({ market }: { market: MarketView }) {
     <Card className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-white">Market actions</h3>
-        <StatusBadge tone={market.status === "RESOLVED" ? "indigo" : market.status === "CANCELLED" ? "red" : "slate"}>
+        <StatusBadge
+          tone={
+            market.status === "RESOLVED"
+              ? "indigo"
+              : market.status === "CANCELLED"
+                ? "red"
+                : "slate"
+          }
+        >
           {market.status}
         </StatusBadge>
       </div>
 
       {/* Resolution lifecycle (permissionless) */}
       <div className="space-y-2">
-        <p className="text-xs text-slate-400">Lifecycle — anyone can run these once their time gate passes:</p>
+        <p className="text-xs text-slate-400">
+          Lifecycle — anyone can run these once their time gate passes:
+        </p>
         {canLock && (
-          <Button className="w-full" variant="secondary" onClick={actions.lock} disabled={busy != null}>
+          <Button
+            className="w-full"
+            variant="secondary"
+            onClick={actions.lock}
+            disabled={busy != null}
+          >
             {busy === "lock" ? <Spinner /> : null}Lock market (entry window over)
           </Button>
         )}
@@ -151,11 +166,14 @@ function MarketActionsInner({ market }: { market: MarketView }) {
             {busy === "resolve" ? <Spinner /> : null}Resolve from oracle
           </Button>
         )}
-        {!canLock && !canResolve && market.status !== "RESOLVED" && market.status !== "CANCELLED" && (
-          <p className="text-xs text-slate-500">
-            No public lifecycle action is available yet — the market is waiting on its time gates.
-          </p>
-        )}
+        {!canLock &&
+          !canResolve &&
+          market.status !== "RESOLVED" &&
+          market.status !== "CANCELLED" && (
+            <p className="text-xs text-slate-500">
+              No public lifecycle action is available yet — the market is waiting on its time gates.
+            </p>
+          )}
       </div>
 
       {/* Connected wallet position */}
@@ -173,10 +191,16 @@ function MarketActionsInner({ market }: { market: MarketView }) {
             <div className="flex flex-wrap items-center gap-2">
               <Badge>Your stake</Badge>
               <span className="text-xs text-slate-300">
-                YES <span className="font-mono">{yesStake != null ? groupedAmount(yesStake.toString()) : "…"} USDG</span>
+                YES{" "}
+                <span className="font-mono">
+                  {yesStake != null ? groupedAmount(yesStake.toString()) : "…"} USDG
+                </span>
               </span>
               <span className="text-xs text-slate-300">
-                NO <span className="font-mono">{noStake != null ? groupedAmount(noStake.toString()) : "…"} USDG</span>
+                NO{" "}
+                <span className="font-mono">
+                  {noStake != null ? groupedAmount(noStake.toString()) : "…"} USDG
+                </span>
               </span>
               {balance != null && (
                 <span className="text-xs text-slate-500">
@@ -202,16 +226,24 @@ function MarketActionsInner({ market }: { market: MarketView }) {
                         <span className="font-semibold text-emerald-400">
                           {groupedAmount(claimPreview.net.toString())} USDG
                         </span>
-                        {claimPreview.fee > 0n && ` (fee ${groupedAmount(claimPreview.fee.toString())} USDG)`} on
-                        stake {groupedAmount(stakeOnWinningSide.toString())} USDG.
+                        {claimPreview.fee > 0n &&
+                          ` (fee ${groupedAmount(claimPreview.fee.toString())} USDG)`}{" "}
+                        on stake {groupedAmount(stakeOnWinningSide.toString())} USDG.
                       </p>
                     )}
-                    <Button className="w-full" variant="success" onClick={actions.claim} disabled={busy != null}>
+                    <Button
+                      className="w-full"
+                      variant="success"
+                      onClick={actions.claim}
+                      disabled={busy != null}
+                    >
                       {busy === "claim" ? <Spinner /> : null}Claim payout
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500">Your side did not win — nothing to claim.</p>
+                  <p className="text-xs text-slate-500">
+                    Your side did not win — nothing to claim.
+                  </p>
                 )}
               </div>
             )}
@@ -219,10 +251,18 @@ function MarketActionsInner({ market }: { market: MarketView }) {
             {market.status === "CANCELLED" && (
               <div className="space-y-2">
                 {claimed ? (
-                  <p className="text-xs font-medium text-emerald-400">You have already been refunded.</p>
+                  <p className="text-xs font-medium text-emerald-400">
+                    You have already been refunded.
+                  </p>
                 ) : totalStake != null && totalStake > 0n ? (
-                  <Button className="w-full" variant="secondary" onClick={actions.refund} disabled={busy != null}>
-                    {busy === "refund" ? <Spinner /> : null}Refund principal ({groupedAmount(totalStake.toString())} USDG)
+                  <Button
+                    className="w-full"
+                    variant="secondary"
+                    onClick={actions.refund}
+                    disabled={busy != null}
+                  >
+                    {busy === "refund" ? <Spinner /> : null}Refund principal (
+                    {groupedAmount(totalStake.toString())} USDG)
                   </Button>
                 ) : (
                   <p className="text-xs text-slate-500">No stake to refund.</p>
@@ -240,7 +280,9 @@ function MarketActionsInner({ market }: { market: MarketView }) {
       </div>
 
       {error && (
-        <p className={`text-sm ${error.tone === "warn" ? "text-amber-300" : "text-rose-300"}`}>{error.message}</p>
+        <p className={`text-sm ${error.tone === "warn" ? "text-amber-300" : "text-rose-300"}`}>
+          {error.message}
+        </p>
       )}
       {notice && (
         <p className="break-all rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs text-emerald-300">

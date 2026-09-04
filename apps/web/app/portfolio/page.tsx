@@ -22,11 +22,7 @@ export default async function PortfolioPage() {
         </p>
       </div>
 
-      {views == null ? (
-        <NoLocalChain />
-      ) : (
-        <PortfolioList markets={views} />
-      )}
+      {views == null ? <NoLocalChain /> : <PortfolioList markets={views} />}
     </div>
   );
 }

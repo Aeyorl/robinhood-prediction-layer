@@ -8,14 +8,14 @@ This project is **standalone** — it does not reference, depend on, or reuse br
 
 ## Status
 
-| Phase | Scope                                                                       | Status                                           |
-| ----- | --------------------------------------------------------------------------- | ------------------------------------------------ |
-| 0     | Repository + design system + CI                                             | ✅ Buildable monorepo, CI green                  |
-| 1     | Smart contract vertical slice                                               | ✅ Contracts + Foundry unit/fuzz/invariant tests |
-| 2     | Market browsing + wallet (direct USDG entry)                                | 🚧 In progress — local chain browsing, trade/claim UI live                 |
-| 3     | Indexer / API projections                                                   | 🚧 Planned                                       |
-| 4     | Meme-token funding layer                                                    | 🚧 Planned                                       |
-| 5–10  | Resolution hardening, community layer, UX compression, production hardening | 🚧 Planned                                       |
+| Phase | Scope                                                                       | Status                                                     |
+| ----- | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 0     | Repository + design system + CI                                             | ✅ Buildable monorepo, CI green                            |
+| 1     | Smart contract vertical slice                                               | ✅ Contracts + Foundry unit/fuzz/invariant tests           |
+| 2     | Market browsing + wallet (direct USDG entry)                                | 🚧 In progress — local chain browsing, trade/claim UI live |
+| 3     | Indexer / API projections                                                   | 🚧 Planned                                                 |
+| 4     | Meme-token funding layer                                                    | 🚧 Planned                                                 |
+| 5–10  | Resolution hardening, community layer, UX compression, production hardening | 🚧 Planned                                                 |
 
 See `08_ROADMAP.md` and `docs/` for details.
 
@@ -88,6 +88,29 @@ instead of fabricating data.
 To drive a full lifecycle (two wallets enter opposite sides → lock → resolve →
 claim) with `cast`, see `docs/runbook.md` → “Phase 2 vertical slice (local)”.
 
+### Browser E2E (Playwright) — approve → enter → resolve → claim
+
+A full vertical slice runs in a real Chromium browser against a fresh local
+chain: connect the injected test wallet → faucet demo USDG → approve → enter
+YES → an opposing wallet enters NO → lock → oracle resolves → the winning
+wallet claims in the UI → the portfolio reflects the claimed position.
+
+```bash
+pnpm exec playwright install chromium   # one-time browser download
+pnpm test:e2e                           # boots anvil + deploys + starts web on :3100
+```
+
+The suite owns ports 8545/3100 and tears everything down afterwards. It needs:
+
+- `@playwright/test` + `esbuild` (root devDependencies, already installed)
+- `forge` on PATH (contracts deploy via `forge script --unlocked` against anvil)
+- No Docker/Postgres needed — markets are read directly from the chain.
+
+Two known Windows quirks are handled inside the tooling: the forge broadcast
+poller can outlive a successful deploy (the env script verifies contract code
+onchain instead of trusting forge's exit code), and Node cannot resolve
+MSYS-style paths from bash (the manifest path is converted with `cygpath -m`).
+
 Alternative entry points:
 
 ```bash
@@ -95,6 +118,7 @@ pnpm --filter @pl/contracts test    # Foundry unit/fuzz/invariant tests
 pnpm --filter @pl/web dev           # web only
 pnpm --filter @pl/api dev           # API only
 pnpm --filter @pl/worker dev        # indexer only
+pnpm typecheck:e2e                  # typecheck the e2e suite only
 ```
 
 Copy the relevant `.env.example` files before starting an app:

@@ -23,7 +23,12 @@ export default async function HomePage() {
 
   const byTotal = (a: MarketView, b: MarketView) =>
     Number(BigInt(b.totalPool) - BigInt(a.totalPool));
-  const trending = views ? views.filter((v) => v.status === "OPEN" || v.status === "LOCKED").sort(byTotal).slice(0, 4) : [];
+  const trending = views
+    ? views
+        .filter((v) => v.status === "OPEN" || v.status === "LOCKED")
+        .sort(byTotal)
+        .slice(0, 4)
+    : [];
   const closingSoon = views
     ? views
         .filter((v) => v.status === "OPEN")
@@ -31,7 +36,10 @@ export default async function HomePage() {
         .slice(0, 4)
     : [];
   const priceFeedMarkets = views
-    ? views.filter((v) => v.status !== "CANCELLED").sort(byTotal).slice(0, 4)
+    ? views
+        .filter((v) => v.status !== "CANCELLED")
+        .sort(byTotal)
+        .slice(0, 4)
     : [];
   const recentlyResolved = views
     ? views
@@ -93,7 +101,9 @@ export default async function HomePage() {
             </Section>
             <Section eyebrow="Live markets" title="Closing soon">
               {closingSoon.length === 0 ? (
-                <Card className="text-sm text-slate-400">No markets accepting entry right now.</Card>
+                <Card className="text-sm text-slate-400">
+                  No markets accepting entry right now.
+                </Card>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   {closingSoon.map((m) => (

@@ -14,7 +14,9 @@ export const defaultChainId =
 // Local mode (NEXT_PUBLIC_LOCAL_CHAIN=true) points the testnet chain id
 // (46630) at anvil on 127.0.0.1:8545.
 const isLocalChain = process.env.NEXT_PUBLIC_LOCAL_CHAIN === "true";
-const testnetRpc = isLocalChain ? "http://127.0.0.1:8545" : process.env.NEXT_PUBLIC_RPC_TESTNET || undefined;
+const testnetRpc = isLocalChain
+  ? "http://127.0.0.1:8545"
+  : process.env.NEXT_PUBLIC_RPC_TESTNET || undefined;
 
 export const wagmiConfig = createConfig({
   chains: [robinhoodMainnet, robinhoodTestnet],

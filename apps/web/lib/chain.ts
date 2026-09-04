@@ -86,7 +86,8 @@ export function catalogFromManifest(manifest: LocalDeployment): MarketCatalogEnt
   const usdg = manifest.mocks["USDG"];
   if (!usdg) throw new Error("USDG mock missing from manifest");
   return manifest.markets.map((m) => {
-    const assetSymbol = Object.entries(manifest.mocks).find(([, v]) => v.address === m.asset)?.[1]?.symbol ?? "?";
+    const assetSymbol =
+      Object.entries(manifest.mocks).find(([, v]) => v.address === m.asset)?.[1]?.symbol ?? "?";
     return {
       address: m.address as Address,
       slug: m.slug,
@@ -152,7 +153,11 @@ export async function readMarketsWithState(): Promise<MarketWithState[]> {
   return markets;
 }
 
-export async function readUsdgBalanceOf(client: PublicClient, usdg: Address, who: Address): Promise<bigint> {
+export async function readUsdgBalanceOf(
+  client: PublicClient,
+  usdg: Address,
+  who: Address,
+): Promise<bigint> {
   const result = await client.readContract({
     address: usdg,
     abi: mockErc20Abi,

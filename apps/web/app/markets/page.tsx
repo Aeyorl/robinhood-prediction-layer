@@ -21,9 +21,7 @@ export default async function MarketsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const { status } = await searchParams;
-  const requested = (TABS.some((t) => t.key === status) ? status : "ALL") as
-    | "ALL"
-    | MarketStatus;
+  const requested = (TABS.some((t) => t.key === status) ? status : "ALL") as "ALL" | MarketStatus;
 
   let views: Awaited<ReturnType<typeof loadMarketViews>>["views"] | null = null;
   let chainDown = false;
@@ -33,14 +31,13 @@ export default async function MarketsPage({
     chainDown = true;
   }
 
-  const filtered = views
-    ? views.filter((v) => requested === "ALL" || v.status === requested)
-    : [];
+  const filtered = views ? views.filter((v) => requested === "ALL" || v.status === requested) : [];
 
   // OPEN/LOCKED first (soonest entry close), then resolved (most recent first).
   const sorted = [...filtered].sort((a, b) => {
     if (a.status === "RESOLVED" || a.status === "CANCELLED") {
-      if (b.status === "RESOLVED" || b.status === "CANCELLED") return (b.resolvedAt ?? b.resolutionTime) - (a.resolvedAt ?? a.resolutionTime);
+      if (b.status === "RESOLVED" || b.status === "CANCELLED")
+        return (b.resolvedAt ?? b.resolutionTime) - (a.resolvedAt ?? a.resolutionTime);
       return 1;
     }
     if (b.status === "RESOLVED" || b.status === "CANCELLED") return -1;

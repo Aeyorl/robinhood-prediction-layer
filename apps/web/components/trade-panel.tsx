@@ -76,12 +76,14 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
   }, [amountText]);
 
   const onWrongChain = isConnected && walletChainId !== market.chainId;
-  const entryOpen = market.status === "OPEN" && now >= market.openTime * 1000 && now < market.lockTime * 1000;
+  const entryOpen =
+    market.status === "OPEN" && now >= market.openTime * 1000 && now < market.lockTime * 1000;
 
   const amountInvalid = amount > 0n && amount < minEntry;
   const exceedsBalance = balance != null && amount > 0n && amount > balance;
   const needsApproval = allowance != null && amount > 0n && allowance < amount;
-  const canEnter = isConnected && !onWrongChain && entryOpen && amount > 0n && !amountInvalid && !exceedsBalance;
+  const canEnter =
+    isConnected && !onWrongChain && entryOpen && amount > 0n && !amountInvalid && !exceedsBalance;
 
   const sidePool = side === "YES" ? market.yesPool : market.noPool;
   const otherPool = side === "YES" ? market.noPool : market.yesPool;
@@ -184,7 +186,12 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
               : "border-rose-400/60 bg-rose-500/15"
             : "border-white/10 bg-white/5 hover:bg-white/10";
           return (
-            <button key={s} type="button" onClick={() => setSide(s)} className={`rounded-xl border px-4 py-3 text-left transition-colors ${tone}`}>
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSide(s)}
+              className={`rounded-xl border px-4 py-3 text-left transition-colors ${tone}`}
+            >
               <span className="block text-lg font-bold text-white">{s}</span>
               <span className="block text-[11px] text-slate-400">
                 Pool share{" "}
@@ -260,7 +267,9 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
           </div>
           <div className="flex justify-between text-slate-400">
             <span>{side} pool share after entry</span>
-            <span className="text-slate-200">{sharePct != null ? `${sharePct.toFixed(2)}%` : "—"}</span>
+            <span className="text-slate-200">
+              {sharePct != null ? `${sharePct.toFixed(2)}%` : "—"}
+            </span>
           </div>
           <div className="flex justify-between text-slate-400">
             <span>If {side} wins — gross</span>
@@ -286,26 +295,36 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
       )}
 
       {/* Status / gating messages */}
-      {!isConnected && <p className="text-sm text-slate-400">Connect an EVM wallet on Robinhood Chain to enter.</p>}
+      {!isConnected && (
+        <p className="text-sm text-slate-400">Connect an EVM wallet on Robinhood Chain to enter.</p>
+      )}
       {isConnected && onWrongChain && (
         <p className="text-sm text-amber-400">
           Wrong network — switch to Robinhood Chain (chain id 46630) with the button above.
         </p>
       )}
       {isConnected && !onWrongChain && market.status !== "OPEN" && (
-        <p className="text-sm text-amber-400">This market is {market.status.toLowerCase()} — entries are closed.</p>
+        <p className="text-sm text-amber-400">
+          This market is {market.status.toLowerCase()} — entries are closed.
+        </p>
       )}
       {isConnected && !onWrongChain && market.status === "OPEN" && !entryOpen && (
         <p className="text-sm text-amber-400">
-          {now < market.openTime * 1000 ? "Market entry has not opened yet." : "Entry window closed — the market is locked onchain."}
+          {now < market.openTime * 1000
+            ? "Market entry has not opened yet."
+            : "Entry window closed — the market is locked onchain."}
         </p>
       )}
       {amountInvalid && (
-        <p className="text-sm text-rose-400">Below the {groupedAmount(market.minEntry)} USDG minimum entry.</p>
+        <p className="text-sm text-rose-400">
+          Below the {groupedAmount(market.minEntry)} USDG minimum entry.
+        </p>
       )}
       {exceedsBalance && <p className="text-sm text-rose-400">Amount exceeds your USDG balance.</p>}
       {error && (
-        <p className={`text-sm ${error.tone === "warn" ? "text-amber-300" : "text-rose-300"}`}>{error.message}</p>
+        <p className={`text-sm ${error.tone === "warn" ? "text-amber-300" : "text-rose-300"}`}>
+          {error.message}
+        </p>
       )}
 
       {/* Actions */}
@@ -331,7 +350,11 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
             {busy === "enter" ? <Spinner /> : null}
             Enter {side}
           </Button>
-          <Button variant="secondary" disabled={!isConnected || onWrongChain || busy != null || !needsApproval} onClick={approve}>
+          <Button
+            variant="secondary"
+            disabled={!isConnected || onWrongChain || busy != null || !needsApproval}
+            onClick={approve}
+          >
             {busy === "approve" ? <Spinner /> : null}
             {needsApproval ? "Approve USDG" : "Approved ✓"}
           </Button>

@@ -77,7 +77,11 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
               args: [address],
             }),
           ]);
-          return { yesStake: yesStake as bigint, noStake: noStake as bigint, claimed: claimed as boolean };
+          return {
+            yesStake: yesStake as bigint,
+            noStake: noStake as bigint,
+            claimed: claimed as boolean,
+          };
         }),
       );
       return perMarket;
@@ -89,7 +93,11 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
   const rows: PositionRow[] = useMemo(() => {
     if (!data) return [];
     return markets.map((market, i) => {
-      const { yesStake, noStake, claimed } = data[i] ?? { yesStake: 0n, noStake: 0n, claimed: false };
+      const { yesStake, noStake, claimed } = data[i] ?? {
+        yesStake: 0n,
+        noStake: 0n,
+        claimed: false,
+      };
       const totalStake = yesStake + noStake;
 
       let actionable = false;
@@ -231,17 +239,27 @@ function PositionCard({ row }: { row: PositionRow }) {
         </span>
         <span>
           Share of pool:{" "}
-          <span className="text-slate-200">{shareOfPool != null ? `${shareOfPool.toFixed(2)}%` : "—"}</span>
+          <span className="text-slate-200">
+            {shareOfPool != null ? `${shareOfPool.toFixed(2)}%` : "—"}
+          </span>
         </span>
         {claimableReason && (
           <span className="text-slate-300">
             {claimableReason} ·{" "}
-            {market.status === "RESOLVED" || market.status === "CANCELLED" ? "final" : "no early exit in v0"}
+            {market.status === "RESOLVED" || market.status === "CANCELLED"
+              ? "final"
+              : "no early exit in v0"}
           </span>
         )}
         {totalStake > 0n && (
           <Badge>
-            {market.status === "RESOLVED" ? (market.side === "YES" ? "YES won" : market.side === "NO" ? "NO won" : "—") : ""}
+            {market.status === "RESOLVED"
+              ? market.side === "YES"
+                ? "YES won"
+                : market.side === "NO"
+                  ? "NO won"
+                  : "—"
+              : ""}
           </Badge>
         )}
       </div>

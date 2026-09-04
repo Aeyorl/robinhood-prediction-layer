@@ -85,7 +85,11 @@ const COMPARATOR_LABEL: Record<MarketComparator, string> = {
   PRICE_BELOW_AT_TIME: "Price below at time",
 };
 
-export function humanAmount(raw: string | bigint, decimals = COLLATERAL_DECIMALS, maxFrac = 4): string {
+export function humanAmount(
+  raw: string | bigint,
+  decimals = COLLATERAL_DECIMALS,
+  maxFrac = 4,
+): string {
   const value = BigInt(raw);
   if (value === 0n) return "0";
   const formatted = formatUnits(value, decimals);
@@ -98,7 +102,11 @@ export function humanAmount(raw: string | bigint, decimals = COLLATERAL_DECIMALS
 }
 
 /** Thousands-separated whole part of a human amount ("1,234.56"). */
-export function groupedAmount(raw: string | bigint, decimals = COLLATERAL_DECIMALS, maxFrac = 4): string {
+export function groupedAmount(
+  raw: string | bigint,
+  decimals = COLLATERAL_DECIMALS,
+  maxFrac = 4,
+): string {
   const human = humanAmount(raw, decimals, maxFrac);
   const dot = human.indexOf(".");
   const whole = dot === -1 ? human : human.slice(0, dot);
@@ -116,7 +124,10 @@ function toSide(n: number): MarketSide {
 }
 
 /** Share of total capital on each side (0–100, one decimal). */
-export function splitPcts(yesPool: string | bigint, noPool: string | bigint): {
+export function splitPcts(
+  yesPool: string | bigint,
+  noPool: string | bigint,
+): {
   yesSharePct: number | null;
   noSharePct: number | null;
 } {
@@ -143,7 +154,8 @@ export function makeMarketView(input: MarketViewInput): MarketView {
     collateralSymbol: input.collateralSymbol,
     status: toStatus(input.status),
     side: toSide(input.side),
-    resolvedPrice: input.status === 2 ? humanAmount(input.resolvedPrice, input.strikeDecimals, 6) : null,
+    resolvedPrice:
+      input.status === 2 ? humanAmount(input.resolvedPrice, input.strikeDecimals, 6) : null,
     resolvedAt: input.status === 2 && input.resolvedAt > 0 ? input.resolvedAt : null,
     yesPool: input.yesPool,
     noPool: input.noPool,
