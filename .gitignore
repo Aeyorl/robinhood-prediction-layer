@@ -7,12 +7,14 @@ dist/
 out/
 .turbo/
 coverage/
+*.tsbuildinfo
 
 # Foundry
 packages/contracts/cache/
 packages/contracts/out/
 packages/contracts/broadcast/
 packages/contracts/cache_solc/
+packages/contracts/deployments/
 
 # Environment
 .env

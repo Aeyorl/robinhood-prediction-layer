@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "turbo dev",
+    "dev:chain": "anvil --chain-id 46630 --port 8545",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

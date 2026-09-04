@@ -12,7 +12,7 @@ This project is **standalone** — it does not reference, depend on, or reuse br
 | ----- | --------------------------------------------------------------------------- | ------------------------------------------------ |
 | 0     | Repository + design system + CI                                             | ✅ Buildable monorepo, CI green                  |
 | 1     | Smart contract vertical slice                                               | ✅ Contracts + Foundry unit/fuzz/invariant tests |
-| 2     | Market browsing + wallet                                                    | 🚧 In progress                                   |
+| 2     | Market browsing + wallet (direct USDG entry)                                | 🚧 In progress — local chain browsing, trade/claim UI live                 |
 | 3     | Indexer / API projections                                                   | 🚧 Planned                                       |
 | 4     | Meme-token funding layer                                                    | 🚧 Planned                                       |
 | 5–10  | Resolution hardening, community layer, UX compression, production hardening | 🚧 Planned                                       |
@@ -49,23 +49,44 @@ scripts             Local development helpers
 # 1. Install dependencies (frozen lockfile)
 pnpm install
 
-# 2. Start local infrastructure (Postgres + Redis). Optional — skip if you
-#    don't need the API/worker yet; contracts and web work without it.
-pnpm dev:infra
+# 2. Start a local anvil chain (Robinhood Chain testnet id 46630)
+pnpm dev:chain              # anvil --chain-id 46630 --port 8545
 
-# 3. Run a local chain and deploy the contract vertical slice (mocks + markets)
-pnpm contracts:local        # starts anvil, deploys MockUSDG/MockPONS/..., creates example markets
+# 3. Deploy the contract vertical slice (mocks + example markets) onto it.
+#    Writes packages/contracts/deployments/local.json.
+pnpm contracts:local
 
-# 4. Generate + apply database migrations
-pnpm db:generate
-pnpm db:migrate
+# 4. Optional: local Postgres + Redis for the API/worker
+pnpm dev:infra              # docker compose up -d postgres redis
+pnpm db:generate && pnpm db:migrate && pnpm seed
 
-# 5. Seed local demo data (markets, oracle values, sample positions)
-pnpm seed
-
-# 6. Start all apps in dev mode
+# 5. Start all apps in dev mode
 pnpm dev
 ```
+
+> Phase 2 reads markets **directly from the local chain** (no database needed) —
+> see “Local demo flow (Phase 2)” below for the exact env setup.
+
+### Local demo flow (Phase 2) — web ↔ anvil
+
+```bash
+# Terminal 1: chain + contracts
+pnpm dev:chain
+pnpm contracts:local
+
+# Terminal 2: web app against the local chain
+cp apps/web/.env.example apps/web/.env.local
+# edit apps/web/.env.local → NEXT_PUBLIC_CHAIN_ID=46630, NEXT_PUBLIC_LOCAL_CHAIN=true
+pnpm --filter @pl/web dev
+```
+
+Open http://localhost:3000 — `/`, `/markets`, `/market/pons-above-100` and
+`/portfolio` render live onchain market state (pools, status, terms). When the
+local chain is not running, pages show an explicit “local chain offline” state
+instead of fabricating data.
+
+To drive a full lifecycle (two wallets enter opposite sides → lock → resolve →
+claim) with `cast`, see `docs/runbook.md` → “Phase 2 vertical slice (local)”.
 
 Alternative entry points:
 

@@ -3,9 +3,43 @@ import Link from "next/link";
 import { branding } from "@pl/config";
 import { Button, Card, Section, StatusBadge } from "@pl/ui";
 
+import { MarketCard } from "@/components/market-card";
+import { NoLocalChain } from "@/components/no-local-chain";
 import { WalletAssetsCard } from "@/components/wallet-assets-card";
+import { isLocalChainEnv } from "@/lib/chain";
+import type { MarketView } from "@/lib/market-view";
+import { loadMarketViews } from "@/lib/server/markets";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  let views: MarketView[] | null = null;
+  let chainDown = false;
+  try {
+    views = (await loadMarketViews()).views;
+  } catch {
+    chainDown = true;
+  }
+
+  const byTotal = (a: MarketView, b: MarketView) =>
+    Number(BigInt(b.totalPool) - BigInt(a.totalPool));
+  const trending = views ? views.filter((v) => v.status === "OPEN" || v.status === "LOCKED").sort(byTotal).slice(0, 4) : [];
+  const closingSoon = views
+    ? views
+        .filter((v) => v.status === "OPEN")
+        .sort((a, b) => a.lockTime - b.lockTime)
+        .slice(0, 4)
+    : [];
+  const priceFeedMarkets = views
+    ? views.filter((v) => v.status !== "CANCELLED").sort(byTotal).slice(0, 4)
+    : [];
+  const recentlyResolved = views
+    ? views
+        .filter((v) => v.status === "RESOLVED" || v.status === "CANCELLED")
+        .sort((a, b) => (b.resolvedAt ?? b.resolutionTime) - (a.resolvedAt ?? a.resolutionTime))
+        .slice(0, 3)
+    : [];
+
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -33,26 +67,76 @@ export default function HomePage() {
       {/* Connected wallet assets */}
       <WalletAssetsCard />
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Section eyebrow="Live markets" title="Trending">
+      {chainDown || views == null ? (
+        <NoLocalChain />
+      ) : views.length === 0 ? (
+        <Section eyebrow="Live markets" title="No markets yet">
           <Card className="text-sm text-slate-400">
-            No live markets indexed yet. Market feeds arrive with the indexer milestone — nothing is
-            fabricated here.
+            The local deployment is reachable but has no markets. Deploy example markets with{" "}
+            <code className="rounded bg-white/10 px-1 font-mono text-xs">pnpm contracts:local</code>{" "}
+            to see live market state here.
           </Card>
         </Section>
-        <Section eyebrow="Live markets" title="Closing soon">
-          <Card className="text-sm text-slate-400">
-            Markets ordered by remaining entry time will appear here once indexed.
-          </Card>
-        </Section>
-      </div>
+      ) : (
+        <>
+          <div className="grid gap-8 lg:grid-cols-2">
+            <Section eyebrow="Live markets" title="Trending">
+              {trending.length === 0 ? (
+                <Card className="text-sm text-slate-400">No open markets right now.</Card>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {trending.map((m) => (
+                    <MarketCard key={m.address} market={m} />
+                  ))}
+                </div>
+              )}
+            </Section>
+            <Section eyebrow="Live markets" title="Closing soon">
+              {closingSoon.length === 0 ? (
+                <Card className="text-sm text-slate-400">No markets accepting entry right now.</Card>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {closingSoon.map((m) => (
+                    <MarketCard key={m.address} market={m} />
+                  ))}
+                </div>
+              )}
+            </Section>
+          </div>
 
-      <Section eyebrow="Robinhood Chain" title="Stock Token markets">
-        <Card className="text-sm text-slate-400">
-          Objective price markets on Stock Tokens (Chainlink-backed feeds, staleness and sequencer
-          checks) are enabled by the oracle resolver.
-        </Card>
-      </Section>
+          <Section
+            eyebrow={isLocalChainEnv() ? "Local demo tokens" : "Robinhood Chain"}
+            title={isLocalChainEnv() ? "Price-feed markets (local demo)" : "Stock Token markets"}
+          >
+            {priceFeedMarkets.length === 0 ? (
+              <Card className="text-sm text-slate-400">
+                Objective price markets on Stock Tokens (Chainlink-backed feeds, staleness and
+                sequencer checks) are enabled by the oracle resolver and will list here.
+              </Card>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {priceFeedMarkets.map((m) => (
+                  <MarketCard key={m.address} market={m} />
+                ))}
+              </div>
+            )}
+          </Section>
+
+          <Section eyebrow="History" title="Recently resolved">
+            {recentlyResolved.length === 0 ? (
+              <Card className="text-sm text-slate-400">
+                Resolved markets with their winning outcome will appear here once markets settle.
+              </Card>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-3">
+                {recentlyResolved.map((m) => (
+                  <MarketCard key={m.address} market={m} />
+                ))}
+              </div>
+            )}
+          </Section>
+        </>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         <Section eyebrow="Analytics" title="Community pulse">
@@ -67,12 +151,6 @@ export default function HomePage() {
           </Card>
         </Section>
       </div>
-
-      <Section eyebrow="History" title="Recently resolved">
-        <Card className="text-sm text-slate-400">
-          Resolved markets with their winning outcome and payout summary will list here.
-        </Card>
-      </Section>
     </div>
   );
 }

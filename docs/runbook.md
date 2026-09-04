@@ -33,6 +33,62 @@ pnpm db:migrate
 pnpm seed              # idempotent: skips existing markets
 ```
 
+## Phase 2 vertical slice (local)
+
+End-to-end flow against anvil: two wallets enter opposite sides → lock →
+advance time → fresh oracle answer → resolve → winner claims. Verified with
+the deployed local manifest (`packages/contracts/deployments/local.json`).
+
+```bash
+# Setup (two terminals)
+pnpm dev:chain            # anvil --chain-id 46630 --port 8545
+pnpm contracts:local     # forge script DeployLocal (mocks + 3 example markets)
+```
+
+```bash
+RPC=http://127.0.0.1:8545
+BOB=0x70997970c51812dc3a010c7d01b50e0d17dc79c8    # anvil account #1
+CAROL=0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc  # anvil account #2
+MKT=$(node -p "require('./packages/contracts/deployments/local.json').markets[0].address")
+USDG=$(node -p "require('./packages/contracts/deployments/local.json').usdg")
+FEED=$(node -p "require('./packages/contracts/deployments/local.json').markets[0].feed")
+
+# 1. Fund + enter opposite sides (MockUSDG mint is public — local only)
+cast send $USDG "mint(address,uint256)" $BOB   2000e18 --unlocked --from $BOB   --rpc-url $RPC
+cast send $USDG "mint(address,uint256)" $CAROL 2000e18 --unlocked --from $CAROL --rpc-url $RPC
+cast send $USDG "approve(address,uint256)" $MKT 1000e18 --unlocked --from $BOB   --rpc-url $RPC
+cast send $MKT "enter(uint8,uint256)" 1 100e18 --unlocked --from $BOB   --rpc-url $RPC   # YES 100
+cast send $USDG "approve(address,uint256)" $MKT 1000e18 --unlocked --from $CAROL --rpc-url $RPC
+cast send $MKT "enter(uint8,uint256)" 2 50e18  --unlocked --from $CAROL --rpc-url $RPC   # NO 50
+
+# 2. Lock at/after lockTime
+LOCK=$(cast call $MKT "lockTime()(uint256)" --rpc-url $RPC | cut -d' ' -f1)
+cast rpc anvil_setNextBlockTimestamp $((LOCK+2)) && cast rpc anvil_mine
+cast send $MKT "lock()" --unlocked --from $BOB --rpc-url $RPC
+
+# 3. Resolve at/after resolutionTime with a FRESH feed answer (> strike 100)
+RES=$(cast call $MKT "resolutionTime()(uint256)" --rpc-url $RPC | cut -d' ' -f1)
+cast rpc anvil_setNextBlockTimestamp $((RES+2)) && cast rpc anvil_mine
+cast send $FEED "setAnswer(int256)" 150e18 --unlocked --from $BOB --rpc-url $RPC  # stamp updatedAt=now
+cast send $MKT "resolve()" --unlocked --from $BOB --rpc-url $RPC
+
+# 4. Winner claims; loser cannot
+cast send $MKT "claim()" --unlocked --from $BOB --rpc-url $RPC      # BOB (YES) → 150e18 on 100e18
+cast call $MKT "winningOutcome()(uint8)" --rpc-url $RPC             # 1 = YES
+cast call $USDG "balanceOf(address)(uint256)" $BOB --rpc-url $RPC   # 2050e18
+cast send $MKT "claim()" --unlocked --from $CAROL --rpc-url $RPC    # reverts NothingToClaim
+```
+
+Web UI: with `NEXT_PUBLIC_CHAIN_ID=46630` + `NEXT_PUBLIC_LOCAL_CHAIN=true`
+(see README) the markets list, market detail (pools, terms, resolve/claim
+buttons), and portfolio read the same live state. To click approve/enter from
+the browser, import an anvil account into your wallet (chain 46630, RPC
+`http://127.0.0.1:8545`) — entries need USDG, so use the panel’s “Get demo
+USDG (local only)” faucet (public `MockUSDG.mint`).
+
+Oracle rule reminder: the resolver rejects stale answers, so `setAnswer` must
+happen *after* the final time warp (it stamps `updatedAt = block.timestamp`).
+
 ## Known honest gaps (current milestones)
 
 - Contract event decoding/projections in the worker are Phase 3 (the loop is real; the handlers are not yet wired).
@@ -49,3 +105,5 @@ pnpm seed              # idempotent: skips existing markets
 | Market resolves to CANCELLED unexpectedly | Check for price == strike (strict equality cancels), or an empty winning side, or stale/sequencer/paused oracle states via `resolver.health(assetKey)`.       |
 | Worker cursor stuck                       | Redis key `pl:worker:cursor`; delete it to backfill from the default start.                                                                                   |
 | Wrong chain shown                         | `CHAIN_ID` / `NEXT_PUBLIC_CHAIN_ID` mismatch across apps — both must be 4663 or 46630.                                                                        |
+| Web shows “Local chain offline”           | Manifest or chain missing. Run `pnpm dev:chain` + `pnpm contracts:local`, or point `PL_LOCAL_MANIFEST` at an existing `deployments/local.json`.                    |
+| Page errors `ChainDoesNotSupportContract: multicall3` | Client/server reads no longer use multicall3 (anvil doesn't deploy it); if this reappears, check no new code path calls `client.multicall`.                     |
