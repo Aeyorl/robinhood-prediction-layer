@@ -1,0 +1,31 @@
+{
+  "name": "@pl/worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prediction Layer chain indexer",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pl/chain-config": "workspace:*",
+    "@pl/config": "workspace:*",
+    "@pl/database": "workspace:*",
+    "@pl/types": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "ioredis": "6.0.0",
+    "postgres": "^3.4.5",
+    "viem": "2.56.3",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "8.5.1",
+    "tsx": "^4.19.0",
+    "typescript": "5.9.3"
+  }
+}

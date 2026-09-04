@@ -1,0 +1,33 @@
+name: Deploy Mainnet (manual, gated)
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for mainnet deployment"
+        required: true
+
+# Requires an explicit environment approval before any step runs.
+jobs:
+  deploy:
+    name: Deploy contracts to mainnet
+    runs-on: ubuntu-latest
+    environment: mainnet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build contracts
+        run: pnpm --filter @pl/contracts build
+      - name: Run contract tests before deploy
+        run: pnpm --filter @pl/contracts test
+      - name: Deploy (implemented at launch gate)
+        run: echo "Mainnet deployment is intentionally not wired up yet — see docs/deployment.md for the launch gate checklist."

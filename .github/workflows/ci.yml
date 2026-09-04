@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint & typecheck & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Build all packages
+        run: pnpm build
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Run tests (apps/packages)
+        run: pnpm test
+      - name: Foundry tests
+        run: pnpm --filter @pl/contracts test
+      - name: Format check
+        run: pnpm format:check
+
+  # No deployment on normal PRs. Mainnet deployment is a separate manually
+  # approved workflow (see deploy-mainnet.yml) gated behind an environment.

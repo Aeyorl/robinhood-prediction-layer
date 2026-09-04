@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.next/
+out/
+.turbo/
+coverage/
+pnpm-lock.yaml
+packages/contracts/out/
+packages/contracts/cache/
+packages/contracts/lib/
+packages/contracts/abi/
+**/*.sol
