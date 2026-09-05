@@ -130,7 +130,7 @@ E2E_REUSE=1 E2E_WEB_URL=http://127.0.0.1:3100 pnpm test:e2e
 
 ## Known honest gaps (current milestones)
 
-- Phase 4 local mock routing is implemented. Real Uniswap execution on a Robinhood Chain fork remains gated on verified proxy support/configuration and live provider credentials; see `swap-flow.md`.
+- Phase 4's real route-to-market gate passed on an isolated Robinhood Chain fork; see `swap-flow.md`. This is integration evidence, not a production-readiness claim.
 - Community analytics are Phase 6.
 
 ## Phase 3 indexer (implemented)
@@ -171,11 +171,11 @@ Recovery: an expired quote before the swap can be refreshed; approvals already c
 
 ### Verified September 5, 2026
 
-- 36 Vitest API/worker tests passed, including isolated PostgreSQL migrations, idempotent transfer replay, metadata failures, signed attribution timing, quote policy and orphaned-swap rejection.
+- 38 Vitest API/worker tests passed, including isolated PostgreSQL migrations, idempotent transfer replay, metadata failures, signed attribution timing, quote policy and orphaned-swap rejection.
 - 69 Foundry tests passed, including the nine saved mock swap adapter tests and existing fuzz/invariant suites.
 - Three Playwright tests passed on isolated Anvil: direct USDG entry/claim, mock PONS funding with rejection/reload recovery and attribution/claim, and the local-only demo guard. The funding quote was checked at 1280px and 390px widths.
 - Workspace typechecks, test/E2E typechecks, lint, formatting and production build passed. Build still emits existing contract timestamp/typecast lint warnings and a dynamic manifest filesystem tracing warning.
-- No real Uniswap fork test ran: provider credentials, fork holder/input and a verified supported proxy were not configured. The local result is not Phase 4's full mainnet-fork exit criterion or a production-readiness claim.
+- The authenticated fork runner routed canonical WETH through Uniswap to canonical USDG, verified minimum output, deployed the production `BinaryPoolMarket` bytecode with USDG collateral, entered the market with the exact routed output and verified the resulting pool and wallet stake. The isolated fork snapshot was reverted and no mainnet transaction was broadcast. This satisfies Phase 4's route-to-market integration criterion; it is not a production-readiness claim.
 
 ## Failure playbooks
 

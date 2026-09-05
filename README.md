@@ -8,18 +8,18 @@ This project is **standalone** — it does not reference, depend on, or reuse br
 
 ## Status
 
-| Phase | Scope                                                                       | Status                                                                              |
-| ----- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| 0     | Repository + design system + CI                                             | ✅ Buildable monorepo, CI green                                                     |
-| 1     | Smart contract vertical slice                                               | ✅ Contracts + Foundry unit/fuzz/invariant tests                                    |
-| 2     | Market browsing + wallet (direct USDG entry)                                | Local browser entry/resolve/claim flow verified                                     |
-| 3     | Indexer / API projections                                                   | Implemented in `bad1677`; event projections and market API                          |
-| 4     | Meme-token funding layer                                                    | Local swap/entry/recovery/attribution verified; real Uniswap fork gate remains open |
-| 5–10  | Resolution hardening, community layer, UX compression, production hardening | 🚧 Planned                                                                          |
+| Phase | Scope                                                                       | Status                                                                       |
+| ----- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 0     | Repository + design system + CI                                             | ✅ Buildable monorepo, CI green                                              |
+| 1     | Smart contract vertical slice                                               | ✅ Contracts + Foundry unit/fuzz/invariant tests                             |
+| 2     | Market browsing + wallet (direct USDG entry)                                | Local browser entry/resolve/claim flow verified                              |
+| 3     | Indexer / API projections                                                   | Implemented in `bad1677`; event projections and market API                   |
+| 4     | Meme-token funding layer                                                    | ✅ Local recovery/attribution and real Uniswap fork route-to-market verified |
+| 5–10  | Resolution hardening, community layer, UX compression, production hardening | 🚧 Planned                                                                   |
 
 See `08_ROADMAP.md` and `docs/` for details.
 
-For Phase 4 setup, required API environment variables, isolated PostgreSQL tests and browser recovery checks, see [the runbook](docs/runbook.md#phase-4-local-funding-setup-and-verification). Real Uniswap routing requires credentials, a verified supported proxy deployment and [fork validation](docs/swap-flow.md#real-routing-gate-not-yet-passed); the mock adapter is strictly local/testnet.
+For Phase 4 setup, required API environment variables, isolated PostgreSQL tests and browser recovery checks, see [the runbook](docs/runbook.md#phase-4-local-funding-setup-and-verification). Real Uniswap routing requires credentials, a verified supported proxy deployment and [fork validation](docs/swap-flow.md#real-routing-gate-passed-september-5-2026); the mock adapter is strictly local/testnet.
 
 ## Repository layout
 

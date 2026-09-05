@@ -1,5 +1,14 @@
 /** Explicit opt-in: only a loopback Anvil mainnet fork can receive transactions. */
-import { createWalletClient, erc20Abi, http, parseAbi, type Address } from "viem";
+import { readFileSync } from "node:fs";
+import {
+  createWalletClient,
+  erc20Abi,
+  http,
+  parseAbi,
+  type Abi,
+  type Address,
+  type Hex,
+} from "viem";
 import { getChain, getChainAddresses } from "@pl/chain-config";
 import { apiEnvSchema } from "@pl/config";
 import { createFundingService } from "../src/funding.js";
@@ -100,8 +109,93 @@ try {
     functionName: "balanceOf",
     args: [owner],
   });
-  if (after - before < BigInt(q.minAmountOut)) throw new Error("Fork output below minimum");
-  console.log("Verified real Uniswap route, simulation and USDG receipt on an isolated fork.");
+  const received = after - before;
+  if (received < BigInt(q.minAmountOut)) throw new Error("Fork output below minimum");
+
+  const artifactUrl = new URL(
+    "../../../packages/contracts/out/BinaryPoolMarket.sol/BinaryPoolMarket.json",
+    import.meta.url,
+  );
+  const artifact = JSON.parse(readFileSync(artifactUrl, "utf8")) as {
+    abi: Abi;
+    bytecode: { object: Hex };
+  };
+  if (!artifact.bytecode.object || artifact.bytecode.object === "0x")
+    throw new Error("BinaryPoolMarket build artifact has no deployment bytecode.");
+
+  const block = await service.client.getBlock();
+  const marketDeploy = await wallet.deployContract({
+    abi: artifact.abi,
+    bytecode: artifact.bytecode.object,
+    args: [
+      {
+        collateral: usdg,
+        resolver: owner,
+        oracleAssetKey: `0x${"00".repeat(32)}`,
+        comparator: 0,
+        strike: 1n,
+        strikeDecimals: 0,
+        openTime: block.timestamp - 1n,
+        lockTime: block.timestamp + 3_600n,
+        resolutionTime: block.timestamp + 7_200n,
+        gracePeriod: 3_600n,
+        feeBps: 0n,
+        minEntry: 1n,
+        maxEntry: 0n,
+        question: "Phase 4 fork route-to-market verification",
+        metadataUri: "ipfs://phase-4-fork-verification",
+        feeVault: owner,
+      },
+    ],
+  });
+  const marketReceipt = await service.client.waitForTransactionReceipt({ hash: marketDeploy });
+  if (marketReceipt.status !== "success" || !marketReceipt.contractAddress)
+    throw new Error("Fork market deployment reverted");
+  const market = marketReceipt.contractAddress;
+
+  const approveMarket = await wallet.writeContract({
+    address: usdg,
+    abi: erc20Abi,
+    functionName: "approve",
+    args: [market, received],
+  });
+  if (
+    (await service.client.waitForTransactionReceipt({ hash: approveMarket })).status !== "success"
+  )
+    throw new Error("Fork USDG market approval reverted");
+  const enter = await wallet.writeContract({
+    address: market,
+    abi: artifact.abi,
+    functionName: "enter",
+    args: [1, received],
+  });
+  if ((await service.client.waitForTransactionReceipt({ hash: enter })).status !== "success")
+    throw new Error("Fork market entry reverted");
+
+  const [yesPool, userStake, marketBalance] = await Promise.all([
+    service.client.readContract({
+      address: market,
+      abi: artifact.abi,
+      functionName: "yesPool",
+    }),
+    service.client.readContract({
+      address: market,
+      abi: artifact.abi,
+      functionName: "userYesStake",
+      args: [owner],
+    }),
+    service.client.readContract({
+      address: usdg,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [market],
+    }),
+  ]);
+  if (yesPool !== received || userStake !== received || marketBalance !== received)
+    throw new Error("Fork market position does not match routed USDG");
+  console.log(
+    "Verified real Uniswap route, USDG receipt and BinaryPoolMarket entry on an isolated fork.",
+  );
 } finally {
   await anvil("evm_revert", [snapshot]);
 }

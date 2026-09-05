@@ -10,7 +10,7 @@
     "start": "node dist/index.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:fork": "tsx --env-file=.env test/fork.ts"
+    "test:fork": "pnpm --filter @pl/contracts build && tsx --env-file=.env test/fork.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.0",
