@@ -6,8 +6,9 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "success";
 
 const buttonVariants: Record<Variant, string> = {
   primary:
-    "bg-indigo-600 text-white hover:bg-indigo-500 disabled:bg-indigo-600/40 disabled:text-white/60",
-  secondary: "bg-white/10 text-white hover:bg-white/15 border border-white/10 disabled:opacity-50",
+    "bg-indigo-500 text-white shadow-[0_10px_30px_-12px_rgba(99,102,241,0.9)] hover:bg-indigo-400 disabled:bg-indigo-600/40 disabled:text-white/60",
+  secondary:
+    "border border-white/12 bg-white/[0.07] text-white hover:border-white/20 hover:bg-white/[0.11] disabled:opacity-50",
   ghost: "text-slate-300 hover:text-white hover:bg-white/5 disabled:opacity-50",
   danger: "bg-rose-600/90 text-white hover:bg-rose-600 disabled:opacity-50",
   success: "bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50",
@@ -22,7 +23,7 @@ export function Button({ variant = "primary", size = "md", className, ...props }
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl font-semibold transition-[background-color,border-color,color,transform] duration-200 active:translate-y-px",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400",
         "disabled:cursor-not-allowed",
         size === "sm" && "px-2.5 py-1.5 text-xs",
@@ -39,7 +40,10 @@ export function Button({ variant = "primary", size = "md", className, ...props }
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur", className)}
+      className={cn(
+        "rounded-2xl border border-white/[0.09] bg-slate-900/65 p-5 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.9)] backdrop-blur-xl",
+        className,
+      )}
       {...props}
     />
   );
@@ -49,7 +53,7 @@ export function Badge({ className, ...props }: HTMLAttributes<HTMLSpanElement>) 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs font-medium text-slate-300",
+        "inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-slate-300",
         className,
       )}
       {...props}
@@ -103,14 +107,14 @@ export function Section({
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-3", className)}>
-      <div className="space-y-1">
+    <section className={cn("space-y-4", className)}>
+      <div className="space-y-1.5">
         {eyebrow ? (
           <p className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">{title}</h2>
       </div>
       {children}
     </section>

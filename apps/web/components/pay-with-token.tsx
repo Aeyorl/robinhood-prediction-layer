@@ -382,136 +382,148 @@ function FundingDialog({
         if (busy) event.preventDefault();
         else close();
       }}
-      className="m-auto w-[min(94vw,32rem)] rounded-2xl border border-white/15 bg-slate-950 p-6 text-slate-200 backdrop:bg-black/70"
+      className="mt-auto mb-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-3xl border border-white/15 bg-slate-950 p-0 text-slate-200 shadow-2xl backdrop:bg-black/75 sm:m-auto sm:w-[min(94vw,34rem)] sm:rounded-3xl"
     >
-      <div className="mb-4 flex justify-between">
-        <h2 className="text-lg font-semibold">Pay with a token</h2>
-        <button disabled={busy} onClick={close} aria-label="Close funding dialog">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-slate-950/95 px-5 py-4 backdrop-blur sm:px-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-indigo-300">
+            Fund position
+          </p>
+          <h2 className="text-lg font-semibold">Pay with a token</h2>
+        </div>
+        <button
+          disabled={busy}
+          onClick={close}
+          aria-label="Close funding dialog"
+          className="min-h-11 rounded-xl px-3 text-sm font-semibold text-slate-400 hover:bg-white/[0.06] hover:text-white"
+        >
           Close
         </button>
       </div>
-      <p className="mb-4 text-sm text-slate-400">
-        {saved?.quote.entryRouter
-          ? "Approve the exact token amount, then confirm one atomic swap-and-enter transaction."
-          : "Approve token → swap to USDG → approve USDG → enter. Each transaction needs a separate confirmation. If entry fails, USDG stays in your wallet."}
-      </p>
-      {assets.isPending && <p>Discovering wallet assets…</p>}
-      {assets.error && <p role="alert">Asset discovery unavailable: {assets.error.message}</p>}
-      <label className="block text-sm">
-        Funding token
-        <select
-          aria-label="Funding token"
-          value={token}
-          disabled={locked}
-          onChange={(e) => {
-            setToken(e.target.value);
-            setSaved(null);
-            sessionStorage.removeItem(key);
-          }}
-          className="my-2 w-full rounded border border-white/20 bg-slate-900 p-2"
-        >
-          <option value="">Select an asset</option>
-          {available?.map((a) => (
-            <option
-              key={a.token.address}
-              value={a.token.address}
-              disabled={["BLOCKED", "UNSAFE_BEHAVIOR"].includes(a.supportStatus)}
-            >
-              {a.symbol} · {formatUnits(BigInt(a.balance), a.decimals)} ·{" "}
-              {a.token.address.slice(0, 8)}… · {a.supportStatus}
-            </option>
-          ))}
-        </select>
-      </label>
-      {assets.hasNextPage && (
-        <button
-          disabled={locked || assets.isFetchingNextPage}
-          onClick={() => assets.fetchNextPage()}
-        >
-          Discover more assets
-        </button>
-      )}
-      {selected && <p className="break-all text-xs text-slate-400">{selected.token.address}</p>}
-      <label className="block text-sm">
-        Token amount
-        <input
-          aria-label="Token amount"
-          value={amount}
-          disabled={locked}
-          onChange={(e) => {
-            setAmount(e.target.value);
-            setSaved(null);
-            sessionStorage.removeItem(key);
-          }}
-          className="my-2 w-full rounded border border-white/20 bg-slate-900 p-2"
-          inputMode="decimal"
-        />
-      </label>
-      <label className="block text-sm">
-        Side
-        <select
-          aria-label="Funding side"
-          value={side}
-          disabled={locked}
-          onChange={(e) => {
-            setSide(e.target.value as "YES" | "NO");
-            setSaved(null);
-            sessionStorage.removeItem(key);
-          }}
-          className="my-2 w-full rounded border border-white/20 bg-slate-900 p-2"
-        >
-          <option>YES</option>
-          <option>NO</option>
-        </select>
-      </label>
-      {saved && (
-        <div className="my-3 space-y-1 rounded border border-white/10 p-3 text-sm">
-          <p>{saved.quote.routeSummary}</p>
-          <p>Expected {formatUnits(BigInt(saved.quote.amountOut), 18)} USDG</p>
-          <p>
-            Minimum {formatUnits(BigInt(saved.quote.minAmountOut), 18)} USDG · slippage{" "}
-            {saved.quote.slippageBps / 100}%
-          </p>
-          <p>Quote expires {new Date(saved.quote.expiresAt).toLocaleTimeString()}</p>
-          {saved.swapHash && <p className="break-all">Swap: {saved.swapHash}</p>}
-          {saved.enterHash && <p className="break-all">Entry: {saved.enterHash}</p>}
-          {saved.received && <p>Received {formatUnits(BigInt(saved.received), 18)} USDG</p>}
-        </div>
-      )}
-      <p role="status" className="my-2 text-sm text-emerald-300">
-        {saved?.complete
-          ? saved.quote.entryRouter
-            ? "Position entered with verified onchain funding attribution."
-            : "Position entered and funding attribution saved."
-          : step}
-      </p>
-      {error && (
-        <p role="alert" className="my-2 text-sm text-amber-300">
-          {error}
+      <div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-6">
+        <p className="mb-4 text-sm leading-6 text-slate-400">
+          {saved?.quote.entryRouter
+            ? "Approve the exact token amount, then confirm one atomic swap-and-enter transaction."
+            : "Approve token → swap to USDG → approve USDG → enter. Each transaction needs a separate confirmation. If entry fails, USDG stays in your wallet."}
         </p>
-      )}
-      <div className="mt-4 flex gap-2">
-        <Button disabled={locked || !selected} onClick={quote}>
-          Get quote
-        </Button>
-        <Button disabled={busy || !saved || saved.complete} onClick={proceed}>
-          {saved?.swapHash ? "Resume funding flow" : "Confirm funding flow"}
-        </Button>
+        {assets.isPending && <p>Discovering wallet assets…</p>}
+        {assets.error && <p role="alert">Asset discovery unavailable: {assets.error.message}</p>}
+        <label className="block text-sm">
+          Funding token
+          <select
+            aria-label="Funding token"
+            value={token}
+            disabled={locked}
+            onChange={(e) => {
+              setToken(e.target.value);
+              setSaved(null);
+              sessionStorage.removeItem(key);
+            }}
+            className="my-2 min-h-12 w-full rounded-xl border border-white/20 bg-slate-900 p-3"
+          >
+            <option value="">Select an asset</option>
+            {available?.map((a) => (
+              <option
+                key={a.token.address}
+                value={a.token.address}
+                disabled={["BLOCKED", "UNSAFE_BEHAVIOR"].includes(a.supportStatus)}
+              >
+                {a.symbol} · {formatUnits(BigInt(a.balance), a.decimals)} ·{" "}
+                {a.token.address.slice(0, 8)}… · {a.supportStatus}
+              </option>
+            ))}
+          </select>
+        </label>
+        {assets.hasNextPage && (
+          <button
+            disabled={locked || assets.isFetchingNextPage}
+            onClick={() => assets.fetchNextPage()}
+          >
+            Discover more assets
+          </button>
+        )}
+        {selected && <p className="break-all text-xs text-slate-400">{selected.token.address}</p>}
+        <label className="block text-sm">
+          Token amount
+          <input
+            aria-label="Token amount"
+            value={amount}
+            disabled={locked}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              setSaved(null);
+              sessionStorage.removeItem(key);
+            }}
+            className="my-2 min-h-12 w-full rounded-xl border border-white/20 bg-slate-900 p-3"
+            inputMode="decimal"
+          />
+        </label>
+        <label className="block text-sm">
+          Side
+          <select
+            aria-label="Funding side"
+            value={side}
+            disabled={locked}
+            onChange={(e) => {
+              setSide(e.target.value as "YES" | "NO");
+              setSaved(null);
+              sessionStorage.removeItem(key);
+            }}
+            className="my-2 min-h-12 w-full rounded-xl border border-white/20 bg-slate-900 p-3"
+          >
+            <option>YES</option>
+            <option>NO</option>
+          </select>
+        </label>
+        {saved && (
+          <div className="my-3 space-y-1 rounded border border-white/10 p-3 text-sm">
+            <p>{saved.quote.routeSummary}</p>
+            <p>Expected {formatUnits(BigInt(saved.quote.amountOut), 18)} USDG</p>
+            <p>
+              Minimum {formatUnits(BigInt(saved.quote.minAmountOut), 18)} USDG · slippage{" "}
+              {saved.quote.slippageBps / 100}%
+            </p>
+            <p>Quote expires {new Date(saved.quote.expiresAt).toLocaleTimeString()}</p>
+            {saved.swapHash && <p className="break-all">Swap: {saved.swapHash}</p>}
+            {saved.enterHash && <p className="break-all">Entry: {saved.enterHash}</p>}
+            {saved.received && <p>Received {formatUnits(BigInt(saved.received), 18)} USDG</p>}
+          </div>
+        )}
+        <p role="status" className="my-2 text-sm text-emerald-300">
+          {saved?.complete
+            ? saved.quote.entryRouter
+              ? "Position entered with verified onchain funding attribution."
+              : "Position entered and funding attribution saved."
+            : step}
+        </p>
+        {error && (
+          <p role="alert" className="my-2 text-sm text-amber-300">
+            {error}
+          </p>
+        )}
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <Button className="w-full" disabled={locked || !selected} onClick={quote}>
+            Get quote
+          </Button>
+          <Button className="w-full" disabled={busy || !saved || saved.complete} onClick={proceed}>
+            {saved?.swapHash ? "Resume funding flow" : "Confirm funding flow"}
+          </Button>
+        </div>
+        {saved?.complete && (
+          <Button
+            className="mt-3"
+            variant="secondary"
+            onClick={() => {
+              sessionStorage.removeItem(key);
+              setSaved(null);
+              setAmount("");
+              setStep("");
+            }}
+          >
+            Start another trade
+          </Button>
+        )}
       </div>
-      {saved?.complete && (
-        <Button
-          className="mt-3"
-          variant="secondary"
-          onClick={() => {
-            sessionStorage.removeItem(key);
-            setSaved(null);
-            setAmount("");
-            setStep("");
-          }}
-        >
-          Start another trade
-        </Button>
-      )}
     </dialog>
   );
 }

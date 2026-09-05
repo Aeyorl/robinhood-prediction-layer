@@ -197,15 +197,13 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
               <span className="block text-lg font-bold text-white">{s}</span>
               <span className="block text-[11px] text-slate-400">
                 Pool share{" "}
-                {active
-                  ? s === "YES"
-                    ? market.yesSharePct != null
-                      ? `${market.yesSharePct.toFixed(1)}%`
-                      : "—"
-                    : market.noSharePct != null
-                      ? `${market.noSharePct.toFixed(1)}%`
-                      : "—"
-                  : "—"}
+                {s === "YES"
+                  ? market.yesSharePct != null
+                    ? `${market.yesSharePct.toFixed(1)}%`
+                    : "—"
+                  : market.noSharePct != null
+                    ? `${market.noSharePct.toFixed(1)}%`
+                    : "—"}
               </span>
             </button>
           );
@@ -258,6 +256,25 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
             )}
           </span>
         </div>
+        {isConnected && balance != null && balance > 0n && (
+          <div className="grid grid-cols-4 gap-2 pt-1" aria-label="Amount shortcuts">
+            {[25, 50, 75, 100].map((percent) => (
+              <button
+                key={percent}
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setAmountText(
+                    formatUnits((balance * BigInt(percent)) / 100n, COLLATERAL_DECIMALS),
+                  );
+                }}
+                className="min-h-9 rounded-lg border border-white/10 bg-white/[0.04] text-xs font-semibold text-slate-400 hover:bg-white/[0.08] hover:text-white"
+              >
+                {percent === 100 ? "Max" : `${percent}%`}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Quote summary */}
@@ -324,7 +341,10 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
       )}
       {exceedsBalance && <p className="text-sm text-rose-400">Amount exceeds your USDG balance.</p>}
       {error && (
-        <p className={`text-sm ${error.tone === "warn" ? "text-amber-300" : "text-rose-300"}`}>
+        <p
+          role="alert"
+          className={`text-sm ${error.tone === "warn" ? "text-amber-300" : "text-rose-300"}`}
+        >
           {error.message}
         </p>
       )}
@@ -368,7 +388,11 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
           </p>
         )}
         {notice && (
-          <p className="break-all rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs text-emerald-300">
+          <p
+            role="status"
+            aria-live="polite"
+            className="break-all rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs text-emerald-300"
+          >
             {notice.text} Tx: {notice.hash}
           </p>
         )}

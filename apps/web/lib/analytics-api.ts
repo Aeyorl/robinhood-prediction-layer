@@ -54,6 +54,14 @@ const communitySummarySchema = z.object({
 export type CommunitySummary = z.infer<typeof communitySummarySchema>;
 export type MarketSplit = z.infer<typeof marketSplitSchema>;
 export type RankedWallet = z.infer<typeof rankedWalletSchema>;
+export type MarketCommunitySplit = z.infer<typeof marketSplitSchema> & {
+  fundingToken: {
+    chainId: number;
+    address: string;
+    symbol: string | null;
+    name: string | null;
+  };
+};
 
 async function analyticsRequest(path: string) {
   const response = await fetch(`${apiUrl}${path}`, {
@@ -74,6 +82,32 @@ export async function getCommunities(window = "7d") {
       nextOffset: z.number().nullable(),
     })
     .parse(await analyticsRequest(`/v1/communities?window=${window}`));
+}
+
+export async function getMarketCommunitySplits(address: string, window = "all") {
+  const response = await fetch(
+    `${apiUrl}/v1/markets/${address}/community-splits?window=${window}`,
+    { cache: "no-store", signal: AbortSignal.timeout(15_000) },
+  );
+  if (response.status === 404) return [] as MarketCommunitySplit[];
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? `Analytics request failed (${response.status})`);
+  return z
+    .object({
+      window: z.string(),
+      attribution: z.array(z.string()),
+      splits: z.array(
+        marketSplitSchema.extend({
+          fundingToken: z.object({
+            chainId: z.number(),
+            address: z.string(),
+            symbol: z.string().nullable(),
+            name: z.string().nullable(),
+          }),
+        }),
+      ),
+    })
+    .parse(data).splits;
 }
 
 export async function getCommunity(chainId: string, tokenAddress: string, window = "all") {

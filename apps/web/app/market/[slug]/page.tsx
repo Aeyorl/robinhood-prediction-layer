@@ -1,12 +1,15 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { branding } from "@pl/config";
 import { Badge, Card, StatusBadge } from "@pl/ui";
 
 import { MarketActions } from "@/components/market-actions";
+import { formatBps, formatUsdg, shortAddress } from "@/components/analytics";
 import { Countdown } from "@/components/countdown";
 import { TradePanel } from "@/components/trade-panel";
 import { isLocalChainEnv } from "@/lib/chain";
+import { getMarketCommunitySplits } from "@/lib/analytics-api";
 import { groupedAmount, type MarketView } from "@/lib/market-view";
 import { loadMarketViewBySlug } from "@/lib/server/markets";
 import { NoLocalChain } from "@/components/no-local-chain";
@@ -46,6 +49,10 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
   const yesAmt = groupedAmount(market.yesPool);
   const noAmt = groupedAmount(market.noPool);
   const nowSeconds = Math.floor(Date.now() / 1000);
+  let communitySplits: Awaited<ReturnType<typeof getMarketCommunitySplits>> | null = null;
+  try {
+    communitySplits = await getMarketCommunitySplits(market.address);
+  } catch {}
 
   return (
     <div className="space-y-8">
@@ -151,27 +158,64 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
             </Card>
           )}
 
-          {/* Activity (honest placeholder until the indexer milestone) */}
           <Card className="space-y-2">
             <h2 className="text-lg font-semibold text-white">Activity</h2>
             <p className="text-sm text-slate-400">
-              Position entries, resolution, and claims appear here once the onchain indexer writes
-              events to the database — the chain remains the source of truth.
+              Confirmed position, resolution, and claim events feed the connected portfolio and
+              community analytics. The chain remains the source of truth.
             </p>
+            <Link
+              href="/portfolio"
+              className="inline-flex text-sm font-semibold text-indigo-300 hover:text-indigo-200"
+            >
+              View your portfolio →
+            </Link>
           </Card>
 
-          {/* Community split (honest placeholder until attribution milestone) */}
           <Card className="space-y-2">
             <h2 className="text-lg font-semibold text-white">Community split</h2>
-            <p className="text-sm text-slate-400">
-              Capital in this market grouped by the token used to fund it (e.g. “positions funded
-              with PONS”) lands here with the funding-layer milestone.
-            </p>
+            {communitySplits == null ? (
+              <p className="text-sm text-slate-400">
+                Funding attribution is temporarily unavailable.
+              </p>
+            ) : communitySplits.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                No verified source-token entries have been indexed for this market.
+              </p>
+            ) : (
+              <div className="divide-y divide-white/[0.08]">
+                {communitySplits.map((split) => (
+                  <Link
+                    key={split.fundingToken.address}
+                    href={`/community/${split.fundingToken.chainId}/${split.fundingToken.address}`}
+                    className="flex items-center justify-between gap-4 py-3 first:pt-1 last:pb-1"
+                  >
+                    <span>
+                      <span className="block font-semibold text-white">
+                        {split.fundingToken.symbol ?? shortAddress(split.fundingToken.address)}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {split.participantCount} participating wallets
+                      </span>
+                    </span>
+                    <span className="text-right text-sm text-slate-300">
+                      {formatUsdg(split.volumeUsdg)}
+                      <span className="block text-xs text-slate-500">
+                        YES {formatBps(split.yesShareBps)}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
 
         {/* Right: trade + actions */}
-        <div className="space-y-6 lg:col-span-2">
+        <div
+          id="trade-panel"
+          className="scroll-mt-24 space-y-6 lg:sticky lg:top-24 lg:col-span-2 lg:self-start"
+        >
           <TradePanel market={market} isLocal={isLocal} />
           <MarketActions market={market} />
           <p className="text-center text-xs text-slate-600">
@@ -179,6 +223,14 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
           </p>
         </div>
       </div>
+      {market.status === "OPEN" && (
+        <a
+          href="#trade-panel"
+          className="fixed bottom-20 left-4 right-4 z-40 flex min-h-12 items-center justify-center rounded-xl bg-indigo-500 px-5 text-sm font-bold text-white shadow-2xl shadow-indigo-950/60 md:hidden"
+        >
+          Trade this market
+        </a>
+      )}
     </div>
   );
 }

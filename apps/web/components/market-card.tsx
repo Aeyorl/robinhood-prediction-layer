@@ -32,17 +32,33 @@ export function MarketCard({ market }: { market: MarketView }) {
   const noAmt = groupedAmount(market.noPool);
 
   return (
-    <Link href={`/market/${market.slug}`} className="block group">
-      <Card className="space-y-3 transition-colors group-hover:border-indigo-400/40">
+    <Link
+      href={`/market/${market.slug}`}
+      className="group block rounded-2xl focus-visible:outline-none"
+    >
+      <Card className="h-full space-y-4 transition-[border-color,background-color,transform] duration-200 group-hover:-translate-y-0.5 group-hover:border-indigo-400/40 group-hover:bg-slate-900/85 group-focus-visible:border-indigo-400/60">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Badge>{market.assetSymbol}</Badge>
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-400/20 bg-indigo-500/10 text-sm font-bold text-indigo-200"
+              aria-hidden="true"
+            >
+              {market.assetSymbol.slice(0, 1)}
+            </span>
+            <div className="space-y-1">
+              <Badge>{market.assetSymbol}</Badge>
+              <p className="text-[10px] uppercase tracking-wider text-slate-600">Price outcome</p>
+            </div>
             <StatusBadge tone={statusTone[market.status]}>{market.status}</StatusBadge>
           </div>
-          <span className="text-xs text-slate-500">Volume {total} USDG</span>
+          <span className="text-right text-[11px] text-slate-500">
+            {total} USDG
+            <br />
+            volume
+          </span>
         </div>
 
-        <p className="line-clamp-2 min-h-10 text-sm font-medium text-slate-100">
+        <p className="line-clamp-3 min-h-15 text-[15px] font-semibold leading-5 text-slate-100">
           {market.question}
         </p>
 
@@ -62,7 +78,12 @@ export function MarketCard({ market }: { market: MarketView }) {
           </div>
         </div>
 
-        <StatusLine market={market} resolvedAt={resolvedAt} />
+        <div className="flex items-center justify-between gap-3 border-t border-white/[0.07] pt-3">
+          <StatusLine market={market} resolvedAt={resolvedAt} />
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-indigo-300">
+            Oracle settled
+          </span>
+        </div>
       </Card>
     </Link>
   );

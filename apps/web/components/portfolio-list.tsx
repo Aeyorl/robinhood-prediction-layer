@@ -174,8 +174,8 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
                 onClick={() => setTab(t.key)}
                 className={
                   tab === t.key
-                    ? "rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-200 ring-1 ring-indigo-400/40"
-                    : "rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300 ring-1 ring-white/10 hover:bg-white/10"
+                    ? "min-h-10 rounded-full bg-indigo-500/20 px-4 text-xs font-semibold text-indigo-200 ring-1 ring-indigo-400/40"
+                    : "min-h-10 rounded-full bg-white/5 px-4 text-xs text-slate-300 ring-1 ring-white/10 hover:bg-white/10"
                 }
               >
                 {t.label}
