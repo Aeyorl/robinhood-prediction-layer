@@ -2,8 +2,10 @@
 pragma solidity ^0.8.24;
 
 import {Script, console2} from "forge-std/Script.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockUSDG} from "../src/mocks/MockUSDG.sol";
 import {MockERC20} from "../src/mocks/MockERC20.sol";
+import {MockSwapAdapter} from "../src/mocks/MockSwapAdapter.sol";
 import {MockAggregatorV3} from "../src/mocks/MockAggregatorV3.sol";
 import {MockSequencerFeed} from "../src/mocks/MockSequencerFeed.sol";
 import {OracleRegistry} from "../src/oracle/OracleRegistry.sol";
@@ -63,6 +65,16 @@ contract DeployLocal is Script {
         ponsFeed.setAnswer(120e18);
         deltaFeed.setAnswer(40e18);
         aiFeed.setAnswer(0.02e18);
+
+        // ------------------------------------------------------------------
+        // Local swap venue for the funding layer (Phase 4)
+        // ------------------------------------------------------------------
+        MockSwapAdapter swapAdapter = new MockSwapAdapter(IERC20(address(usdg)));
+        // Rates mirror the mock feed prices: 1 PONS = 120 USDG, etc.
+        swapAdapter.setRate(address(pons), 120e18);
+        swapAdapter.setRate(address(delta), 40e18);
+        swapAdapter.setRate(address(ai), 0.02e18);
+        usdg.mint(address(swapAdapter), 1_000_000e18);
 
         // ------------------------------------------------------------------
         // Example markets (default testnet fee = 0)
@@ -195,6 +207,8 @@ contract DeployLocal is Script {
             vm.toString(address(feeVault)),
             '","usdg":"',
             vm.toString(address(usdg)),
+            '","mockSwapAdapter":"',
+            vm.toString(address(swapAdapter)),
             '","mocks":{',
             mocksJson,
             '},"markets":[',
@@ -209,6 +223,7 @@ contract DeployLocal is Script {
         console2.log("  resolver         ", address(resolver));
         console2.log("  feeVault         ", address(feeVault));
         console2.log("  usdg             ", address(usdg));
+        console2.log("  swapAdapter      ", address(swapAdapter));
         console2.log("  markets          ", address(m1), address(m2), address(m3));
         console2.log("Manifest written to deployments/local.json");
     }

@@ -1,5 +1,16 @@
 # Database
 
+## Phase 4 funding projections
+
+Migration `0001_rapid_proemial_gods.sql` adds `tokens`, `token_transfers`, `quotes` and `trade_attributions`.
+
+- `tokens`: identity is `(chain_id,address)`; metadata is display-only. Failed reads are `UNREADABLE`; names never establish trust.
+- `token_transfers`: strict ERC-20 logs, unique `(chain_id,tx_hash,log_index)`. ERC-721 topic shapes are excluded. Transfer history discovers candidates; the API reads current `balanceOf` rather than presenting partial backfill totals as authoritative wallet balances.
+- `quotes`: exact server quote and swap calldata retained in `route_summary` for receipt binding; no funds or liquidity reservations.
+- `trade_attributions`: signed correlation keyed by entry hash; `PENDING`/`CONFIRMED` reflect indexer timing. API and worker use the same advisory lock so a late browser request cannot miss the projected trade. Canonical trade amounts still come from `PositionEntered`.
+
+Reorg rollback removes token transfers and entry projections in the affected window, then resets affected attribution rows for reprocessing. The worker rechecks the swap receipt before restoring attribution; an orphaned swap leaves the entry `UNKNOWN` and marks its correlation `REJECTED`. Metadata is checked in PostgreSQL rather than an unbounded process cache. Tests apply both migrations into randomly named `pl_test_*` schemas and drop only the schema created by that test; normal application data is not truncated.
+
 PostgreSQL via Drizzle ORM. Migrations live in `packages/database/drizzle/` (generated with `pnpm db:generate`, applied with `pnpm db:migrate`).
 
 ## Identity conventions

@@ -23,6 +23,7 @@ const contracts = [
   ["src/mocks/MockERC20.sol", "MockERC20"],
   ["src/mocks/MockAggregatorV3.sol", "MockAggregatorV3"],
   ["src/mocks/MockSequencerFeed.sol", "MockSequencerFeed"],
+  ["src/mocks/MockSwapAdapter.sol", "MockSwapAdapter"],
 ];
 
 mkdirSync(outDir, { recursive: true });

@@ -9,17 +9,22 @@
     "build": "tsup src/index.ts --format esm",
     "start": "node dist/index.js",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:fork": "tsx --env-file=.env test/fork.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.0",
+    "@fastify/rate-limit": "11.2.0",
+    "@pl/chain-config": "workspace:*",
     "@pl/config": "workspace:*",
     "@pl/database": "workspace:*",
+    "@pl/sdk": "workspace:*",
     "@pl/types": "workspace:*",
     "drizzle-orm": "0.45.2",
     "fastify": "5.12.1",
     "ioredis": "6.0.0",
     "postgres": "^3.4.5",
+    "viem": "2.56.3",
     "zod": "4.5.4"
   },
   "devDependencies": {

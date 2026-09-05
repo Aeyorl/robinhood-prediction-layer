@@ -8,9 +8,18 @@
  *   - indexes every block: discovers markets from the MarketFactory, decodes
  *     contract events, and writes idempotent projections (chain_events /
  *     markets / trades / claims / refunds / market_snapshots — see
- *     projections.ts). Without Postgres it degrades to logging heads only.
+ *     projections.ts), plus every ERC-20 Transfer for funding-token wallet
+ *     discovery (tokens / token_transfers — see tokens.ts). Without Postgres
+ *     it degrades to logging heads only.
  */
-import { createPublicClient, http, webSocket, type Address, type Chain, type PublicClient } from "viem";
+import {
+  createPublicClient,
+  http,
+  webSocket,
+  type Address,
+  type Chain,
+  type PublicClient,
+} from "viem";
 
 import { getChain } from "@pl/chain-config";
 import type { Database } from "@pl/database";
@@ -22,6 +31,7 @@ import { env } from "./config.js";
 import { markets } from "@pl/database";
 import { marketFactoryAbi } from "@pl/sdk";
 import { processBlock, rollbackProjections } from "./projections.js";
+import { fetchTokenMetadata } from "./tokens.js";
 
 const CURSOR_KEY = "pl:worker:cursor";
 const RECENT_HASHES_DEPTH = 16;
@@ -177,17 +187,36 @@ async function indexBlock(deps: IndexerDeps, blockNumber: bigint): Promise<void>
   const block = await deps.client.getBlock({ blockNumber });
   let createdMarkets = 0;
   let events = 0;
+  let transfers = 0;
+  let newTokens: Address[] = [];
   if (deps.db) {
-    const counts = await processBlock({ ...deps, db: deps.db }, {
-      number: blockNumber,
-      hash: block.hash,
-      timestamp: block.timestamp,
-    });
+    const counts = await processBlock(
+      { ...deps, db: deps.db },
+      {
+        number: blockNumber,
+        hash: block.hash,
+        timestamp: block.timestamp,
+      },
+    );
     createdMarkets = counts.createdMarkets;
     events = counts.events;
+    transfers = counts.transfers;
+    newTokens = counts.newTokens;
+    if (newTokens.length > 0) {
+      // Metadata reads happen after the block transaction commits so a slow or
+      // hostile RPC cannot hold the projection tx open. Failures leave the
+      // token PENDING; the next block retries nothing but the next appearance
+      // does — metadata is display-only, never load-bearing.
+      await fetchTokenMetadata(deps.client, deps.db, deps.chainId, newTokens).catch((err) =>
+        console.warn(
+          "[worker] token metadata fetch failed:",
+          err instanceof Error ? err.message : err,
+        ),
+      );
+    }
   }
   console.log(
-    `[worker] indexed block ${blockNumber} (${block.hash}) — ${createdMarkets} markets created, ${events} events`,
+    `[worker] indexed block ${blockNumber} (${block.hash}) — ${createdMarkets} markets created, ${events} events, ${transfers} transfers${newTokens.length ? `, ${newTokens.length} new tokens` : ""}`,
   );
 }
 

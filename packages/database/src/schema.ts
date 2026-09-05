@@ -313,6 +313,121 @@ export const marketCommunitySplits = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Funding-token discovery (indexer wallet scan, Phase 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every ERC-20 token observed by the indexer's Transfer scan. Identity is
+ * (chainId, address) — symbol/name/decimals are display metadata only and may
+ * be null when safe reads fail (weird return values, transfer restrictions).
+ */
+export const tokens = pgTable(
+  "tokens",
+  {
+    chainId: integer("chain_id").notNull(),
+    address: text("address").notNull(),
+    symbol: text("symbol"),
+    name: text("name"),
+    decimals: integer("decimals"),
+    metadataStatus: text("metadata_status").notNull().default("PENDING"), // PENDING | OK | UNREADABLE
+    supportStatus: supportStatusEnum("support_status").notNull().default("DISCOVERED"),
+    firstSeenBlock: bigint("first_seen_block", { mode: "number" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.chainId, t.address] }),
+    index("tokens_support_status_idx").on(t.chainId, t.supportStatus),
+  ],
+);
+
+/**
+ * Append-only ERC-20 Transfer log used for wallet asset discovery. Balances
+ * are aggregated on read (SUM(in) - SUM(out)) so reorg rollback of this table
+ * automatically rewinds balances too.
+ */
+export const tokenTransfers = pgTable(
+  "token_transfers",
+  {
+    id: serial("id").primaryKey(),
+    chainId: integer("chain_id").notNull(),
+    txHash: text("tx_hash").notNull(),
+    logIndex: integer("log_index").notNull(),
+    blockNumber: bigint("block_number", { mode: "number" }).notNull(),
+    blockHash: text("block_hash").notNull(),
+    tokenAddress: text("token_address").notNull(),
+    fromAddress: text("from_address").notNull(),
+    toAddress: text("to_address").notNull(),
+    value: text("value").notNull(), // uint256 as decimal string
+    timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("token_transfers_identity_unique").on(t.chainId, t.txHash, t.logIndex),
+    index("token_transfers_to_idx").on(t.chainId, t.toAddress),
+    index("token_transfers_from_idx").on(t.chainId, t.fromAddress),
+    index("token_transfers_token_idx").on(t.chainId, t.tokenAddress),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Funding-layer quotes and attribution (Phase 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Quote metadata, persisted for analytics only — blockchain state stays
+ * authoritative. `quoteId` binds the response the client saw to what was
+ * requested; it never grants onchain rights.
+ */
+export const quotes = pgTable(
+  "quotes",
+  {
+    id: serial("id").primaryKey(),
+    quoteId: text("quote_id").notNull().unique(),
+    chainId: integer("chain_id").notNull(),
+    adapter: text("adapter").notNull(), // mock | uniswap
+    wallet: text("wallet"),
+    tokenIn: text("token_in").notNull(),
+    usdgAddress: text("usdg_address").notNull(),
+    amountIn: text("amount_in").notNull(),
+    amountOut: text("amount_out").notNull(),
+    minAmountOut: text("min_amount_out").notNull(),
+    slippageBps: integer("slippage_bps").notNull(),
+    priceImpactBps: numeric("price_impact_bps", { precision: 20, scale: 4 }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    routeSummary: jsonb("route_summary"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("quotes_wallet_idx").on(t.chainId, t.wallet)],
+);
+
+/**
+ * Browser-session correlation between a swap tx and the immediately following
+ * market entry. The worker consults this when projecting PositionEntered and
+ * upgrades the trades row from UNKNOWN to SESSION_CORRELATED (never presented
+ * as trustless onchain attribution).
+ */
+export const tradeAttributions = pgTable(
+  "trade_attributions",
+  {
+    id: serial("id").primaryKey(),
+    chainId: integer("chain_id").notNull(),
+    enterTxHash: text("enter_tx_hash").notNull(),
+    swapTxHash: text("swap_tx_hash").notNull(),
+    wallet: text("wallet").notNull(),
+    fundingTokenAddress: text("funding_token_address").notNull(),
+    fundingAmount: text("funding_amount"),
+    quoteId: text("quote_id"),
+    status: text("status").notNull().default("PENDING"), // PENDING | CONFIRMED | REJECTED
+    rejectionReason: text("rejection_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("trade_attributions_enter_tx_unique").on(t.chainId, t.enterTxHash),
+    index("trade_attributions_status_idx").on(t.chainId, t.status),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Admin audit
 // ---------------------------------------------------------------------------
 

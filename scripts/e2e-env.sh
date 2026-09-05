@@ -17,24 +17,12 @@ WEB="http://127.0.0.1:${WEB_PORT}"
 CHAIN_ID=46630
 mkdir -p "$ROOT/.e2e"
 
-# Fresh mode owns these ports — clear anything left over from prior runs so a
-# stale anvil/web can never receive the new deployment's traffic.
-clear_port() {
-  local port="$1"
-  if command -v netstat >/dev/null 2>&1 && command -v taskkill >/dev/null 2>&1; then
-    local pid
-    pid=$(netstat -ano 2>/dev/null | grep ":${port}" | grep -i listening | awk '{print $NF}' | head -1)
-    if [ -n "$pid" ] && [ "$pid" != "0" ]; then
-      echo "[e2e-env] clearing port ${port} (pid ${pid})"
-      taskkill //PID "$pid" //F >/dev/null 2>&1 || true
-      sleep 1
-    fi
-  else
-    pkill -f ":${port}" 2>/dev/null || true
+# Never stop an existing developer service. The caller must choose unused ports.
+for port in "$RPC_PORT" "$WEB_PORT" "${E2E_API_PORT:-13001}"; do
+  if node -e 'const n=require("node:net");const s=n.connect(Number(process.argv[1]),"127.0.0.1");s.on("connect",()=>process.exit(0));s.on("error",()=>process.exit(1))' "$port"; then
+    echo "[e2e-env] Port $port is occupied; choose unused E2E ports."; exit 1
   fi
-}
-clear_port "${RPC_PORT}"
-clear_port "${WEB_PORT}"
+done
 
 echo "[e2e-env] starting anvil on ${RPC}"
 anvil --chain-id "${CHAIN_ID}" --port "${RPC_PORT}" --allow-origin '*' > "$ROOT/.e2e/anvil.log" 2>&1 &
@@ -72,7 +60,7 @@ for attempt in 1 2 3; do
     >> "$ROOT/.e2e/deploy.log" 2>&1
   echo "[e2e-env] deploy attempt ${attempt}: forge rc $?"
   if [ -f "$MANIFEST" ]; then
-    REQUIRED=$(node -p "const m=require('$MANIFEST_NODE'); [m.usdg, ...m.markets.map(x=>x.address)].join(' ')" 2>/dev/null || echo "")
+    REQUIRED=$(node -p "const m=require('$MANIFEST_NODE'); [m.usdg, m.mockSwapAdapter, ...m.markets.map(x=>x.address)].join(' ')" 2>/dev/null || echo "")
     all=1
     for addr in $REQUIRED; do
       if [ -z "$addr" ] || [ "$(code_at "$addr")" != "1" ]; then all=0; break; fi
@@ -93,14 +81,20 @@ if [ "$deploy_ok" != "1" ]; then
   exit 1
 fi
 
+echo "[e2e-env] starting funding API and isolated indexer"
+cd "$ROOT"
+E2E_WEB_URL="$WEB" E2E_RPC_URL="$RPC" E2E_API_PORT="${E2E_API_PORT:-13001}" \
+node "$ROOT/apps/api/node_modules/tsx/dist/cli.mjs" "$ROOT/e2e/funding-server.ts" > "$ROOT/.e2e/funding.log" 2>&1 &
+API_PID=$!
 echo "[e2e-env] starting web on ${WEB}"
 cd "$ROOT/apps/web"
 NEXT_PUBLIC_CHAIN_ID="${CHAIN_ID}" NEXT_PUBLIC_LOCAL_CHAIN=true \
 NEXT_PUBLIC_RPC_TESTNET="$RPC" NEXT_TELEMETRY_DISABLED=1 \
+NEXT_PUBLIC_API_URL="http://127.0.0.1:${E2E_API_PORT:-13001}" \
 node "$ROOT/apps/web/node_modules/next/dist/bin/next" dev -p "${WEB_PORT}" \
   > "$ROOT/.e2e/web.log" 2>&1 &
 WEB_PID=$!
 
-echo "${ANVIL_PID} ${WEB_PID}" > "$ROOT/.e2e/pids"
+echo "${ANVIL_PID} ${WEB_PID} ${API_PID}" > "$ROOT/.e2e/pids"
 echo "[e2e-env] READY anvil=${ANVIL_PID} web=${WEB_PID} rpc=${RPC} weburl=${WEB}"
 wait

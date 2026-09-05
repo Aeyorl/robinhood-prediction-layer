@@ -6,7 +6,8 @@
  *
  *   chain_events      → every decoded event (identity: chain + tx + logIndex)
  *   markets           → upserted from MarketCreated; status/pools from lifecycle events
- *   trades            → PositionEntered (attribution UNKNOWN until Phase 4+)
+ *   trades            → PositionEntered (attribution SESSION_CORRELATED when a
+ *                       pending trade_attributions row matches, else UNKNOWN)
  *   claims            → Claimed (gross = net + fee)
  *   refunds           → Refunded
  *   market_snapshots  → one row per PositionEntered (pool trajectory for charts)
@@ -16,7 +17,7 @@
  * The whole block is one transaction, so a failed projection rolls back the
  * block's raw events too; the cursor never advances past a failed block.
  */
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql as drizzleSql } from "drizzle-orm";
 import postgres from "postgres";
 import {
   binaryPoolMarketAbi,
@@ -31,16 +32,30 @@ import {
   markets,
   oracleAssets,
   refunds,
+  tradeAttributions,
   trades,
   type Database,
 } from "@pl/database";
-import { parseEventLogs, type Address, type Log, type PublicClient } from "viem";
+import {
+  parseEventLogs,
+  TransactionReceiptNotFoundError,
+  type Address,
+  type Log,
+  type PublicClient,
+} from "viem";
+
+import {
+  erc20TransferEvent,
+  isErc20TransferLog,
+  projectTokenTransfers,
+  type TransferLog,
+} from "./tokens.js";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Db = Pick<Database, "insert" | "select" | "update" | "delete" | "query">;
+type Db = Pick<Database, "insert" | "select" | "update" | "delete" | "query" | "execute">;
 
 export interface ProjectionDeps {
   chainId: number;
@@ -242,7 +257,14 @@ async function projectMarketCreated(
   args: MarketCreatedArgs,
 ): Promise<void> {
   const market = toAddress(args.market);
-  if (!(await recordEvent(tx, deps, block, { log: ev, eventType: "MarketCreated", marketAddress: market, args }))) {
+  if (
+    !(await recordEvent(tx, deps, block, {
+      log: ev,
+      eventType: "MarketCreated",
+      marketAddress: market,
+      args,
+    }))
+  ) {
     return;
   }
 
@@ -310,15 +332,118 @@ async function projectMarketCreated(
     });
 }
 
+/**
+ * Session-correlated funding-token attribution (Phase 4). The API records a
+ * pending (swapTx → enterTx) correlation; the worker only trusts it after
+ * verifying the enter tx exists (we are projecting it now) and that the
+ * correlated wallet matches the trader. This is SESSION_CORRELATED — an
+ * honest, non-trustless attribution level.
+ */
+async function resolveSessionAttribution(
+  tx: Db,
+  deps: ProjectionDeps & { client: PublicClient },
+  txHash: string,
+  wallet: Address,
+  blockNumber: bigint,
+  transactionIndex: number,
+): Promise<
+  { fundingTokenAddress: string | null; fundingAmount: string | null } & (
+    | { attribution: "SESSION_CORRELATED"; attributionId: number }
+    | { attribution: "UNKNOWN"; attributionId: null }
+  )
+> {
+  if (!txHash)
+    return {
+      attribution: "UNKNOWN" as const,
+      attributionId: null,
+      fundingTokenAddress: null,
+      fundingAmount: null,
+    };
+  await tx.execute(
+    drizzleSql`select pg_advisory_xact_lock(hashtext(${`${deps.chainId}:${txHash}`}))`,
+  );
+  const rows = await tx
+    .select({
+      id: tradeAttributions.id,
+      wallet: tradeAttributions.wallet,
+      fundingTokenAddress: tradeAttributions.fundingTokenAddress,
+      fundingAmount: tradeAttributions.fundingAmount,
+      status: tradeAttributions.status,
+      swapTxHash: tradeAttributions.swapTxHash,
+    })
+    .from(tradeAttributions)
+    .where(
+      and(
+        eq(tradeAttributions.chainId, deps.chainId),
+        eq(tradeAttributions.enterTxHash, txHash.toLowerCase()),
+        eq(tradeAttributions.status, "PENDING"),
+      ),
+    )
+    .limit(1);
+
+  const row = rows[0];
+  if (!row || row.wallet !== wallet) {
+    return {
+      attribution: "UNKNOWN" as const,
+      attributionId: null,
+      fundingTokenAddress: null,
+      fundingAmount: null,
+    };
+  }
+  // A previously validated swap can be orphaned by a reorg. Recheck its
+  // canonical receipt before restoring a pending correlation on replay.
+  let canonicalSwap = false;
+  try {
+    const receipt = await deps.client.getTransactionReceipt({
+      hash: row.swapTxHash as `0x${string}`,
+    });
+    canonicalSwap =
+      receipt.status === "success" &&
+      (receipt.blockNumber < blockNumber ||
+        (receipt.blockNumber === blockNumber && receipt.transactionIndex < transactionIndex));
+  } catch (err) {
+    if (!(err instanceof TransactionReceiptNotFoundError)) throw err;
+  }
+  if (!canonicalSwap) {
+    await tx
+      .update(tradeAttributions)
+      .set({ status: "REJECTED", rejectionReason: "swap_not_canonical" })
+      .where(eq(tradeAttributions.id, row.id));
+    return {
+      attribution: "UNKNOWN",
+      attributionId: null,
+      fundingTokenAddress: null,
+      fundingAmount: null,
+    };
+  }
+  await tx
+    .update(tradeAttributions)
+    .set({ status: "CONFIRMED", confirmedAt: new Date() })
+    .where(eq(tradeAttributions.id, row.id));
+  return {
+    attribution: "SESSION_CORRELATED" as const,
+    attributionId: row.id,
+    fundingTokenAddress: row.fundingTokenAddress,
+    fundingAmount: row.fundingAmount,
+  };
+}
+
 async function projectPositionEntered(
   tx: Db,
-  deps: ProjectionDeps,
+  deps: ProjectionDeps & { client: PublicClient },
   block: BlockRef,
   ev: Log,
   args: PositionEnteredArgs,
 ): Promise<void> {
   const market = toAddress(ev.address);
-  if (!(await recordEvent(tx, deps, block, { log: ev, eventType: "PositionEntered", marketAddress: market, args }))) {
+  if (
+    !(await recordEvent(tx, deps, block, {
+      log: ev,
+      eventType: "PositionEntered",
+      marketAddress: market,
+      args,
+    }))
+  ) {
     return;
   }
 
@@ -328,6 +453,15 @@ async function projectPositionEntered(
     return;
   }
   const timestamp = toDate(block.timestamp);
+
+  const attribution = await resolveSessionAttribution(
+    tx,
+    deps,
+    (ev.transactionHash ?? "").toLowerCase(),
+    toAddress(args.user),
+    block.number,
+    ev.transactionIndex ?? 0,
+  );
 
   await tx
     .insert(trades)
@@ -340,10 +474,10 @@ async function projectPositionEntered(
       wallet: toAddress(args.user),
       side,
       amountUsdg: args.amount.toString(),
-      fundingTokenChainId: null,
-      fundingTokenAddress: null,
-      fundingAmount: null,
-      attribution: "UNKNOWN",
+      fundingTokenChainId: attribution.fundingTokenAddress ? deps.chainId : null,
+      fundingTokenAddress: attribution.fundingTokenAddress,
+      fundingAmount: attribution.fundingAmount,
+      attribution: attribution.attribution,
       timestamp,
     })
     .onConflictDoNothing();
@@ -369,9 +503,21 @@ async function projectPositionEntered(
   });
 }
 
-async function projectMarketLocked(tx: Db, deps: ProjectionDeps, block: BlockRef, ev: Log): Promise<void> {
+async function projectMarketLocked(
+  tx: Db,
+  deps: ProjectionDeps,
+  block: BlockRef,
+  ev: Log,
+): Promise<void> {
   const market = toAddress(ev.address);
-  if (!(await recordEvent(tx, deps, block, { log: ev, eventType: "MarketLocked", marketAddress: market, args: {} }))) {
+  if (
+    !(await recordEvent(tx, deps, block, {
+      log: ev,
+      eventType: "MarketLocked",
+      marketAddress: market,
+      args: {},
+    }))
+  ) {
     return;
   }
   await tx
@@ -388,7 +534,14 @@ async function projectMarketResolved(
   args: MarketResolvedArgs,
 ): Promise<void> {
   const market = toAddress(ev.address);
-  if (!(await recordEvent(tx, deps, block, { log: ev, eventType: "MarketResolved", marketAddress: market, args }))) {
+  if (
+    !(await recordEvent(tx, deps, block, {
+      log: ev,
+      eventType: "MarketResolved",
+      marketAddress: market,
+      args,
+    }))
+  ) {
     return;
   }
   await tx
@@ -409,7 +562,14 @@ async function projectMarketCancelled(
   ev: Log,
 ): Promise<void> {
   const market = toAddress(ev.address);
-  if (!(await recordEvent(tx, deps, block, { log: ev, eventType: "MarketCancelled", marketAddress: market, args: {} }))) {
+  if (
+    !(await recordEvent(tx, deps, block, {
+      log: ev,
+      eventType: "MarketCancelled",
+      marketAddress: market,
+      args: {},
+    }))
+  ) {
     return;
   }
   await tx
@@ -426,7 +586,14 @@ async function projectClaimed(
   args: ClaimedArgs,
 ): Promise<void> {
   const market = toAddress(ev.address);
-  if (!(await recordEvent(tx, deps, block, { log: ev, eventType: "Claimed", marketAddress: market, args }))) {
+  if (
+    !(await recordEvent(tx, deps, block, {
+      log: ev,
+      eventType: "Claimed",
+      marketAddress: market,
+      args,
+    }))
+  ) {
     return;
   }
   await tx
@@ -454,7 +621,14 @@ async function projectRefunded(
   args: RefundedArgs,
 ): Promise<void> {
   const market = toAddress(ev.address);
-  if (!(await recordEvent(tx, deps, block, { log: ev, eventType: "Refunded", marketAddress: market, args }))) {
+  if (
+    !(await recordEvent(tx, deps, block, {
+      log: ev,
+      eventType: "Refunded",
+      marketAddress: market,
+      args,
+    }))
+  ) {
     return;
   }
   await tx
@@ -487,7 +661,7 @@ async function projectRefunded(
 export async function processBlock(
   deps: ProjectionDeps & { client: PublicClient; db: Database },
   block: BlockRef,
-): Promise<{ createdMarkets: number; events: number }> {
+): Promise<{ createdMarkets: number; events: number; transfers: number; newTokens: Address[] }> {
   return deps.db.transaction(async (tx) => {
     const factoryLogs = await deps.client.getLogs({
       address: deps.factoryAddress,
@@ -520,13 +694,25 @@ export async function processBlock(
     for (const ev of marketEvents) {
       switch (ev.eventName) {
         case "PositionEntered":
-          await projectPositionEntered(tx, deps, block, ev, ev.args as unknown as PositionEnteredArgs);
+          await projectPositionEntered(
+            tx,
+            deps,
+            block,
+            ev,
+            ev.args as unknown as PositionEnteredArgs,
+          );
           break;
         case "MarketLocked":
           await projectMarketLocked(tx, deps, block, ev);
           break;
         case "MarketResolved":
-          await projectMarketResolved(tx, deps, block, ev, ev.args as unknown as MarketResolvedArgs);
+          await projectMarketResolved(
+            tx,
+            deps,
+            block,
+            ev,
+            ev.args as unknown as MarketResolvedArgs,
+          );
           break;
         case "MarketCancelled":
           await projectMarketCancelled(tx, deps, block, ev);
@@ -546,12 +732,34 @@ export async function processBlock(
               args: ev.args,
             });
           }
-          // Paused / Unpaused / OwnershipTransferred are housekeeping, not
-          // part of the indexed protocol surface (see docs/contracts.md).
+        // Paused / Unpaused / OwnershipTransferred are housekeeping, not
+        // part of the indexed protocol surface (see docs/contracts.md).
       }
     }
 
-    return { createdMarkets: createdEvents.length, events: marketEvents.length };
+    // Full-chain ERC-20 wallet scan (Phase 4 funding-token discovery): every
+    // Transfer log, no address filter. ERC-721 Transfers share the topic0
+    // signature but have a fourth indexed topic and are filtered out.
+    const transferLogsRaw = await deps.client.getLogs({
+      fromBlock: block.number,
+      toBlock: block.number,
+      event: erc20TransferEvent,
+      strict: true,
+    });
+    const transferLogs: TransferLog[] = transferLogsRaw.filter(isErc20TransferLog).map((log) => ({
+      address: toAddress(log.address),
+      transactionHash: log.transactionHash,
+      logIndex: log.logIndex,
+      args: log.args as unknown as TransferLog["args"],
+    }));
+    const { transfers, newTokens } = await projectTokenTransfers(tx, deps, block, transferLogs);
+
+    return {
+      createdMarkets: createdEvents.length,
+      events: marketEvents.length,
+      transfers,
+      newTokens,
+    };
   });
 }
 
@@ -606,6 +814,23 @@ export async function rollbackProjections(
          AND address IN (
            SELECT market_address FROM chain_events
             WHERE chain_id = ${chainId} AND event_type = 'MarketCreated'
+              AND block_number >= ${from}
+         )`;
+    // Phase 4: transfers are append-only and balances aggregate on read, so
+    // deleting the window rewinds balances. Attributions whose enter tx was
+    // rolled back go back to PENDING so a re-included entry re-correlates.
+    // Both must run before the chain_events delete below — the attribution
+    // reset looks up the window's PositionEntered txs there.
+    await tx`
+      DELETE FROM token_transfers
+       WHERE chain_id = ${chainId} AND block_number >= ${from}`;
+    await tx`
+      UPDATE trade_attributions
+         SET status = 'PENDING', confirmed_at = NULL
+       WHERE chain_id = ${chainId}
+         AND enter_tx_hash IN (
+           SELECT tx_hash FROM chain_events
+            WHERE chain_id = ${chainId} AND event_type = 'PositionEntered'
               AND block_number >= ${from}
          )`;
     await tx`

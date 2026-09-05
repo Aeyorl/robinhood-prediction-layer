@@ -9,6 +9,7 @@ import { Badge, Button, Card, StatusBadge } from "@pl/ui";
 import { useAccount, useChainId, usePublicClient } from "wagmi";
 
 import { groupedAmount, type MarketView } from "@/lib/market-view";
+import { getWalletTrades } from "@/lib/funding-api";
 
 function addr(a: string): `0x${string}` {
   return a as `0x${string}`;
@@ -48,6 +49,13 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
 
   const wrongChain = isConnected && walletChainId !== markets[0]?.chainId;
   const enabled = isConnected && !wrongChain && !!address && !!publicClient;
+  const funding = useQuery({
+    queryKey: ["portfolio-funding", address, walletChainId],
+    queryFn: () => getWalletTrades(address!),
+    enabled,
+    retry: false,
+    refetchInterval: 10_000,
+  });
 
   // Direct per-market reads (no multicall3 dependency — anvil and some
   // testnets don't deploy it).
@@ -187,7 +195,24 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
           ) : (
             <div className="space-y-3">
               {visible.map((r) => (
-                <PositionCard key={r.market.address} row={r} />
+                <div key={r.market.address}>
+                  <PositionCard row={r} />
+                  {funding.data?.chainId === r.market.chainId &&
+                    funding.data.trades
+                      .filter(
+                        (t) =>
+                          t.marketAddress.toLowerCase() === r.market.address.toLowerCase() &&
+                          t.fundingTokenAddress,
+                      )
+                      .map((t) => (
+                        <p key={t.txHash} className="mt-1 break-all px-3 text-xs text-slate-400">
+                          {groupedAmount(t.amountUsdg)} USDG funded with {t.fundingTokenAddress} ·{" "}
+                          {t.attribution === "SESSION_CORRELATED"
+                            ? "session-correlated, not trustless attribution"
+                            : t.attribution}
+                        </p>
+                      ))}
+                </div>
               ))}
             </div>
           )}

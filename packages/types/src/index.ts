@@ -1,4 +1,5 @@
 import { z } from "zod";
+export { attributionMessage } from "./attribution.js";
 
 // ---------------------------------------------------------------------------
 // Identity
@@ -11,6 +12,19 @@ export const addressSchema = z
   .string()
   .regex(/^0x[a-fA-F0-9]{40}$/, "must be a 0x-prefixed 40-hex-char EVM address");
 export type Address = z.infer<typeof addressSchema>;
+
+export const txHashSchema = z
+  .string()
+  .regex(/^0x[0-9a-fA-F]{64}$/, "must be a 0x-prefixed 32-byte transaction hash");
+export type TxHash = z.infer<typeof txHashSchema>;
+
+/** Unsigned uint256 as a decimal string (no exponent, no sign). */
+export const uint256DecimalSchema = z
+  .string()
+  .max(78)
+  .regex(/^\d+$/, "must be a decimal string")
+  .refine((s) => /^\d+$/.test(s) && BigInt(s) < 2n ** 256n, "exceeds uint256");
+export type Uint256Decimal = z.infer<typeof uint256DecimalSchema>;
 
 /**
  * Token identity is always (chainId, contractAddress) — never just a symbol.
@@ -164,3 +178,83 @@ export interface Position {
   claimed: boolean;
   refunded: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// Funding-layer quotes (Phase 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Quote request. The chain ID is NEVER accepted from the client — the API
+ * derives it from its own environment — and the output token is always forced
+ * to the canonical USDG address.
+ */
+export const quoteRequestSchema = z.object({
+  tokenIn: addressSchema,
+  amountIn: uint256DecimalSchema,
+  wallet: addressSchema,
+  /** Market the user intends to enter — used for analytics/UX only. */
+  market: addressSchema.optional(),
+});
+export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
+
+/** The swap transaction the wallet should sign for this quote. */
+export const swapPlanSchema = z.object({
+  to: addressSchema,
+  data: z
+    .string()
+    .max(262144)
+    .regex(/^0x(?:[0-9a-fA-F]{2}){4,}$/, "must contain a function selector and whole hex bytes"),
+  value: uint256DecimalSchema.default("0"),
+});
+export type SwapPlan = z.infer<typeof swapPlanSchema>;
+
+export const quoteResponseSchema = z.object({
+  quoteId: z.string(),
+  chainId: chainIdSchema,
+  adapter: z.enum(["mock", "uniswap"]),
+  tokenIn: addressSchema,
+  /** Always the canonical USDG address for the chain — never client-chosen. */
+  usdg: addressSchema,
+  amountIn: uint256DecimalSchema,
+  amountOut: uint256DecimalSchema,
+  minAmountOut: uint256DecimalSchema,
+  slippageBps: z.number().int().nonnegative(),
+  priceImpactBps: z.string().nullable(),
+  /** Unix milliseconds after which the quote must be re-requested. */
+  expiresAt: z.number(),
+  routeSummary: z.string().nullable(),
+  swapPlan: swapPlanSchema,
+  approvalSpender: addressSchema,
+});
+export type QuoteResponse = z.infer<typeof quoteResponseSchema>;
+
+export const quoteErrorCodeSchema = z.enum([
+  "quote_expired",
+  "no_route",
+  "high_price_impact",
+  "unsupported_token",
+  "invalid_amount",
+  "adapter_unavailable",
+]);
+export type QuoteErrorCode = z.infer<typeof quoteErrorCodeSchema>;
+
+// ---------------------------------------------------------------------------
+// Session attribution (Phase 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Browser-session correlation between a funding-token swap and the
+ * immediately following market entry. Never presented as trustless onchain
+ * attribution — the API verifies the wallet signature and both receipts;
+ * the worker binds the correlation to the canonical indexed entry.
+ */
+export const attributionRequestSchema = z.object({
+  enterTxHash: txHashSchema,
+  swapTxHash: txHashSchema,
+  wallet: addressSchema,
+  fundingToken: addressSchema,
+  fundingAmount: uint256DecimalSchema,
+  quoteId: z.string().uuid(),
+  signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
+});
+export type AttributionRequest = z.infer<typeof attributionRequestSchema>;

@@ -130,7 +130,7 @@ E2E_REUSE=1 E2E_WEB_URL=http://127.0.0.1:3100 pnpm test:e2e
 
 ## Known honest gaps (current milestones)
 
-- Quote/swap endpoints and wallet asset discovery are Phase 4; the web surfaces show empty states, never fabricated data.
+- Phase 4 local mock routing is implemented. Real Uniswap execution on a Robinhood Chain fork remains gated on verified proxy support/configuration and live provider credentials; see `swap-flow.md`.
 - Community analytics are Phase 6.
 
 ## Phase 3 indexer (implemented)
@@ -144,8 +144,38 @@ rollback deletes projections for the rewound window and re-backfills. The API
 (`/v1/markets`) reads these projections, so refreshing the web app reconstructs
 state from indexed confirmed events.
 
-Attribution is written as `UNKNOWN` until Phase 4 wires the funding-token swap
-receipt correlation.
+Attribution defaults to `UNKNOWN`. Phase 4's signed correlation upgrades only verified swap/entry pairs to `SESSION_CORRELATED`.
+
+## Phase 4 local funding setup and verification
+
+1. Run the local chain and `pnpm contracts:local`. The deployment now includes a funded `MockSwapAdapter` and deterministic token rates. Old local manifests need redeployment before token swaps work.
+2. Run `pnpm db:migrate` to apply the funding tables. Export API variables from `apps/api/.env.example`: copy `usdg`, `mockSwapAdapter` and mock token addresses from the generated manifest. Set `RPC_HTTP_URL` to the local chain. Set the web `NEXT_PUBLIC_API_URL` to this API instance.
+3. Start the API with the exported environment, or `pnpm --filter @pl/api exec tsx --env-file=.env src/index.ts`. Start the worker with its existing factory/RPC/database variables. Token discovery begins at the worker's backfill boundary; older holdings require configured fallback addresses or a fuller backfill. Transfer observations identify candidates; displayed balances are live reads.
+4. Open a market, connect a wallet holding a mock token, and choose **Pay with another token**. Get a quote, approve and swap, approve USDG and enter. Sign the attribution message after the confirmed entry. The portfolio labels the funding source as session-correlated.
+
+The automated browser test deliberately rejects the first entry signature, reloads the page, resumes without another swap, verifies indexed attribution, resolves the market and claims the payout. It also retains desktop/mobile quote screenshots and a portfolio screenshot under `.e2e/`.
+
+```powershell
+# Isolated ports preserve the normal local dev chain/API.
+$env:E2E_RPC_URL='http://127.0.0.1:18545'
+$env:E2E_WEB_URL='http://127.0.0.1:13100'
+$env:E2E_API_PORT='13001'
+pnpm test:e2e
+pnpm test
+pnpm typecheck:tests
+```
+
+PostgreSQL must be reachable (`TEST_DATABASE_URL` overrides the default local development connection). Each test environment creates a unique schema, applies migrations and removes only its own schema. The E2E bootstrap restores the existing local deployment manifest after stopping its processes. Occupied test ports are refused rather than terminated. The browser suite uses installed Chrome and Anvil/Foundry/Git Bash on Windows.
+
+Recovery: an expired quote before the swap can be refreshed; approvals already confirmed remain valid. After a swap, **Resume funding flow** checks the saved receipt and retries entry only. After an entry, it retries only attribution. If the market locks, USDG stays in the wallet. Missing/replaced transaction hashes require inspecting the wallet transaction history; do not clear saved progress and swap again blindly. Metadata read failures are marked `UNREADABLE`; investigate the token before resetting its metadata status to `PENDING`.
+
+### Verified September 5, 2026
+
+- 36 Vitest API/worker tests passed, including isolated PostgreSQL migrations, idempotent transfer replay, metadata failures, signed attribution timing, quote policy and orphaned-swap rejection.
+- 69 Foundry tests passed, including the nine saved mock swap adapter tests and existing fuzz/invariant suites.
+- Three Playwright tests passed on isolated Anvil: direct USDG entry/claim, mock PONS funding with rejection/reload recovery and attribution/claim, and the local-only demo guard. The funding quote was checked at 1280px and 390px widths.
+- Workspace typechecks, test/E2E typechecks, lint, formatting and production build passed. Build still emits existing contract timestamp/typecast lint warnings and a dynamic manifest filesystem tracing warning.
+- No real Uniswap fork test ran: provider credentials, fork holder/input and a verified supported proxy were not configured. The local result is not Phase 4's full mainnet-fork exit criterion or a production-readiness claim.
 
 ## Failure playbooks
 

@@ -1,6 +1,7 @@
 import { build } from "esbuild";
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, existsSync, copyFileSync, writeFileSync } from "node:fs";
+import globalTeardown from "./global-teardown.js";
 import { resolve } from "node:path";
 
 import { BOB_ADDRESS, BOB_KEY, CAROL_ADDRESS, readManifest, sleep } from "./lib/chain.js";
@@ -94,15 +95,24 @@ export default async function globalSetup(): Promise<void> {
   const webUrl = process.env.E2E_WEB_URL ?? DEFAULT_WEB_URL;
   const rpcUrl = process.env.E2E_RPC_URL ?? DEFAULT_RPC_URL;
 
-  const env = spawn("bash", ["scripts/e2e-env.sh"], {
-    cwd: REPO_ROOT,
-    env: {
-      ...process.env,
-      E2E_RPC_PORT: new URL(rpcUrl).port,
-      E2E_WEB_PORT: new URL(webUrl).port,
+  const manifestPath = resolve(REPO_ROOT, "packages/contracts/deployments/local.json");
+  if (existsSync(manifestPath))
+    copyFileSync(manifestPath, resolve(E2E_WORKDIR, "local-manifest.backup"));
+  writeFileSync(resolve(E2E_WORKDIR, "pids"), "");
+  const env = spawn(
+    process.platform === "win32" ? "C:/Program Files/Git/bin/bash.exe" : "bash",
+    ["scripts/e2e-env.sh"],
+    {
+      cwd: REPO_ROOT,
+      env: {
+        ...process.env,
+        E2E_RPC_PORT: new URL(rpcUrl).port,
+        E2E_WEB_PORT: new URL(webUrl).port,
+        E2E_API_PORT: process.env.E2E_API_PORT ?? "13001",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
     },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  );
   env.stdout?.on("data", (d: Buffer) => process.stdout.write(d));
   env.stderr?.on("data", (d: Buffer) => process.stderr.write(d));
   env.on("exit", (code) => {
@@ -111,11 +121,6 @@ export default async function globalSetup(): Promise<void> {
     }
   });
 
-  await waitForHttp(`${webUrl}/markets`, 240_000, "web app");
-  await waitForRpc(rpcUrl, 15_000);
-
-  await buildShim(rpcUrl);
-
   writeState({
     reuse: false,
     webUrl,
@@ -123,6 +128,19 @@ export default async function globalSetup(): Promise<void> {
     chainId: CHAIN_ID,
     pids: [env.pid ?? -1],
   });
+  try {
+    await waitForHttp(`${webUrl}/markets`, 240_000, "web app");
+    await waitForRpc(rpcUrl, 15_000);
+    await waitForHttp(
+      `http://127.0.0.1:${process.env.E2E_API_PORT ?? "13001"}/v1/markets`,
+      30_000,
+      "funding API",
+    );
+    await buildShim(rpcUrl);
+  } catch (err) {
+    await globalTeardown();
+    throw err;
+  }
   console.log(`[e2e] fresh env ready: web ${webUrl}, anvil ${rpcUrl}`);
   console.log(`[e2e] accounts: BOB=${BOB_ADDRESS} CAROL=${CAROL_ADDRESS}`);
 }

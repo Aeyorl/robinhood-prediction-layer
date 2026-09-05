@@ -9,6 +9,7 @@ import { formatUnits, parseUnits } from "viem";
 import { useAccount, useChainId, usePublicClient, useWriteContract } from "wagmi";
 
 import { useNow } from "@/components/countdown";
+import { PayWithToken } from "@/components/pay-with-token";
 import { COLLATERAL_DECIMALS, groupedAmount, type MarketView } from "@/lib/market-view";
 import { mapTxError, type MappedTxError } from "@/lib/tx-errors";
 
@@ -177,6 +178,7 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
       </div>
 
       {/* Side selector */}
+      <PayWithToken market={market} />
       <div className="grid grid-cols-2 gap-2">
         {(["YES", "NO"] as const).map((s) => {
           const active = side === s;
