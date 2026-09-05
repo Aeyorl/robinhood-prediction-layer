@@ -87,6 +87,14 @@ contract MarketFactoryTest is BaseTest {
         factory.createMarket(p);
     }
 
+    function test_createMarket_unconfiguredOracleAsset_reverts() public {
+        BinaryPoolMarket.MarketParams memory p = _params();
+        p.oracleAssetKey = keccak256("unknown");
+        vm.expectRevert(bytes("oracle asset not configured"));
+        vm.prank(owner);
+        factory.createMarket(p);
+    }
+
     function test_factoryControlsMarketPause() public {
         vm.prank(owner);
         factory.pauseMarket(address(market));

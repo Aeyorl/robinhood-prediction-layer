@@ -58,6 +58,7 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     IERC20 public immutable collateral;
     IOracleResolver public immutable resolver;
     bytes32 public immutable oracleAssetKey;
+    bytes32 public immutable oracleConfigHash;
     Comparator public immutable comparator;
     int256 public immutable strike;
     uint8 public immutable strikeDecimals;
@@ -115,6 +116,7 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         collateral = IERC20(params.collateral);
         resolver = IOracleResolver(params.resolver);
         oracleAssetKey = params.oracleAssetKey;
+        oracleConfigHash = _readConfigHash(params.resolver, params.oracleAssetKey);
         comparator = params.comparator;
         strike = params.strike;
         strikeDecimals = params.strikeDecimals;
@@ -180,6 +182,10 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     function resolve() external nonReentrant {
         if (block.timestamp < resolutionTime) revert TooEarly();
         if (status != Status.LOCKED) revert NotLocked();
+        if (
+            oracleConfigHash != bytes32(0)
+                && _readConfigHash(address(resolver), oracleAssetKey) != oracleConfigHash
+        ) revert OracleConfigChanged();
 
         (int256 price, uint8 feedDecimals) = resolver.resolve(oracleAssetKey, resolutionTime);
         Side outcome = _evaluate(price, feedDecimals);
@@ -204,6 +210,32 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         if (status == Status.CANCELLED) revert AlreadyCancelled();
         status = Status.CANCELLED;
         emit MarketCancelled("admin cancel");
+    }
+
+    /// @notice Cancel a locked market after its oracle timeout when the
+    ///         snapshotted oracle is unhealthy. Anyone may call this so user
+    ///         refunds do not depend on an admin transaction.
+    function cancelAfterOracleTimeout() external {
+        if (status != Status.LOCKED) revert NotLocked();
+        if (block.timestamp < resolutionTime + gracePeriod) revert TooEarly();
+
+        bool healthy;
+        if (
+            oracleConfigHash == bytes32(0)
+                || _readConfigHash(address(resolver), oracleAssetKey) != oracleConfigHash
+        ) {
+            healthy = false;
+        } else {
+            try resolver.health(oracleAssetKey) returns (IOracleResolver.Health memory h) {
+                healthy = h.healthy;
+            } catch {
+                healthy = false;
+            }
+        }
+        if (healthy) revert OracleHealthy();
+
+        status = Status.CANCELLED;
+        emit MarketCancelled("oracle timeout");
     }
 
     // ------------------------------------------------------------------
@@ -319,6 +351,16 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         (,, fee, net) = previewPayout(stake, winningPool_, losingPool_);
     }
 
+    function _readConfigHash(address resolver_, bytes32 assetKey)
+        internal
+        view
+        returns (bytes32 hash)
+    {
+        (bool ok, bytes memory data) =
+            resolver_.staticcall(abi.encodeCall(IOracleResolver.configHash, (assetKey)));
+        if (ok && data.length == 32) hash = abi.decode(data, (bytes32));
+    }
+
     // ------------------------------------------------------------------
     // Errors
     // ------------------------------------------------------------------
@@ -333,4 +375,6 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     error AlreadyCancelled();
     error AlreadyClaimed();
     error NothingToClaim();
+    error OracleConfigChanged();
+    error OracleHealthy();
 }

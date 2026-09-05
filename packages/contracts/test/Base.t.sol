@@ -104,24 +104,49 @@ contract BaseTest is Test {
         uint256 lockTime,
         uint256 resolutionTime
     ) internal returns (BinaryPoolMarket) {
-        BinaryPoolMarket.MarketParams memory params = BinaryPoolMarket.MarketParams({
-            collateral: address(usdg),
-            resolver: address(resolver),
-            oracleAssetKey: assetKey,
-            comparator: comparator,
-            strike: strike,
-            strikeDecimals: 18,
-            openTime: openTime,
-            lockTime: lockTime,
-            resolutionTime: resolutionTime,
-            gracePeriod: DEFAULT_GRACE_PERIOD,
-            feeBps: feeBps,
-            minEntry: minEntry,
-            maxEntry: maxEntry,
-            question: "Will the price be above the strike at resolution?",
-            metadataUri: "",
-            feeVault: address(feeVault)
-        });
+        return _createMarketWithGracePeriod(
+            comparator,
+            strike,
+            feeBps,
+            minEntry,
+            maxEntry,
+            openTime,
+            lockTime,
+            resolutionTime,
+            DEFAULT_GRACE_PERIOD
+        );
+    }
+
+    function _createMarketWithGracePeriod(
+        IMarket.Comparator comparator,
+        int256 strike,
+        uint256 feeBps,
+        uint256 minEntry,
+        uint256 maxEntry,
+        uint256 openTime,
+        uint256 lockTime,
+        uint256 resolutionTime,
+        uint256 marketGracePeriod
+    ) internal returns (BinaryPoolMarket) {
+        BinaryPoolMarket.MarketParams memory params =
+            BinaryPoolMarket.MarketParams({
+                collateral: address(usdg),
+                resolver: address(resolver),
+                oracleAssetKey: assetKey,
+                comparator: comparator,
+                strike: strike,
+                strikeDecimals: 18,
+                openTime: openTime,
+                lockTime: lockTime,
+                resolutionTime: resolutionTime,
+                gracePeriod: marketGracePeriod,
+                feeBps: feeBps,
+                minEntry: minEntry,
+                maxEntry: maxEntry,
+                question: "Will the price be above the strike at resolution?",
+                metadataUri: "",
+                feeVault: address(feeVault)
+            });
         vm.prank(owner);
         return factory.createMarket(params);
     }

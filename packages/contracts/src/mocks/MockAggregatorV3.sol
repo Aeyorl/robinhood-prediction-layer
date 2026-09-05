@@ -8,6 +8,8 @@ contract MockAggregatorV3 is AggregatorV3Interface {
     uint8 private immutable _decimals;
     int256 private _answer;
     uint256 private _updatedAt;
+    uint80 private _roundId = 1;
+    uint80 private _answeredInRound = 1;
 
     constructor(uint8 decimals_) {
         _decimals = decimals_;
@@ -39,6 +41,18 @@ contract MockAggregatorV3 is AggregatorV3Interface {
         _updatedAt = updatedAt_;
     }
 
+    function setRoundData(
+        int256 answer_,
+        uint256 updatedAt_,
+        uint80 roundId_,
+        uint80 answeredInRound_
+    ) external {
+        _answer = answer_;
+        _updatedAt = updatedAt_;
+        _roundId = roundId_;
+        _answeredInRound = answeredInRound_;
+    }
+
     function latestRoundData()
         external
         view
@@ -50,6 +64,6 @@ contract MockAggregatorV3 is AggregatorV3Interface {
             uint80 answeredInRound
         )
     {
-        return (1, _answer, _updatedAt, _updatedAt, 1);
+        return (_roundId, _answer, _updatedAt, _updatedAt, _answeredInRound);
     }
 }

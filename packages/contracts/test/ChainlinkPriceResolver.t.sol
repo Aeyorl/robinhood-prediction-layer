@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {BaseTest} from "./Base.t.sol";
 import {MockAggregatorV3} from "../src/mocks/MockAggregatorV3.sol";
 import {MockSequencerFeed} from "../src/mocks/MockSequencerFeed.sol";
+import {MockStockToken} from "../src/mocks/MockStockToken.sol";
 import {BinaryPoolMarket} from "../src/market/BinaryPoolMarket.sol";
 import {IOracleResolver} from "../src/interfaces/IOracleResolver.sol";
 import {IMarket} from "../src/interfaces/IMarket.sol";
@@ -88,6 +89,80 @@ contract ChainlinkPriceResolverTest is BaseTest {
         registry.setPaused(assetKey, true);
         vm.expectRevert(bytes("oracle paused"));
         resolver.resolve(assetKey, block.timestamp);
+    }
+
+    function test_resolve_stockTokenOraclePaused_reverts() public {
+        MockStockToken stockToken = new MockStockToken();
+        vm.prank(owner);
+        registry.setStockTokenAssetConfig(
+            assetKey,
+            address(feed),
+            address(sequencer),
+            address(stockToken),
+            DEFAULT_HEARTBEAT,
+            DEFAULT_GRACE_PERIOD,
+            false
+        );
+        feed.setAnswer(100e18);
+        stockToken.setOraclePaused(true);
+
+        IOracleResolver.Health memory h = resolver.health(assetKey);
+        assertFalse(h.healthy);
+        assertTrue(h.paused);
+        assertTrue(h.tokenOraclePaused);
+        assertTrue(h.tokenStateReadable);
+        vm.expectRevert(bytes("oracle paused"));
+        resolver.resolve(assetKey, block.timestamp);
+    }
+
+    function test_resolve_unreadableStockTokenPause_failsClosed() public {
+        vm.prank(owner);
+        registry.setStockTokenAssetConfig(
+            assetKey,
+            address(feed),
+            address(sequencer),
+            address(oracleToken),
+            DEFAULT_HEARTBEAT,
+            DEFAULT_GRACE_PERIOD,
+            false
+        );
+        feed.setAnswer(100e18);
+
+        IOracleResolver.Health memory h = resolver.health(assetKey);
+        assertFalse(h.healthy);
+        assertFalse(h.tokenStateReadable);
+        vm.expectRevert(bytes("oracle pause unreadable"));
+        resolver.resolve(assetKey, block.timestamp);
+    }
+
+    function test_resolve_futureTimestamp_revertsAsStale() public {
+        feed.setAnswerAndTime(100e18, block.timestamp + 1);
+        vm.expectRevert(bytes("stale feed"));
+        resolver.resolve(assetKey, block.timestamp);
+    }
+
+    function test_resolve_incompleteRound_reverts() public {
+        feed.setRoundData(100e18, block.timestamp, 2, 1);
+        vm.expectRevert(bytes("incomplete round"));
+        resolver.resolve(assetKey, block.timestamp);
+    }
+
+    function test_configHash_changesOnlyWhenResolutionTermsChange() public {
+        bytes32 beforeHash = resolver.configHash(assetKey);
+        vm.prank(owner);
+        registry.setPaused(assetKey, true);
+        assertEq(resolver.configHash(assetKey), beforeHash);
+
+        vm.prank(owner);
+        registry.setAssetConfig(
+            assetKey,
+            address(feed),
+            address(sequencer),
+            DEFAULT_HEARTBEAT + 1,
+            DEFAULT_GRACE_PERIOD,
+            false
+        );
+        assertNotEq(resolver.configHash(assetKey), beforeHash);
     }
 
     function test_health_reportsUnhealthyWithoutReverting() public {

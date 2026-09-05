@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify:oracles": "pnpm build && node scripts/verify-oracles.mjs"
   },
   "dependencies": {
     "viem": "2.56.3",

@@ -131,7 +131,14 @@ E2E_REUSE=1 E2E_WEB_URL=http://127.0.0.1:3100 pnpm test:e2e
 ## Known honest gaps (current milestones)
 
 - Phase 4's real route-to-market gate passed on an isolated Robinhood Chain fork; see `swap-flow.md`. This is integration evidence, not a production-readiness claim.
+- Phase 5 supports a Chainlink sequencer uptime feed, but no official Robinhood Chain feed address is currently published in Chainlink's reference directory. Production config remains empty until one is verified.
 - Community analytics are Phase 6.
+
+## Phase 5 oracle operations
+
+Open `/admin` before creating or resolving a Stock Token market. The page reads the curated AAPL, NVDA, and TSLA Chainlink rounds, each token's live `oraclePaused()` value, multiplier metadata, and corporate-action records. Any stale/incomplete round, future timestamp, operator pause, Stock Token pause, or unreadable dependency is unhealthy.
+
+Factory-created markets freeze the feed-related config hash at creation. If a feed configuration must change while a market is locked, resolution remains blocked for that market. Once its exact `resolutionTime + gracePeriod` deadline passes and health remains false, call `cancelAfterOracleTimeout()` from any wallet. Participants then call `refund()` themselves. Do not use timeout cancellation while health is true; the contract rejects it.
 
 ## Phase 3 indexer (implemented)
 

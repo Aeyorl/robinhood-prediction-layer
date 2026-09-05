@@ -4,23 +4,10 @@ pragma solidity ^0.8.24;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "../interfaces/AggregatorV3Interface.sol";
 import {IOracleResolver} from "../interfaces/IOracleResolver.sol";
+import {IStockTokenOracleState} from "../interfaces/IStockTokenOracleState.sol";
 import {OracleRegistry} from "./OracleRegistry.sol";
 
-/// @notice Deterministic Chainlink AggregatorV3 price resolver.
-///
-/// Validation performed before a price is accepted:
-///   - asset is configured in the OracleRegistry,
-///   - sequencer uptime feed is up and the grace period has elapsed,
-///   - latest round answer > 0 and updatedAt > 0,
-///   - the round is not stale (updatedAt within the configured heartbeat),
-///   - the asset is not paused (Stock Token corporate-action pause).
-///
-/// Feed decimals are read dynamically via `decimals()` — never assumed to be 8.
-///
-/// `referenceTime` is informational for this resolver (AggregatorV3 has no
-/// historical reads); the freshness check is against the live feed at
-/// resolution time. A future Data Streams resolver will verify a signed report
-/// covering `referenceTime`.
+/// @notice Chainlink AggregatorV3 resolver with fail-closed health checks.
 contract ChainlinkPriceResolver is Ownable, IOracleResolver {
     OracleRegistry public immutable registry;
 
@@ -36,39 +23,69 @@ contract ChainlinkPriceResolver is Ownable, IOracleResolver {
         view
         returns (int256 price, uint8 decimals)
     {
-        OracleRegistry.AssetConfig memory cfg = registry.get(assetKey);
-        (bool sequencerUp, bool sequencerGraceElapsed) =
-            _sequencerStatus(cfg.sequencerFeed, cfg.sequencerGracePeriod);
-        require(sequencerUp, "sequencer down");
-        require(sequencerGraceElapsed, "sequencer grace not elapsed");
-        require(!cfg.paused, "oracle paused");
-
-        (, int256 answer,, uint256 updatedAt,) = cfg.feed.latestRoundData();
-        require(answer > 0, "invalid answer");
-        require(updatedAt > 0, "no update");
-        require(block.timestamp - updatedAt <= cfg.heartbeat, "stale feed");
-        return (answer, cfg.feed.decimals());
+        registry.get(assetKey);
+        Health memory h = health(assetKey);
+        require(h.sequencerUp, "sequencer down");
+        require(h.sequencerGraceElapsed, "sequencer grace not elapsed");
+        require(h.tokenStateReadable, "oracle pause unreadable");
+        require(!h.paused, "oracle paused");
+        require(h.price > 0, "invalid answer");
+        require(h.updatedAt > 0, "no update");
+        require(h.roundComplete, "incomplete round");
+        require(!h.isStale, "stale feed");
+        return (h.price, h.decimals);
     }
 
-    function health(bytes32 assetKey) external view returns (IOracleResolver.Health memory h) {
+    function health(bytes32 assetKey) public view returns (Health memory h) {
         OracleRegistry.AssetConfig memory cfg = configOrZero(assetKey);
-        if (!cfg.exists) {
-            return h; // healthy = false, everything default
-        }
-        (bool sequencerUp, bool sequencerGraceElapsed) =
+        if (!cfg.exists) return h;
+
+        (h.sequencerUp, h.sequencerGraceElapsed) =
             _sequencerStatus(cfg.sequencerFeed, cfg.sequencerGracePeriod);
-        (, int256 answer,, uint256 updatedAt,) = cfg.feed.latestRoundData();
-        bool stale = updatedAt == 0 || block.timestamp - updatedAt > cfg.heartbeat;
-        h = IOracleResolver.Health({
-            healthy: sequencerUp && sequencerGraceElapsed && !cfg.paused && answer > 0 && !stale,
-            price: answer,
-            decimals: cfg.feed.decimals(),
-            updatedAt: updatedAt,
-            isStale: stale,
-            sequencerUp: sequencerUp,
-            sequencerGraceElapsed: sequencerGraceElapsed,
-            paused: cfg.paused
-        });
+        h.operatorPaused = cfg.paused;
+        h.tokenStateReadable = cfg.oraclePauseToken == address(0);
+        if (cfg.oraclePauseToken != address(0)) {
+            try IStockTokenOracleState(cfg.oraclePauseToken).oraclePaused() returns (bool paused_) {
+                h.tokenOraclePaused = paused_;
+                h.tokenStateReadable = true;
+            } catch {}
+        }
+        h.paused = h.operatorPaused || h.tokenOraclePaused;
+
+        try cfg.feed.latestRoundData() returns (
+            uint80 roundId, int256 answer, uint256, uint256 updatedAt, uint80 answeredInRound
+        ) {
+            h.price = answer;
+            h.updatedAt = updatedAt;
+            h.roundComplete = answeredInRound >= roundId;
+            h.isStale = updatedAt == 0 || updatedAt > block.timestamp
+                || block.timestamp - updatedAt > cfg.heartbeat;
+        } catch {
+            h.isStale = true;
+        }
+
+        try cfg.feed.decimals() returns (uint8 decimals_) {
+            h.decimals = decimals_;
+        } catch {
+            h.roundComplete = false;
+        }
+
+        h.healthy = h.sequencerUp && h.sequencerGraceElapsed && h.tokenStateReadable && !h.paused
+            && h.price > 0 && h.updatedAt > 0 && h.roundComplete && !h.isStale;
+    }
+
+    function configHash(bytes32 assetKey) external view returns (bytes32) {
+        OracleRegistry.AssetConfig memory cfg = configOrZero(assetKey);
+        if (!cfg.exists) return bytes32(0);
+        return keccak256(
+            abi.encode(
+                address(cfg.feed),
+                address(cfg.sequencerFeed),
+                cfg.oraclePauseToken,
+                cfg.heartbeat,
+                cfg.sequencerGracePeriod
+            )
+        );
     }
 
     function configOrZero(bytes32 assetKey)
@@ -82,6 +99,7 @@ contract ChainlinkPriceResolver is Ownable, IOracleResolver {
             return OracleRegistry.AssetConfig({
                 feed: AggregatorV3Interface(address(0)),
                 sequencerFeed: AggregatorV3Interface(address(0)),
+                oraclePauseToken: address(0),
                 heartbeat: 0,
                 sequencerGracePeriod: 0,
                 paused: false,
@@ -96,14 +114,18 @@ contract ChainlinkPriceResolver is Ownable, IOracleResolver {
         view
         returns (bool up, bool graceElapsed)
     {
-        if (address(sequencerFeed) == address(0)) {
-            return (true, true);
-        }
-        (, int256 answer, uint256 startedAt,,) = sequencerFeed.latestRoundData();
-        if (answer != 1 || startedAt == 0) {
+        if (address(sequencerFeed) == address(0)) return (true, true);
+
+        try sequencerFeed.latestRoundData() returns (
+            uint80, int256 answer, uint256 startedAt, uint256, uint80
+        ) {
+            // Chainlink sequencer feeds use 0 = up and 1 = down.
+            if (answer != 0 || startedAt == 0 || startedAt > block.timestamp) {
+                return (false, false);
+            }
+            return (true, block.timestamp - startedAt >= gracePeriod);
+        } catch {
             return (false, false);
         }
-        uint256 elapsed = block.timestamp - startedAt;
-        return (true, elapsed >= gracePeriod);
     }
 }

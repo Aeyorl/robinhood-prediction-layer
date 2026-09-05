@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {BinaryPoolMarket} from "./BinaryPoolMarket.sol";
 import {IMarket} from "../interfaces/IMarket.sol";
+import {IOracleResolver} from "../interfaces/IOracleResolver.sol";
 
 /// @notice Admin-only factory for structured template markets (MVP).
 ///
@@ -37,6 +38,10 @@ contract MarketFactory is Ownable {
         require(params.collateral != address(0), "collateral is zero");
         require(params.resolver != address(0), "resolver is zero");
         require(params.feeVault != address(0), "fee vault is zero");
+        require(
+            IOracleResolver(params.resolver).configHash(params.oracleAssetKey) != bytes32(0),
+            "oracle asset not configured"
+        );
 
         market = new BinaryPoolMarket(params);
 

@@ -6,11 +6,11 @@ Binary pooled parimutuel prediction markets for Robinhood Chain.
 
 ```text
 src/
-  interfaces/   AggregatorV3Interface, IOracleResolver, IMarket
+  interfaces/   AggregatorV3Interface, IOracleResolver, IStockTokenOracleState, IMarket
   market/       BinaryPoolMarket (core), MarketFactory (admin creation)
   oracle/       OracleRegistry, ChainlinkPriceResolver
   fee/          FeeVault
-  mocks/        MockUSDG, MockERC20, MockAggregatorV3, MockSequencerFeed
+  mocks/        MockUSDG, MockERC20, MockAggregatorV3, MockSequencerFeed, MockStockToken
 test/           unit, fuzz, invariant, and vertical-slice tests
 script/         DeployLocal.s.sol (local), Deploy.s.sol (gated production)
 abi/            exported ABIs for the SDK (regenerate after contract changes)
@@ -40,8 +40,9 @@ node scripts/export-abis.mjs   # after contract changes, regenerate abi/*.json
 - Winners share the full pool pro rata: `gross = stake * (yes+no)/winningPool`,
   fee (if enabled) is charged only on profit, floor rounding preserves
   solvency.
-- Cancellation refunds principal. If the winning side has zero stake, the
-  market cancels and refunds everyone.
+- Cancellation refunds principal. After the oracle grace deadline, anyone can
+  cancel an oracle-unhealthy market; a healthy oracle cannot be bypassed. If the
+  winning side has zero stake, the market cancels and refunds everyone.
 - Strict comparison: equality between price and strike produces no winner and
   cancels/refunds (documented semantics).
 - Default testnet fee = 0.
@@ -57,7 +58,10 @@ cap (10%), contract always solvent.
 
 - Feed decimals are read dynamically (`feed.decimals()`), never assumed to be 8.
 - Health checks: answer > 0, updatedAt > 0, staleness <= configured heartbeat,
-  L2 sequencer uptime + grace period, stock-token `oraclePaused` state.
+  complete round, L2 sequencer uptime + grace period, and live Stock Token
+  `oraclePaused` state. Unreadable dependencies fail closed.
+- Factory-created markets snapshot the oracle config hash so later registry
+  edits cannot change existing resolution terms.
 - Comparison between feed price and strike is normalized to a common decimal
   scale in `BinaryPoolMarket._evaluate`.
 - A Chainlink Data Streams resolver interface slot exists (`IOracleResolver`)

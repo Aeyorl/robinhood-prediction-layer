@@ -8,7 +8,7 @@ Solidity 0.8.31, OpenZeppelin v5, Foundry. See `packages/contracts/README.md` fo
 | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `BinaryPoolMarket`                                               | Core pooled parimutuel market: enter, lock, resolve, claim, refund |
 | `MarketFactory`                                                  | Admin-only creation of template markets with immutable terms       |
-| `OracleRegistry`                                                 | Maps oracle asset key → feed config (heartbeat, sequencer, pause)  |
+| `OracleRegistry`                                                 | Maps oracle asset key → feed, Stock Token, heartbeat, sequencer    |
 | `ChainlinkPriceResolver`                                         | Deterministic AggregatorV3 resolution with health checks           |
 | `FeeVault`                                                       | Protocol fee sink; owner withdraws only to a fixed recipient       |
 | `MockUSDG`, `MockERC20`, `MockAggregatorV3`, `MockSequencerFeed` | Local/test mocks (never mainnet)                                   |
@@ -43,13 +43,13 @@ Permissionless — anyone may call `resolve()` at/after `resolutionTime` when th
 
 - asset is configured,
 - L2 sequencer is up and its grace period has elapsed,
-- latest answer > 0, `updatedAt` > 0,
-- round is not stale (within the configured heartbeat),
-- asset is not paused (stock-token corporate-action pause).
+- latest answer > 0, `updatedAt` > 0, and the round is complete,
+- timestamp is not in the future and the round is within the configured heartbeat,
+- operator pause is clear and Stock Token `oraclePaused()` is readable and false.
 
 Feed decimals are read dynamically via `decimals()` and the market compares price and strike on a common scale (`_evaluate`). Admin can never type the winning outcome.
 
-Cancellation (admin) refunds principal. If the winning side has zero stake, resolution itself cancels the market and refunds everyone. Strict equality between price and strike also cancels.
+Each factory-created market snapshots the resolver configuration hash. Feed-term changes block resolution for that market instead of silently changing its terms. Admin cancellation refunds principal. Once `resolutionTime + gracePeriod` passes, anyone can cancel an oracle-unhealthy market and unlock refunds; this path rejects a healthy oracle. If the winning side has zero stake, or the price equals the strike, resolution itself cancels and refunds.
 
 ## Events (indexed by the worker)
 
@@ -61,7 +61,7 @@ No double claim, no double refund, no entry after lock, no early resolution, no 
 
 ## Test coverage
 
-`forge test` runs 60 tests: unit (lifecycle/entry/claims/refunds/fees/pause/admin), factory validation, resolver health checks (staleness, sequencer, grace, pause, dynamic decimals, 8-vs-18 decimal comparison), fuzz (exact floor payouts + solvency), invariant (ghost conservation across a random lifecycle), and the end-to-end vertical slice (create → two wallets enter opposite sides → lock → oracle resolves → winner claims).
+`forge test` runs 79 tests: unit (lifecycle/entry/claims/refunds/fees/pause/admin), factory validation, resolver health checks (staleness, incomplete rounds, sequencer, grace, Stock Token pause, dynamic decimals, immutable config, timeout cancellation), fuzz (exact floor payouts + solvency), invariant (ghost conservation across a random lifecycle), and the end-to-end vertical slice.
 
 ## Data Streams
 

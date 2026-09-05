@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import {AggregatorV3Interface} from "../interfaces/AggregatorV3Interface.sol";
 
-/// @notice Local/test L2 sequencer uptime feed. answer == 1 means up,
-///         answer == 0 means down. Never deploy on mainnet.
+/// @notice Local/test Chainlink-compatible L2 sequencer uptime feed.
+///         answer == 0 means up; answer == 1 means down. Never deploy on mainnet.
 contract MockSequencerFeed is AggregatorV3Interface {
     bool private _isUp;
     uint256 private _lastStatusChangeAt;
@@ -49,7 +49,7 @@ contract MockSequencerFeed is AggregatorV3Interface {
     {
         return (
             uint80(1),
-            _isUp ? int256(1) : int256(0),
+            _isUp ? int256(0) : int256(1),
             _lastStatusChangeAt,
             _lastStatusChangeAt,
             uint80(1)

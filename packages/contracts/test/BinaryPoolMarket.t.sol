@@ -371,6 +371,85 @@ contract BinaryPoolMarketTest is BaseTest {
         assertEq(usdg.balanceOf(alice) - before, 100e18);
     }
 
+    function test_cancelAfterOracleTimeout_requiresDeadline() public {
+        BinaryPoolMarket delayed = _createMarketWithGracePeriod(
+            IMarket.Comparator.PRICE_ABOVE_AT_TIME,
+            100e18,
+            0,
+            MIN_ENTRY,
+            0,
+            DEFAULT_OPEN_TIME,
+            DEFAULT_LOCK_TIME,
+            DEFAULT_RESOLUTION_TIME,
+            1 days
+        );
+        vm.prank(alice);
+        usdg.approve(address(delayed), type(uint256).max);
+        vm.prank(alice);
+        delayed.enter(IMarket.Side.YES, 100e18);
+        vm.warp(DEFAULT_LOCK_TIME);
+        delayed.lock();
+        vm.prank(owner);
+        registry.setPaused(assetKey, true);
+        vm.warp(DEFAULT_RESOLUTION_TIME + 1 days - 1);
+
+        vm.expectRevert(BinaryPoolMarket.TooEarly.selector);
+        delayed.cancelAfterOracleTimeout();
+
+        vm.warp(DEFAULT_RESOLUTION_TIME + 1 days);
+        delayed.cancelAfterOracleTimeout();
+        assertEq(uint8(delayed.status()), uint8(IMarket.Status.CANCELLED));
+    }
+
+    function test_cancelAfterOracleTimeout_rejectsHealthyOracle() public {
+        _enter(alice, IMarket.Side.YES, 100e18);
+        _lock();
+        vm.warp(DEFAULT_RESOLUTION_TIME);
+        feed.setAnswer(150e18);
+
+        vm.expectRevert(BinaryPoolMarket.OracleHealthy.selector);
+        market.cancelAfterOracleTimeout();
+    }
+
+    function test_cancelAfterOracleTimeout_isPermissionlessAndRefunds() public {
+        _enter(alice, IMarket.Side.YES, 100e18);
+        _lock();
+        vm.prank(owner);
+        registry.setPaused(assetKey, true);
+        vm.warp(DEFAULT_RESOLUTION_TIME);
+
+        vm.prank(stranger);
+        market.cancelAfterOracleTimeout();
+        assertEq(uint8(market.status()), uint8(IMarket.Status.CANCELLED));
+
+        uint256 before = usdg.balanceOf(alice);
+        vm.prank(alice);
+        market.refund();
+        assertEq(usdg.balanceOf(alice) - before, 100e18);
+    }
+
+    function test_changedOracleConfig_blocksResolutionAndAllowsTimeoutCancel() public {
+        _enter(alice, IMarket.Side.YES, 100e18);
+        _enter(bob, IMarket.Side.NO, 100e18);
+        _lock();
+        vm.prank(owner);
+        registry.setAssetConfig(
+            assetKey,
+            address(feed),
+            address(sequencer),
+            DEFAULT_HEARTBEAT + 1,
+            DEFAULT_GRACE_PERIOD,
+            false
+        );
+        vm.warp(DEFAULT_RESOLUTION_TIME);
+        feed.setAnswer(150e18);
+
+        vm.expectRevert(BinaryPoolMarket.OracleConfigChanged.selector);
+        market.resolve();
+        market.cancelAfterOracleTimeout();
+        assertEq(uint8(market.status()), uint8(IMarket.Status.CANCELLED));
+    }
+
     // ------------------------------------------------------------------
     // Admin restrictions
     // ------------------------------------------------------------------

@@ -102,6 +102,34 @@
   },
   {
     "type": "function",
+    "name": "setRoundData",
+    "inputs": [
+      {
+        "name": "answer_",
+        "type": "int256",
+        "internalType": "int256"
+      },
+      {
+        "name": "updatedAt_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "roundId_",
+        "type": "uint80",
+        "internalType": "uint80"
+      },
+      {
+        "name": "answeredInRound_",
+        "type": "uint80",
+        "internalType": "uint80"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "version",
     "inputs": [],
     "outputs": [

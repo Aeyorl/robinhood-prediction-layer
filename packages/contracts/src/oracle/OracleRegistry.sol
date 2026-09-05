@@ -15,6 +15,9 @@ contract OracleRegistry is Ownable {
         AggregatorV3Interface feed;
         /// @dev address(0) means no sequencer uptime feed configured.
         AggregatorV3Interface sequencerFeed;
+        /// @dev Robinhood Stock Token exposing oraclePaused(); zero for assets
+        ///      that do not use the Stock Token corporate-action mechanism.
+        address oraclePauseToken;
         /// @dev Maximum allowed age of the latest round, in seconds.
         uint256 heartbeat;
         /// @dev Seconds that must elapse after the sequencer comes back up
@@ -31,6 +34,7 @@ contract OracleRegistry is Ownable {
         bytes32 indexed assetKey,
         address feed,
         address sequencerFeed,
+        address oraclePauseToken,
         uint256 heartbeat,
         uint256 sequencerGracePeriod,
         bool paused
@@ -47,18 +51,60 @@ contract OracleRegistry is Ownable {
         uint256 sequencerGracePeriod_,
         bool paused_
     ) external onlyOwner {
+        _setAssetConfig(
+            assetKey, feed_, sequencerFeed_, address(0), heartbeat_, sequencerGracePeriod_, paused_
+        );
+    }
+
+    function setStockTokenAssetConfig(
+        bytes32 assetKey,
+        address feed_,
+        address sequencerFeed_,
+        address oraclePauseToken_,
+        uint256 heartbeat_,
+        uint256 sequencerGracePeriod_,
+        bool paused_
+    ) external onlyOwner {
+        require(oraclePauseToken_ != address(0), "pause token is zero");
+        _setAssetConfig(
+            assetKey,
+            feed_,
+            sequencerFeed_,
+            oraclePauseToken_,
+            heartbeat_,
+            sequencerGracePeriod_,
+            paused_
+        );
+    }
+
+    function _setAssetConfig(
+        bytes32 assetKey,
+        address feed_,
+        address sequencerFeed_,
+        address oraclePauseToken_,
+        uint256 heartbeat_,
+        uint256 sequencerGracePeriod_,
+        bool paused_
+    ) internal {
         require(feed_ != address(0), "feed is zero");
         require(heartbeat_ > 0, "heartbeat is zero");
         configs[assetKey] = AssetConfig({
             feed: AggregatorV3Interface(feed_),
             sequencerFeed: AggregatorV3Interface(sequencerFeed_),
+            oraclePauseToken: oraclePauseToken_,
             heartbeat: heartbeat_,
             sequencerGracePeriod: sequencerGracePeriod_,
             paused: paused_,
             exists: true
         });
         emit AssetConfigured(
-            assetKey, feed_, sequencerFeed_, heartbeat_, sequencerGracePeriod_, paused_
+            assetKey,
+            feed_,
+            sequencerFeed_,
+            oraclePauseToken_,
+            heartbeat_,
+            sequencerGracePeriod_,
+            paused_
         );
     }
 

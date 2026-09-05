@@ -17,6 +17,25 @@
   },
   {
     "type": "function",
+    "name": "configHash",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "configOrZero",
     "inputs": [
       {
@@ -40,6 +59,11 @@
             "name": "sequencerFeed",
             "type": "address",
             "internalType": "contract AggregatorV3Interface"
+          },
+          {
+            "name": "oraclePauseToken",
+            "type": "address",
+            "internalType": "address"
           },
           {
             "name": "heartbeat",
@@ -119,6 +143,26 @@
           },
           {
             "name": "paused",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "operatorPaused",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "tokenOraclePaused",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "tokenStateReadable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "roundComplete",
             "type": "bool",
             "internalType": "bool"
           }

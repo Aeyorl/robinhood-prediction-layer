@@ -18,6 +18,10 @@ interface IOracleResolver {
         bool sequencerUp;
         bool sequencerGraceElapsed;
         bool paused;
+        bool operatorPaused;
+        bool tokenOraclePaused;
+        bool tokenStateReadable;
+        bool roundComplete;
     }
 
     /// @return price The resolved price of `assetKey` as of `referenceTime`.
@@ -31,4 +35,9 @@ interface IOracleResolver {
 
     /// @notice Non-reverting health snapshot for admin/UI surfaces.
     function health(bytes32 assetKey) external view returns (Health memory);
+
+    /// @notice Hash of the feed and health parameters used for an asset.
+    /// @dev Markets snapshot this at creation so registry edits cannot silently
+    ///      change an existing market's resolution terms.
+    function configHash(bytes32 assetKey) external view returns (bytes32);
 }
