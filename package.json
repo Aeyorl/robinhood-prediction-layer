@@ -26,6 +26,7 @@
     "seed": "pnpm --filter @pl/database run seed",
     "test:e2e": "playwright test",
     "test:load": "node scripts/load-test.mjs",
+    "monitor:once": "node scripts/monitor-once.mjs",
     "typecheck:e2e": "tsc -p e2e/tsconfig.json"
   },
   "devDependencies": {
