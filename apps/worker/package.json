@@ -15,6 +15,7 @@
     "@pl/chain-config": "workspace:*",
     "@pl/config": "workspace:*",
     "@pl/database": "workspace:*",
+    "@pl/sdk": "workspace:*",
     "@pl/types": "workspace:*",
     "drizzle-orm": "0.45.2",
     "ioredis": "6.0.0",

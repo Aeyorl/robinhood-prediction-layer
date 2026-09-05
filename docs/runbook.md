@@ -18,6 +18,8 @@ pnpm --filter @pl/worker dev
 
 The worker logs every indexed block and its cursor. Lag = `head - cursor`. If the worker is down, restart it — the persistent cursor resumes and backfills gaps automatically. Reorgs at the head are detected by parent-hash comparison and trigger a rewind + re-backfill log.
 
+The worker needs `FACTORY_ADDRESS` (the MarketFactory it watches for `MarketCreated` events). Locally that's the `factory` field of `packages/contracts/deployments/local.json` (written by `pnpm contracts:local`). On a fresh start it binary-searches the factory deployment block and backfills from there, so no `MarketCreated` is missed. It degrades gracefully without Postgres/Redis (logs heads only) and requires Postgres to write projections.
+
 ### Apply migrations
 
 ```bash
@@ -128,9 +130,22 @@ E2E_REUSE=1 E2E_WEB_URL=http://127.0.0.1:3100 pnpm test:e2e
 
 ## Known honest gaps (current milestones)
 
-- Contract event decoding/projections in the worker are Phase 3 (the loop is real; the handlers are not yet wired).
 - Quote/swap endpoints and wallet asset discovery are Phase 4; the web surfaces show empty states, never fabricated data.
 - Community analytics are Phase 6.
+
+## Phase 3 indexer (implemented)
+
+The worker decodes `MarketCreated` (factory) plus `PositionEntered`, `MarketLocked`,
+`MarketResolved`, `MarketCancelled`, `Claimed`, `Refunded`, and `FeeCollected`
+(binary market) into idempotent projections — `chain_events`, `markets`,
+`trades`, `claims`, `refunds`, `market_snapshots`. Every block is one DB
+transaction; a failed block leaves the cursor behind it and is retried. Reorg
+rollback deletes projections for the rewound window and re-backfills. The API
+(`/v1/markets`) reads these projections, so refreshing the web app reconstructs
+state from indexed confirmed events.
+
+Attribution is written as `UNKNOWN` until Phase 4 wires the funding-token swap
+receipt correlation.
 
 ## Failure playbooks
 
