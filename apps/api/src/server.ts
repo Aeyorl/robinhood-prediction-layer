@@ -10,6 +10,7 @@ import type postgres from "postgres";
 
 import { healthRoutes } from "./routes/health.js";
 import { marketRoutes } from "./routes/markets.js";
+import { analyticsRoutes } from "./routes/analytics.js";
 
 export interface ServerDeps {
   env: ApiEnv;
@@ -31,6 +32,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   await app.register(healthRoutes, deps);
   await app.register(marketRoutes, deps);
   await app.register(fundingRoutes, deps);
+  await app.register(analyticsRoutes, deps);
 
   return app;
 }

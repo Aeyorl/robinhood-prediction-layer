@@ -1,0 +1,160 @@
+import Link from "next/link";
+import { formatUnits } from "viem";
+
+import { Badge, Card, StatusBadge } from "@pl/ui";
+
+import type { CommunitySummary, MarketSplit, RankedWallet } from "@/lib/analytics-api";
+
+export function formatUsdg(raw: string) {
+  const value = Number(formatUnits(BigInt(raw), 18));
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: Math.abs(value) >= 10_000 ? "compact" : "standard",
+    maximumFractionDigits: Math.abs(value) >= 100 ? 0 : 2,
+  }).format(value);
+}
+
+export function formatBps(value: number | null) {
+  return value == null ? "—" : `${(value / 100).toFixed(1)}%`;
+}
+
+export function shortAddress(address: string) {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
+export function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-slate-500">{label}</dt>
+      <dd className="mt-1 font-semibold text-white">{value}</dd>
+    </div>
+  );
+}
+
+export function CommunityCard({ community }: { community: CommunitySummary }) {
+  const label = community.symbol ?? shortAddress(community.tokenAddress);
+  return (
+    <Link
+      href={`/community/${community.chainId}/${community.tokenAddress}`}
+      className="group block"
+    >
+      <Card className="h-full space-y-4 transition-colors group-hover:border-indigo-400/40">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <Badge>{community.chainId}</Badge>
+            <h2 className="mt-2 text-xl font-semibold text-white">{label}</h2>
+            <p className="text-sm text-slate-400">{community.name ?? "Source token community"}</p>
+          </div>
+          <StatusBadge tone="indigo">Verified source</StatusBadge>
+        </div>
+        <dl className="grid grid-cols-2 gap-4">
+          <Stat label="Prediction volume" value={formatUsdg(community.volumeUsdg)} />
+          <Stat label="Participating wallets" value={community.participantCount.toLocaleString()} />
+          <Stat label="Resolved hit rate" value={formatBps(community.hitRateBps)} />
+          <Stat label="Realized PnL" value={formatUsdg(community.realizedPnlUsdg)} />
+        </dl>
+        <div className="border-t border-white/10 pt-3 text-sm text-slate-400">
+          {community.topCurrentStance ? (
+            <>
+              <span className="text-slate-500">Strongest current participant stance</span>
+              <p className="mt-1 text-slate-200">
+                {community.topCurrentStance.question} ·{" "}
+                {formatBps(community.topCurrentStance.shareBps)}{" "}
+                {community.topCurrentStance.strongestSide}-funded capital
+              </p>
+            </>
+          ) : (
+            "No open-market stance in this window."
+          )}
+        </div>
+      </Card>
+    </Link>
+  );
+}
+
+export function MarketSplitRow({ market }: { market: MarketSplit }) {
+  const yes = market.yesShareBps;
+  return (
+    <Link
+      href={`/market/${market.slug}`}
+      className="block rounded-xl border border-white/10 p-4 hover:border-indigo-400/40"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-white">{market.question}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {market.participantCount} participating wallet{market.participantCount === 1 ? "" : "s"}{" "}
+            · {formatUsdg(market.volumeUsdg)}
+          </p>
+        </div>
+        <Badge>{market.status}</Badge>
+      </div>
+      <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-rose-400/70">
+        <div className="bg-emerald-400" style={{ width: `${(yes ?? 0) / 100}%` }} />
+      </div>
+      <div className="mt-1 flex justify-between text-xs">
+        <span className="text-emerald-300">YES {formatBps(yes)}</span>
+        <span className="text-rose-300">NO {formatBps(yes == null ? null : 10_000 - yes)}</span>
+      </div>
+    </Link>
+  );
+}
+
+export function WalletTable({ entries }: { entries: RankedWallet[] }) {
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-white/10">
+      <table className="w-full min-w-[720px] text-left text-sm">
+        <thead className="bg-white/5 text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th className="px-4 py-3">Rank</th>
+            <th className="px-4 py-3">Wallet</th>
+            <th className="px-4 py-3">PnL</th>
+            <th className="px-4 py-3">ROI</th>
+            <th className="px-4 py-3">Hit rate</th>
+            <th className="px-4 py-3">Volume</th>
+            <th className="px-4 py-3">Streak</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/10">
+          {entries.map((entry, index) => (
+            <tr key={entry.address} className="text-slate-300">
+              <td className="px-4 py-3 text-slate-500">{index + 1}</td>
+              <td className="px-4 py-3">
+                <Link
+                  className="font-mono text-indigo-300 hover:text-indigo-200"
+                  href={`/profile/${entry.address}`}
+                >
+                  {shortAddress(entry.address)}
+                </Link>
+                <div className="text-xs text-slate-500">{entry.resolvedMarkets} resolved</div>
+              </td>
+              <td
+                className={`px-4 py-3 font-medium ${BigInt(entry.realizedPnlUsdg) >= 0n ? "text-emerald-300" : "text-rose-300"}`}
+              >
+                {formatUsdg(entry.realizedPnlUsdg)}
+              </td>
+              <td className="px-4 py-3">{formatBps(entry.roiBps)}</td>
+              <td className="px-4 py-3">{formatBps(entry.hitRateBps)}</td>
+              <td className="px-4 py-3">{formatUsdg(entry.volumeUsdg)}</td>
+              <td className="px-4 py-3">
+                {entry.currentStreak === 0
+                  ? "—"
+                  : `${entry.currentStreak > 0 ? "W" : "L"}${Math.abs(entry.currentStreak)}`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function AnalyticsUnavailable() {
+  return (
+    <Card className="text-sm text-slate-400">
+      Community analytics are unavailable while the indexer database is offline. Try again once the
+      API is healthy.
+    </Card>
+  );
+}
