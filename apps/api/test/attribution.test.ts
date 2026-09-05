@@ -12,7 +12,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { apiEnvSchema } from "@pl/config";
 import { attributionMessage } from "@pl/types";
-import { binaryPoolMarketAbi } from "@pl/sdk";
+import { binaryPoolMarketAbi, predictionEntryRouterAbi } from "@pl/sdk";
 import { markets, quotes } from "@pl/database";
 import { createFundingService } from "../src/funding.js";
 import { buildServer } from "../src/server.js";
@@ -65,6 +65,20 @@ const swapLog = {
     args: { from: adapter, to: wallet },
   }),
   data: encodeAbiParameters([{ type: "uint256" }], [120n]),
+} as Log;
+const routedLog = {
+  ...entryLog,
+  address: token,
+  topics: encodeEventTopics({
+    abi: predictionEntryRouterAbi,
+    eventName: "FundingRouted",
+    args: { user: wallet, market, fundingToken: token },
+  }),
+  data: encodeAbiParameters(
+    [{ type: "uint256" }, { type: "uint256" }, { type: "uint8" }],
+    [100n, 120n, 1],
+  ),
+  logIndex: 1,
 } as Log;
 
 describe("signed attribution and indexer timing", () => {
@@ -187,6 +201,29 @@ describe("signed attribution and indexer timing", () => {
     expect(response.json().status).toBe("PENDING");
     await index();
     expect((await storage.db.query.trades.findFirst())?.attribution).toBe("SESSION_CORRELATED");
+  });
+  it("prefers atomic router attribution proven in the entry transaction", async () => {
+    vi.spyOn(service.client, "getLogs").mockImplementation(async (args) => {
+      if (!args || "event" in args) return [];
+      if (args.address === token) return [routedLog];
+      return Array.isArray(args.address) ? [entryLog] : [];
+    });
+    await processBlock(
+      {
+        db: storage.db,
+        client: service.client,
+        chainId: 46630,
+        factoryAddress: adapter,
+        entryRouterAddress: token,
+        marketAddresses: new Set([market]),
+      },
+      { number: 12n, hash: blockHash, timestamp: 1000n },
+    );
+    expect(await storage.db.query.trades.findFirst()).toMatchObject({
+      attribution: "ONCHAIN",
+      fundingTokenAddress: token,
+      fundingAmount: "100",
+    });
   });
   it("updates already indexed trades and makes a signed replay idempotent", async () => {
     await index();

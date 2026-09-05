@@ -67,6 +67,7 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
   const usdg = (env.USDG_ADDRESS ?? getChainAddresses(env.CHAIN_ID).usdg)?.toLowerCase() as
     Address | undefined;
   const mockSpender = env.MOCK_SWAP_ADAPTER_ADDRESS?.toLowerCase() as Address | undefined;
+  const entryRouter = env.PREDICTION_ENTRY_ROUTER_ADDRESS?.toLowerCase() as Address | undefined;
   const uniswapSpenders = (
     env.UNISWAP_PROXY_ADDRESS
       ? [env.UNISWAP_PROXY_ADDRESS]
@@ -95,6 +96,10 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
       const code = await client.getCode({ address: allowedSpender });
       if (!code || code === "0x") throw new FundingError("adapter_unavailable", 503);
     }
+    if (entryRouter) {
+      const code = await client.getCode({ address: entryRouter });
+      if (!code || code === "0x") throw new FundingError("adapter_unavailable", 503);
+    }
     if (env.SWAP_ADAPTER === "mock") {
       const actual = (await client.readContract({
         address: spender,
@@ -109,7 +114,7 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
       functionName: "decimals",
     });
     if (usdgDecimals > 77) throw new FundingError("noncanonical_collateral", 503);
-    return { usdg, spender, allowedSpenders, usdgDecimals };
+    return { usdg, spender, allowedSpenders, usdgDecimals, entryRouter };
   }
 
   async function post(path: string, body: unknown): Promise<unknown> {
@@ -133,9 +138,10 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
   }
 
   async function quote(input: QuoteRequest): Promise<QuoteResponse> {
-    const { usdg, spender, allowedSpenders, usdgDecimals } = await ready();
+    const { usdg, spender, allowedSpenders, usdgDecimals, entryRouter } = await ready();
     const tokenIn = input.tokenIn.toLowerCase() as Address;
     const wallet = input.wallet.toLowerCase() as Address;
+    const swapper = entryRouter ?? wallet;
     const amount = BigInt(input.amountIn);
     if (amount <= 0n) throw new FundingError("invalid_amount", 400);
     if (
@@ -148,7 +154,7 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
     let amountOut: bigint;
     let priceImpactBps = "0";
     let swapPlan: QuoteResponse["swapPlan"];
-    let approvalSpender = spender;
+    let approvalSpender = entryRouter ?? spender;
     if (env.SWAP_ADAPTER === "mock") {
       try {
         amountOut = (await client.readContract({
@@ -174,13 +180,13 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
         data: encodeFunctionData({
           abi: mockSwapAdapterAbi,
           functionName: "swap",
-          args: [tokenIn, amount, min, wallet],
+          args: [tokenIn, amount, min, swapper],
         }),
       };
     } else {
       const providerTokenIn = getAddress(tokenIn);
       const providerUsdg = getAddress(usdg);
-      const providerWallet = getAddress(wallet);
+      const providerWallet = getAddress(swapper);
       const parsed = upstreamQuoteSchema.safeParse(
         await post("quote", {
           type: "EXACT_INPUT",
@@ -201,7 +207,7 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
       if (
         permitData != null ||
         q.chainId !== env.CHAIN_ID ||
-        q.swapper.toLowerCase() !== wallet ||
+        q.swapper.toLowerCase() !== swapper ||
         q.input.token.toLowerCase() !== tokenIn ||
         BigInt(q.input.amount) !== amount ||
         q.output.token.toLowerCase() !== usdg ||
@@ -219,12 +225,13 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
         !result.success ||
         !allowedSpenders.includes(result.data.swap.to.toLowerCase() as Address) ||
         result.data.swap.chainId !== env.CHAIN_ID ||
-        result.data.swap.from.toLowerCase() !== wallet ||
+        result.data.swap.from.toLowerCase() !== swapper ||
         BigInt(result.data.swap.value) !== 0n
       )
         throw new FundingError("invalid_provider_transaction", 502);
-      approvalSpender = result.data.swap.to.toLowerCase() as Address;
-      swapPlan = { to: approvalSpender, data: result.data.swap.data, value: "0" };
+      const swapTarget = result.data.swap.to.toLowerCase() as Address;
+      approvalSpender = entryRouter ?? swapTarget;
+      swapPlan = { to: swapTarget, data: result.data.swap.data, value: "0" };
     }
     const dustThreshold = env.DUST_THRESHOLD_USDG
       ? BigInt(env.DUST_THRESHOLD_USDG)
@@ -249,6 +256,7 @@ export function createFundingService(env: ApiEnv, request: typeof fetch = fetch)
           : "Uniswap V2/V3 via verified proxy",
       swapPlan,
       approvalSpender,
+      entryRouter: entryRouter ?? null,
     });
   }
   return { client, usdg, ready, quote };

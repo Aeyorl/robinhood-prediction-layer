@@ -16,7 +16,7 @@ import {
 } from "./lib/chain.js";
 import { CHAIN_ID, readState } from "./lib/state.js";
 
-test("PONS → USDG → entry, recover after rejection, attribution → resolve → claim", async ({
+test("PONS → atomic routed entry with onchain attribution → resolve → claim", async ({
   page,
   request,
 }) => {
@@ -73,45 +73,16 @@ test("PONS → USDG → entry, recover after rejection, attribution → resolve 
     ).toBe(true);
     await page.screenshot({ path: ".e2e/funding-quote-mobile.png", fullPage: true });
     await page.setViewportSize({ width: 1280, height: 720 });
-    // Reject only the market entry signature once; approvals and swap execute normally.
-    await page.evaluate((marketAddress) => {
-      const ethereum = (
-        window as unknown as {
-          ethereum: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> };
-        }
-      ).ethereum;
-      const original = ethereum.request.bind(ethereum);
-      let rejected = false;
-      ethereum.request = async (args) => {
-        const tx = args.params?.[0] as { to?: string } | undefined;
-        if (
-          !rejected &&
-          args.method === "eth_sendTransaction" &&
-          tx?.to?.toLowerCase() === marketAddress.toLowerCase()
-        ) {
-          rejected = true;
-          throw Object.assign(new Error("User rejected entry"), { code: 4001 });
-        }
-        return original(args);
-      };
-    }, marketAddress);
     await page.getByRole("button", { name: "Confirm funding flow" }).click();
-    await expect(page.locator("dialog").getByRole("alert")).toContainText(/reject/i, {
-      timeout: 60_000,
-    });
-    expect(await balanceOf(state.rpcUrl, pons, BOB_ADDRESS)).toBe(parseUnits("1", 18));
-    await page.reload();
-    await ensureConnected(page, BOB_ADDRESS);
-    await page.getByRole("button", { name: "Pay with another token" }).click();
-    await expect(page.getByText(/Swap: 0x/)).toBeVisible();
-    await page.getByRole("button", { name: "Resume funding flow" }).click();
-    await expect(page.getByText("Position entered and funding attribution saved.")).toBeVisible({
+    await expect(
+      page.getByText("Position entered with verified onchain funding attribution."),
+    ).toBeVisible({
       timeout: 60_000,
     });
     expect(await readMarketUint(state.rpcUrl, marketAddress, "yesPool")).toBe(
       parseUnits("120", 18),
     );
-    expect(await balanceOf(state.rpcUrl, pons, BOB_ADDRESS)).toBe(parseUnits("1", 18)); // no duplicate swap
+    expect(await balanceOf(state.rpcUrl, pons, BOB_ADDRESS)).toBe(parseUnits("1", 18));
     await expect
       .poll(async () => {
         const response = await request.get(`${api}/v1/wallets/${BOB_ADDRESS}/trades`);
@@ -120,7 +91,7 @@ test("PONS → USDG → entry, recover after rejection, attribution → resolve 
           (t: { marketAddress: string }) => t.marketAddress === marketAddress.toLowerCase(),
         )?.attribution;
       })
-      .toBe("SESSION_CORRELATED");
+      .toBe("ONCHAIN");
     await secondWalletEntersNo(state.rpcUrl, usdg, marketAddress, parseUnits("60", 18));
     await lockAndResolve(
       state.rpcUrl,

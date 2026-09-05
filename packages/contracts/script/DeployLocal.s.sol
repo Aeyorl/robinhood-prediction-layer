@@ -14,6 +14,7 @@ import {FeeVault} from "../src/fee/FeeVault.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {BinaryPoolMarket} from "../src/market/BinaryPoolMarket.sol";
 import {IMarket} from "../src/interfaces/IMarket.sol";
+import {PredictionEntryRouter} from "../src/router/PredictionEntryRouter.sol";
 
 /// @notice Deploys the full local vertical slice and writes
 ///         `deployments/local.json` consumed by `pnpm seed`.
@@ -75,6 +76,8 @@ contract DeployLocal is Script {
         swapAdapter.setRate(address(delta), 40e18);
         swapAdapter.setRate(address(ai), 0.02e18);
         usdg.mint(address(swapAdapter), 1_000_000e18);
+        PredictionEntryRouter entryRouter = new PredictionEntryRouter(msg.sender, usdg, factory);
+        entryRouter.setSwapTarget(address(swapAdapter), true);
 
         // ------------------------------------------------------------------
         // Example markets (default testnet fee = 0)
@@ -209,6 +212,8 @@ contract DeployLocal is Script {
             vm.toString(address(usdg)),
             '","mockSwapAdapter":"',
             vm.toString(address(swapAdapter)),
+            '","predictionEntryRouter":"',
+            vm.toString(address(entryRouter)),
             '","mocks":{',
             mocksJson,
             '},"markets":[',
@@ -224,6 +229,7 @@ contract DeployLocal is Script {
         console2.log("  feeVault         ", address(feeVault));
         console2.log("  usdg             ", address(usdg));
         console2.log("  swapAdapter      ", address(swapAdapter));
+        console2.log("  entryRouter      ", address(entryRouter));
         console2.log("  markets          ", address(m1), address(m2), address(m3));
         console2.log("Manifest written to deployments/local.json");
     }

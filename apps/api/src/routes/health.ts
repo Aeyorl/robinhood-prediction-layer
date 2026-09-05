@@ -31,7 +31,7 @@ async function pingDb(sql: ServerDeps["sql"]): Promise<boolean> {
 }
 
 export const healthRoutes: FastifyPluginAsync<ServerDeps> = async (app, deps) => {
-  app.get("/health", async () => {
+  app.get("/health", { config: { rateLimit: false } }, async () => {
     const [db, redis] = await Promise.all([pingDb(deps.sql), pingRedis(deps.redis)]);
     return {
       ok: db && redis,

@@ -156,11 +156,11 @@ Attribution defaults to `UNKNOWN`. Phase 4's signed correlation upgrades only ve
 ## Phase 4 local funding setup and verification
 
 1. Run the local chain and `pnpm contracts:local`. The deployment now includes a funded `MockSwapAdapter` and deterministic token rates. Old local manifests need redeployment before token swaps work.
-2. Run `pnpm db:migrate` to apply the funding tables. Export API variables from `apps/api/.env.example`: copy `usdg`, `mockSwapAdapter` and mock token addresses from the generated manifest. Set `RPC_HTTP_URL` to the local chain. Set the web `NEXT_PUBLIC_API_URL` to this API instance.
+2. Run `pnpm db:migrate` to apply the funding tables. Export API variables from `apps/api/.env.example`: copy `usdg`, `mockSwapAdapter`, `predictionEntryRouter` and mock token addresses from the generated manifest. Set `RPC_HTTP_URL` to the local chain. Set the web `NEXT_PUBLIC_API_URL` to this API instance.
 3. Start the API with the exported environment, or `pnpm --filter @pl/api exec tsx --env-file=.env src/index.ts`. Start the worker with its existing factory/RPC/database variables. Token discovery begins at the worker's backfill boundary; older holdings require configured fallback addresses or a fuller backfill. Transfer observations identify candidates; displayed balances are live reads.
-4. Open a market, connect a wallet holding a mock token, and choose **Pay with another token**. Get a quote, approve and swap, approve USDG and enter. Sign the attribution message after the confirmed entry. The portfolio labels the funding source as session-correlated.
+4. Open a market, connect a wallet holding a mock token, and choose **Pay with another token**. Get a quote, approve the exact funding-token amount, then confirm the atomic routed entry. The portfolio labels the funding source as verified onchain attribution.
 
-The automated browser test deliberately rejects the first entry signature, reloads the page, resumes without another swap, verifies indexed attribution, resolves the market and claims the payout. It also retains desktop/mobile quote screenshots and a portfolio screenshot under `.e2e/`.
+The automated browser test verifies the two-confirmation routed entry, indexed onchain attribution, resolution and payout. It also retains desktop/mobile quote screenshots and a portfolio screenshot under `.e2e/`.
 
 ```powershell
 # Isolated ports preserve the normal local dev chain/API.

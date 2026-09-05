@@ -22,6 +22,7 @@ import postgres from "postgres";
 import {
   binaryPoolMarketAbi,
   marketFactoryAbi,
+  predictionEntryRouterAbi,
   oracleAssetKey as buildOracleAssetKey,
 } from "@pl/sdk";
 import {
@@ -60,6 +61,7 @@ type Db = Pick<Database, "insert" | "select" | "update" | "delete" | "query" | "
 export interface ProjectionDeps {
   chainId: number;
   factoryAddress: Address;
+  entryRouterAddress?: Address;
   /** Every market address the indexer knows about (mutated as markets are created). */
   marketAddresses: Set<Address>;
 }
@@ -100,6 +102,15 @@ interface PositionEnteredArgs {
   amount: bigint;
   yesPool: bigint;
   noPool: bigint;
+}
+
+interface FundingRoutedArgs {
+  user: Address;
+  market: Address;
+  fundingToken: Address;
+  fundingAmount: bigint;
+  usdgAmount: bigint;
+  side: number;
 }
 
 interface MarketResolvedArgs {
@@ -434,6 +445,7 @@ async function projectPositionEntered(
   block: BlockRef,
   ev: Log,
   args: PositionEnteredArgs,
+  onchainAttribution?: FundingRoutedArgs,
 ): Promise<void> {
   const market = toAddress(ev.address);
   if (
@@ -454,14 +466,26 @@ async function projectPositionEntered(
   }
   const timestamp = toDate(block.timestamp);
 
-  const attribution = await resolveSessionAttribution(
-    tx,
-    deps,
-    (ev.transactionHash ?? "").toLowerCase(),
-    toAddress(args.user),
-    block.number,
-    ev.transactionIndex ?? 0,
-  );
+  const attribution =
+    onchainAttribution &&
+    toAddress(onchainAttribution.user) === toAddress(args.user) &&
+    toAddress(onchainAttribution.market) === market &&
+    onchainAttribution.usdgAmount === args.amount &&
+    onchainAttribution.side === args.side
+      ? {
+          attribution: "ONCHAIN" as const,
+          attributionId: null,
+          fundingTokenAddress: toAddress(onchainAttribution.fundingToken),
+          fundingAmount: onchainAttribution.fundingAmount.toString(),
+        }
+      : await resolveSessionAttribution(
+          tx,
+          deps,
+          (ev.transactionHash ?? "").toLowerCase(),
+          toAddress(args.user),
+          block.number,
+          ev.transactionIndex ?? 0,
+        );
 
   await tx
     .insert(trades)
@@ -690,6 +714,29 @@ export async function processBlock(
           })
         : [];
     const marketEvents = parseEventLogs({ abi: binaryPoolMarketAbi, logs: marketLogs });
+    const routedByTransaction = new Map<string, FundingRoutedArgs>();
+    if (deps.entryRouterAddress) {
+      const routerLogs = await deps.client.getLogs({
+        address: deps.entryRouterAddress,
+        fromBlock: block.number,
+        toBlock: block.number,
+      });
+      const routedEvents = parseEventLogs({
+        abi: predictionEntryRouterAbi,
+        logs: routerLogs,
+        eventName: "FundingRouted",
+      });
+      for (const event of routedEvents) {
+        const args = event.args as unknown as FundingRoutedArgs;
+        await recordEvent(tx, deps, block, {
+          log: event,
+          eventType: "FundingRouted",
+          marketAddress: toAddress(args.market),
+          args,
+        });
+        routedByTransaction.set((event.transactionHash ?? "").toLowerCase(), args);
+      }
+    }
 
     for (const ev of marketEvents) {
       switch (ev.eventName) {
@@ -700,6 +747,7 @@ export async function processBlock(
             block,
             ev,
             ev.args as unknown as PositionEnteredArgs,
+            routedByTransaction.get((ev.transactionHash ?? "").toLowerCase()),
           );
           break;
         case "MarketLocked":

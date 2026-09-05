@@ -19,6 +19,7 @@ const contracts = [
   ["src/oracle/OracleRegistry.sol", "OracleRegistry"],
   ["src/oracle/ChainlinkPriceResolver.sol", "ChainlinkPriceResolver"],
   ["src/fee/FeeVault.sol", "FeeVault"],
+  ["src/router/PredictionEntryRouter.sol", "PredictionEntryRouter"],
   ["src/mocks/MockUSDG.sol", "MockUSDG"],
   ["src/mocks/MockERC20.sol", "MockERC20"],
   ["src/mocks/MockAggregatorV3.sol", "MockAggregatorV3"],

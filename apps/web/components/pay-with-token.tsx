@@ -11,7 +11,7 @@ import {
 } from "wagmi";
 import { getAccount } from "wagmi/actions";
 import { erc20Abi, formatUnits, parseEventLogs, parseUnits, type Address, type Hash } from "viem";
-import { binaryPoolMarketAbi } from "@pl/sdk";
+import { binaryPoolMarketAbi, predictionEntryRouterAbi } from "@pl/sdk";
 import { attributionMessage, quoteResponseSchema, type QuoteResponse } from "@pl/types";
 import { Button } from "@pl/ui";
 import { z } from "zod";
@@ -230,6 +230,51 @@ function FundingDialog({
       let progress = { ...saved };
       const q: QuoteResponse = progress.quote;
       assertWallet();
+      if (q.entryRouter) {
+        if (!progress.enterHash) {
+          await assertOpen();
+          if (Date.now() >= q.expiresAt) throw new Error("quote_expired — request a fresh quote.");
+          setStep("1. Approve the exact funding amount in your wallet");
+          await approve(q.tokenIn as Address, q.entryRouter as Address, BigInt(q.amountIn));
+          await assertOpen();
+          const args = [
+            market.address as Address,
+            progress.side === "YES" ? 1 : 2,
+            q.tokenIn as Address,
+            BigInt(q.amountIn),
+            BigInt(q.minAmountOut),
+            q.swapPlan.to as Address,
+            q.swapPlan.data as Hash,
+            BigInt(Math.floor(q.expiresAt / 1000)),
+          ] as const;
+          setStep("2. Confirm atomic swap and entry in your wallet");
+          await client.simulateContract({
+            account: wallet,
+            address: q.entryRouter as Address,
+            abi: predictionEntryRouterAbi,
+            functionName: "enterWithToken",
+            args,
+          });
+          const hash = await write({
+            address: q.entryRouter as Address,
+            abi: predictionEntryRouterAbi,
+            functionName: "enterWithToken",
+            args,
+            chainId: market.chainId as 4663 | 46630,
+          });
+          progress = { ...progress, enterHash: hash };
+          save(progress);
+        }
+        const atomicReceipt = await receipt(progress.enterHash!);
+        if (atomicReceipt.status !== "success") {
+          save({ quote: q, side: progress.side });
+          throw new Error("Atomic entry reverted. No swap or market entry was retained.");
+        }
+        save({ ...progress, complete: true });
+        setStep("Position entered with verified onchain funding attribution.");
+        await assets.refetch();
+        return;
+      }
       if (!progress.swapHash) {
         await assertOpen();
         if (Date.now() >= q.expiresAt) throw new Error("quote_expired — request a fresh quote.");
@@ -329,7 +374,7 @@ function FundingDialog({
       await assets.refetch();
     });
   }
-  const locked = busy || !!saved?.swapHash;
+  const locked = busy || !!saved?.swapHash || !!saved?.enterHash;
   return (
     <dialog
       ref={dialog}
@@ -346,8 +391,9 @@ function FundingDialog({
         </button>
       </div>
       <p className="mb-4 text-sm text-slate-400">
-        Approve token → swap to USDG → approve USDG → enter. Each transaction needs a separate
-        confirmation. If entry fails, USDG stays in your wallet.
+        {saved?.quote.entryRouter
+          ? "Approve the exact token amount, then confirm one atomic swap-and-enter transaction."
+          : "Approve token → swap to USDG → approve USDG → enter. Each transaction needs a separate confirmation. If entry fails, USDG stays in your wallet."}
       </p>
       {assets.isPending && <p>Discovering wallet assets…</p>}
       {assets.error && <p role="alert">Asset discovery unavailable: {assets.error.message}</p>}
@@ -433,7 +479,11 @@ function FundingDialog({
         </div>
       )}
       <p role="status" className="my-2 text-sm text-emerald-300">
-        {saved?.complete ? "Position entered and funding attribution saved." : step}
+        {saved?.complete
+          ? saved.quote.entryRouter
+            ? "Position entered with verified onchain funding attribution."
+            : "Position entered and funding attribution saved."
+          : step}
       </p>
       {error && (
         <p role="alert" className="my-2 text-sm text-amber-300">

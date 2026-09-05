@@ -143,25 +143,40 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     /// Entry is blocked by `lockTime` itself (even if `lock()` was never
     /// called) and by the pause — pause never blocks claims/refunds.
     function enter(Side side, uint256 amount) external nonReentrant whenNotPaused {
+        _enter(msg.sender, msg.sender, side, amount);
+    }
+
+    /// @notice Enter for `beneficiary`, taking collateral from the caller.
+    function enterFor(address beneficiary, Side side, uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+    {
+        if (beneficiary == address(0)) revert InvalidBeneficiary();
+        _enter(msg.sender, beneficiary, side, amount);
+    }
+
+    function _enter(address payer, address beneficiary, Side side, uint256 amount) private {
         if (side != Side.YES && side != Side.NO) revert InvalidSide();
         if (block.timestamp < openTime || block.timestamp >= lockTime) revert TimestampViolation();
         if (status != Status.OPEN) revert NotOpen();
         if (amount < minEntry) revert BelowMinEntry();
         if (maxEntry != 0) {
-            uint256 existing = side == Side.YES ? userYesStake[msg.sender] : userNoStake[msg.sender];
+            uint256 existing =
+                side == Side.YES ? userYesStake[beneficiary] : userNoStake[beneficiary];
             if (existing + amount > maxEntry) revert AboveMaxEntry();
         }
 
-        collateral.safeTransferFrom(msg.sender, address(this), amount);
+        collateral.safeTransferFrom(payer, address(this), amount);
 
         if (side == Side.YES) {
             yesPool += amount;
-            userYesStake[msg.sender] += amount;
+            userYesStake[beneficiary] += amount;
         } else {
             noPool += amount;
-            userNoStake[msg.sender] += amount;
+            userNoStake[beneficiary] += amount;
         }
-        emit PositionEntered(msg.sender, side, amount, yesPool, noPool);
+        emit PositionEntered(beneficiary, side, amount, yesPool, noPool);
     }
 
     // ------------------------------------------------------------------
@@ -377,4 +392,5 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     error NothingToClaim();
     error OracleConfigChanged();
     error OracleHealthy();
+    error InvalidBeneficiary();
 }

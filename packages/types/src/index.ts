@@ -225,6 +225,8 @@ export const quoteResponseSchema = z.object({
   routeSummary: z.string().nullable(),
   swapPlan: swapPlanSchema,
   approvalSpender: addressSchema,
+  /** Present when the quote executes atomically through PredictionEntryRouter. */
+  entryRouter: addressSchema.nullable().default(null),
 });
 export type QuoteResponse = z.infer<typeof quoteResponseSchema>;
 

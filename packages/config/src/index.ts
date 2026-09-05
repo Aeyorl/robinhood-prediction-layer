@@ -49,12 +49,30 @@ export const apiEnvSchema = z.object({
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
+  PRODUCTION_MODE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  MAINNET_EXTERNAL_AUDIT_APPROVED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  MAINNET_COMPLIANCE_APPROVED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  API_RATE_LIMIT_MAX: z.coerce.number().int().positive().max(10_000).default(300),
   CHAIN_ID: envChainIdSchema.default(46630),
   /** Funding-layer swap adapter: deterministic mocks locally, Uniswap on mainnet. */
   SWAP_ADAPTER: z.enum(["mock", "uniswap"]).default("mock"),
   RPC_HTTP_URL: z.url().default("http://127.0.0.1:8545"),
   RPC_TIMEOUT_MS: z.coerce.number().int().positive().max(60_000).default(10_000),
   MOCK_SWAP_ADAPTER_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
+  /** Optional atomic swap-and-enter router (Phase 7). */
+  PREDICTION_ENTRY_ROUTER_ADDRESS: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .optional(),
@@ -106,7 +124,22 @@ export const apiEnvSchema = z.object({
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
 
 export function loadApiEnv(env: NodeJS.ProcessEnv = process.env): ApiEnv {
-  return apiEnvSchema.parse(env);
+  const parsed = apiEnvSchema.parse(env);
+  if (parsed.PRODUCTION_MODE && parsed.CHAIN_ID === 4663) {
+    const errors: string[] = [];
+    if (!parsed.RPC_HTTP_URL.startsWith("https://")) errors.push("RPC_HTTP_URL must use HTTPS");
+    if (parsed.CORS_ORIGIN.includes("localhost") || parsed.CORS_ORIGIN.includes("127.0.0.1"))
+      errors.push("CORS_ORIGIN must be a production origin");
+    if (parsed.SWAP_ADAPTER !== "uniswap" || !parsed.UNISWAP_API_KEY)
+      errors.push("Uniswap routing must be configured");
+    if (!parsed.PREDICTION_ENTRY_ROUTER_ADDRESS)
+      errors.push("PREDICTION_ENTRY_ROUTER_ADDRESS is required");
+    if (!parsed.MAINNET_EXTERNAL_AUDIT_APPROVED)
+      errors.push("MAINNET_EXTERNAL_AUDIT_APPROVED is required");
+    if (!parsed.MAINNET_COMPLIANCE_APPROVED) errors.push("MAINNET_COMPLIANCE_APPROVED is required");
+    if (errors.length) throw new Error(`mainnet production gate failed: ${errors.join("; ")}`);
+  }
+  return parsed;
 }
 
 // ---------------------------------------------------------------------------
@@ -120,6 +153,10 @@ export const workerEnvSchema = z.object({
   START_BLOCK: z.coerce.number().int().nonnegative().default(0),
   /** MarketFactory the worker indexes events from — must be configured per chain. */
   FACTORY_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "invalid FACTORY_ADDRESS"),
+  PREDICTION_ENTRY_ROUTER_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
   HTTP_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(4000),

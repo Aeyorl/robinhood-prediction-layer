@@ -7,6 +7,7 @@ import feeVaultAbiJson from "@pl/contracts/abi/FeeVault.json";
 import mockUsdgAbiJson from "@pl/contracts/abi/MockUSDG.json";
 import mockErc20AbiJson from "@pl/contracts/abi/MockERC20.json";
 import mockSwapAdapterAbiJson from "@pl/contracts/abi/MockSwapAdapter.json";
+import predictionEntryRouterAbiJson from "@pl/contracts/abi/PredictionEntryRouter.json";
 
 export const binaryPoolMarketAbi = binaryPoolMarketAbiJson as unknown as Abi;
 export const marketFactoryAbi = marketFactoryAbiJson as unknown as Abi;
@@ -16,3 +17,4 @@ export const feeVaultAbi = feeVaultAbiJson as unknown as Abi;
 export const mockUsdgAbi = mockUsdgAbiJson as unknown as Abi;
 export const mockErc20Abi = mockErc20AbiJson as unknown as Abi;
 export const mockSwapAdapterAbi = mockSwapAdapterAbiJson as unknown as Abi;
+export const predictionEntryRouterAbi = predictionEntryRouterAbiJson as unknown as Abi;

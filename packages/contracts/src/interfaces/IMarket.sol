@@ -36,6 +36,8 @@ interface IMarket {
 
     function userStake(address user, Side side) external view returns (uint256);
 
+    function enterFor(address beneficiary, Side side, uint256 amount) external;
+
     function collateral() external view returns (IERC20);
 
     function resolver() external view returns (IOracleResolver);

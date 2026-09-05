@@ -44,6 +44,7 @@ interface IndexerDeps {
   sql: ReturnType<typeof createClient>["client"] | null;
   chainId: number;
   factoryAddress: Address;
+  entryRouterAddress?: Address;
   marketAddresses: Set<Address>;
 }
 
@@ -223,6 +224,8 @@ async function indexBlock(deps: IndexerDeps, blockNumber: bigint): Promise<void>
 async function run() {
   const chain = getChain(env.CHAIN_ID);
   const factoryAddress = env.FACTORY_ADDRESS.toLowerCase() as Address;
+  const entryRouterAddress = env.PREDICTION_ENTRY_ROUTER_ADDRESS?.toLowerCase() as
+    Address | undefined;
   const { client, transport } = makeClient();
   console.log(`[worker] starting on chain ${chain.id} via ${transport}`);
   console.log(`[worker] factory ${factoryAddress}`);
@@ -262,6 +265,7 @@ async function run() {
     sql,
     chainId: chain.id,
     factoryAddress,
+    entryRouterAddress,
     marketAddresses,
   };
   const ring = makeHashRing();

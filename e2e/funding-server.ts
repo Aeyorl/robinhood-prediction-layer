@@ -20,6 +20,7 @@ const env = apiEnvSchema.parse({
   RPC_HTTP_URL: process.env.E2E_RPC_URL ?? "http://127.0.0.1:18545",
   USDG_ADDRESS: manifest.usdg,
   MOCK_SWAP_ADAPTER_ADDRESS: manifest.mockSwapAdapter,
+  PREDICTION_ENTRY_ROUTER_ADDRESS: manifest.predictionEntryRouter,
   KNOWN_TOKEN_ADDRESSES: Object.values(manifest.mocks as Record<string, { address: string }>)
     .map((t) => t.address)
     .join(","),
@@ -70,6 +71,7 @@ while (!closing) {
           client: service.client,
           chainId: 46630,
           factoryAddress: manifest.factory,
+          entryRouterAddress: manifest.predictionEntryRouter,
           marketAddresses,
         },
         { number: next, hash: block.hash!, timestamp: block.timestamp },

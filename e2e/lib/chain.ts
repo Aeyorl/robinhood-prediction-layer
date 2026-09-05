@@ -50,6 +50,8 @@ export interface Manifest {
   chainId: number;
   factory: string;
   usdg: string;
+  mockSwapAdapter: string;
+  predictionEntryRouter: string;
   markets: ManifestMarket[];
   mocks: Record<string, { address: string; symbol: string }>;
 }

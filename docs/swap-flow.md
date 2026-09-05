@@ -35,7 +35,7 @@ The implemented modal persists the quote, side, swap hash and entry hash in tab 
 
 ## Attribution
 
-The original funding token is tracked in the authenticated browser session and correlated with the immediately following market entry → `attribution = SESSION_CORRELATED` (not trustless onchain attribution). A hardened `PredictionEntryRouter` that emits verified source-token metadata is a later milestone.
+With `PREDICTION_ENTRY_ROUTER_ADDRESS` configured, the original token is emitted by the atomic router transaction and indexed as `attribution = ONCHAIN`. Without it, the legacy session correlation remains explicitly labelled `SESSION_CORRELATED`.
 
 ## Real routing gate (passed September 5, 2026)
 

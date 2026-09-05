@@ -25,6 +25,7 @@
     "db:migrate": "pnpm --filter @pl/database run migrate",
     "seed": "pnpm --filter @pl/database run seed",
     "test:e2e": "playwright test",
+    "test:load": "node scripts/load-test.mjs",
     "typecheck:e2e": "tsc -p e2e/tsconfig.json"
   },
   "devDependencies": {

@@ -10,6 +10,7 @@ const token = `0x${"11".repeat(20)}` as const;
 const usdg = `0x${"22".repeat(20)}` as const;
 const adapter = `0x${"33".repeat(20)}` as const;
 const wallet = `0x${"44".repeat(20)}` as const;
+const router = `0x${"55".repeat(20)}` as const;
 const input = { tokenIn: token, amountIn: "1000000000000000000", wallet };
 function setup(overrides: Record<string, unknown> = {}, request?: typeof fetch) {
   const env = apiEnvSchema.parse({
@@ -47,6 +48,18 @@ describe("funding quote policy", () => {
     });
     expect(decoded.functionName).toBe("swap");
     expect(decoded.args).toEqual([token, 10n ** 18n, 118800000000000000000n, wallet]);
+  });
+  it("routes approval and swap output through the atomic entry router", async () => {
+    const { service } = setup({ PREDICTION_ENTRY_ROUTER_ADDRESS: router });
+    const q = await service.quote(input);
+    expect(q.approvalSpender).toBe(router);
+    expect(q.entryRouter).toBe(router);
+    expect(q.swapPlan.to).toBe(adapter);
+    const decoded = decodeFunctionData({
+      abi: mockSwapAdapterAbi,
+      data: q.swapPlan.data as `0x${string}`,
+    });
+    expect(decoded.args).toEqual([token, 10n ** 18n, 118800000000000000000n, router]);
   });
   it.each(["0", "-1", "1e18", (2n ** 256n).toString(), "1".repeat(1000)])(
     "rejects invalid amount %s",

@@ -60,7 +60,7 @@ for attempt in 1 2 3; do
     >> "$ROOT/.e2e/deploy.log" 2>&1
   echo "[e2e-env] deploy attempt ${attempt}: forge rc $?"
   if [ -f "$MANIFEST" ]; then
-    REQUIRED=$(node -p "const m=require('$MANIFEST_NODE'); [m.usdg, m.mockSwapAdapter, ...m.markets.map(x=>x.address)].join(' ')" 2>/dev/null || echo "")
+    REQUIRED=$(node -p "const m=require('$MANIFEST_NODE'); [m.usdg, m.mockSwapAdapter, m.predictionEntryRouter, ...m.markets.map(x=>x.address)].join(' ')" 2>/dev/null || echo "")
     all=1
     for addr in $REQUIRED; do
       if [ -z "$addr" ] || [ "$(code_at "$addr")" != "1" ]; then all=0; break; fi

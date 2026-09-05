@@ -64,7 +64,7 @@ OPEN → LOCKED → RESOLVED
 
 ## Source-token / community attribution
 
-The v0 two-step funding flow (swap funding token → USDG, then enter) tracks the original funding token in the authenticated browser trade session and correlates the swap receipt with the immediately following market entry (`attribution = SESSION_CORRELATED`). This is explicitly not presented as trustless onchain attribution. A hardened `PredictionEntryRouter` is a later milestone.
+The preferred funding flow uses the immutable `PredictionEntryRouter`: exact token approval followed by one atomic swap-and-enter transaction. The router emits source-token metadata and the worker records matching entries as `ONCHAIN`. The legacy separate swap/entry path remains a fallback when no router is configured and stays labelled `SESSION_CORRELATED`.
 
 ## Branding
 
