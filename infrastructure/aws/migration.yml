@@ -29,6 +29,7 @@ Resources:
         - Name: migrate
           Image: !Sub 498287372410.dkr.ecr.eu-west-1.amazonaws.com/prediction-layer/migrate:${ImageTag}
           Essential: true
+          User: "0"
           ReadonlyRootFilesystem: true
           MountPoints:
             - SourceVolume: temporary-files
