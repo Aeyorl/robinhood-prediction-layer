@@ -1,0 +1,186 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Prediction Layer production PostgreSQL and Redis data services.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+  DatabasePassword:
+    Type: String
+    NoEcho: true
+    MinLength: 24
+    MaxLength: 64
+    AllowedPattern: "[A-Za-z0-9]+"
+  RedisAuthToken:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+    MaxLength: 64
+    AllowedPattern: "[A-Za-z0-9]+"
+
+Resources:
+  ApplicationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Prediction Layer production ECS tasks
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: prediction-layer-production-app
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Prediction Layer production PostgreSQL
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !GetAtt ApplicationSecurityGroup.GroupId
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  CacheSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Prediction Layer production Redis
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !GetAtt ApplicationSecurityGroup.GroupId
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Prediction Layer production database subnets
+      SubnetIds: !Ref SubnetIds
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Prediction Layer production cache subnets
+      SubnetIds: !Ref SubnetIds
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: prediction-layer-production
+      Engine: postgres
+      DBName: prediction
+      MasterUsername: prediction
+      MasterUserPassword: !Ref DatabasePassword
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      MaxAllocatedStorage: 100
+      StorageType: gp3
+      StorageEncrypted: true
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: 7
+      CopyTagsToSnapshot: true
+      DeletionProtection: true
+      AutoMinorVersionUpgrade: true
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt DatabaseSecurityGroup.GroupId
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  Cache:
+    Type: AWS::ElastiCache::ReplicationGroup
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      ReplicationGroupId: prediction-layer-production
+      ReplicationGroupDescription: Prediction Layer production Redis-compatible cache
+      Engine: valkey
+      CacheNodeType: cache.t4g.micro
+      NumNodeGroups: 1
+      ReplicasPerNodeGroup: 0
+      AutomaticFailoverEnabled: false
+      AtRestEncryptionEnabled: true
+      TransitEncryptionEnabled: true
+      TransitEncryptionMode: required
+      AuthToken: !Ref RedisAuthToken
+      SnapshotRetentionLimit: 7
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      SecurityGroupIds:
+        - !GetAtt CacheSecurityGroup.GroupId
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  DatabaseUrlSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: prediction-layer/production/database-url
+      Description: PostgreSQL connection URL used by ECS tasks.
+      SecretString: !Sub
+        - '{"url":"postgres://prediction:${Password}@${Host}:5432/prediction?sslmode=require"}'
+        - Password: !Ref DatabasePassword
+          Host: !GetAtt Database.Endpoint.Address
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  RedisUrlSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: prediction-layer/production/redis-url
+      Description: Encrypted Redis connection URL used by ECS tasks.
+      SecretString: !Sub
+        - '{"url":"rediss://:${Token}@${Host}:6379"}'
+        - Token: !Ref RedisAuthToken
+          Host: !GetAtt Cache.PrimaryEndPoint.Address
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+Outputs:
+  ApplicationSecurityGroupId:
+    Value: !GetAtt ApplicationSecurityGroup.GroupId
+  DatabaseEndpoint:
+    Value: !GetAtt Database.Endpoint.Address
+  CacheEndpoint:
+    Value: !GetAtt Cache.PrimaryEndPoint.Address
+  DatabaseUrlSecretArn:
+    Value: !Ref DatabaseUrlSecret
+  RedisUrlSecretArn:
+    Value: !Ref RedisUrlSecret
