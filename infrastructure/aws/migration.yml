@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Prediction Layer production database migration task.
+
+Parameters:
+  ImageTag:
+    Type: String
+    AllowedPattern: "sha-[0-9a-f]{40}"
+  DatabaseUrlSecretArn:
+    Type: String
+
+Resources:
+  MigrationTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: prediction-layer-production-migrate
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn: arn:aws:iam::498287372410:role/prediction-layer-production-task-execution
+      TaskRoleArn: arn:aws:iam::498287372410:role/prediction-layer-production-task
+      ContainerDefinitions:
+        - Name: migrate
+          Image: !Sub 498287372410.dkr.ecr.eu-west-1.amazonaws.com/prediction-layer/migrate:${ImageTag}
+          Essential: true
+          ReadonlyRootFilesystem: true
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "${DatabaseUrlSecretArn}:url::"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/prediction-layer/production/migrate
+              awslogs-region: eu-west-1
+              awslogs-stream-prefix: task
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+Outputs:
+  TaskDefinitionArn:
+    Value: !Ref MigrationTaskDefinition
