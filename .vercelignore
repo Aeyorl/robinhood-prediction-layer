@@ -1,0 +1,14 @@
+.git/
+.vercel/
+.turbo/
+.logs/
+data/
+**/node_modules/
+**/.next/
+**/.turbo/
+**/dist/
+**/out/
+**/coverage/
+**/*.tsbuildinfo
+test-results/
+playwright-report/
