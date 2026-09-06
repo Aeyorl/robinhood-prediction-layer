@@ -1,11 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Prediction Layer production container foundation in eu-west-1.
 
-Parameters:
-  GitHubRepository:
-    Type: String
-    Default: Aeyod7/robinhood-prediction-layer
-
 Resources:
   GitHubOidcProvider:
     Type: AWS::IAM::OIDCProvider
@@ -35,8 +30,7 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-              StringLike:
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepository}:ref:refs/heads/main
+                token.actions.githubusercontent.com:sub: repo:Aeyod7@234510671/robinhood-prediction-layer@1356669085:ref:refs/heads/main
       Policies:
         - PolicyName: PushPredictionLayerImages
           PolicyDocument:
