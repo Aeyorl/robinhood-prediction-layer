@@ -27,7 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <footer className="site-footer">
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-              <p><span className="footer-mark" aria-hidden="true">PL</span> Built on {branding.chainName}</p>
+              <p>
+                <span className="footer-mark" aria-hidden="true">
+                  PL
+                </span>{" "}
+                Built on {branding.chainName}
+              </p>
               <nav aria-label="Legal and documentation" className="flex flex-wrap gap-4">
                 <Link href="/docs" className="hover:text-slate-300">
                   User guide
@@ -39,7 +44,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   Terms
                 </Link>
               </nav>
-              <p className="footer-disclaimer">Independent product. Not affiliated with or endorsed by Robinhood.</p>
+              <p className="footer-disclaimer">
+                Independent product. Not affiliated with or endorsed by Robinhood.
+              </p>
             </div>
           </footer>
         </Providers>

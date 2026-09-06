@@ -74,7 +74,7 @@ let cached: LocalDeployment | null = null;
 export function getLocalManifest(): LocalDeployment {
   if (cached) return cached;
   try {
-    const raw = readFileSync(MANIFEST_PATH, "utf8");
+    const raw = readFileSync(/* turbopackIgnore: true */ MANIFEST_PATH, "utf8");
     cached = manifestSchema.parse(JSON.parse(raw));
     return cached;
   } catch (err) {

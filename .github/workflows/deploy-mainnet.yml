@@ -6,6 +6,16 @@ on:
       reason:
         description: "Reason for mainnet deployment"
         required: true
+      confirmation:
+        description: 'Type "DEPLOY TO ROBINHOOD MAINNET 4663"'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mainnet-contract-deployment
+  cancel-in-progress: false
 
 # Requires an explicit environment approval before any step runs.
 jobs:
@@ -14,6 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: mainnet
     steps:
+      - name: Confirm mainnet target
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: test "$CONFIRMATION" = "DEPLOY TO ROBINHOOD MAINNET 4663"
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -29,5 +43,44 @@ jobs:
         run: pnpm --filter @pl/contracts build
       - name: Run contract tests before deploy
         run: pnpm --filter @pl/contracts test
-      - name: Deploy (implemented at launch gate)
-        run: echo "Mainnet deployment is intentionally not wired up yet — see docs/deployment.md for the launch gate checklist."
+      - name: Verify mainnet release evidence and onchain dependencies
+        env:
+          MAINNET_EXTERNAL_AUDIT_APPROVED: ${{ vars.MAINNET_EXTERNAL_AUDIT_APPROVED }}
+          MAINNET_COMPLIANCE_APPROVED: ${{ vars.MAINNET_COMPLIANCE_APPROVED }}
+          RPC_HTTP_URL: ${{ secrets.PRODUCTION_RPC_URL }}
+          SAFE_ADDRESS: ${{ vars.SAFE_ADDRESS }}
+          EXPECTED_SAFE_OWNERS: ${{ secrets.EXPECTED_SAFE_OWNERS }}
+          EXPECTED_SAFE_THRESHOLD: ${{ vars.EXPECTED_SAFE_THRESHOLD }}
+          FEE_RECIPIENT: ${{ vars.FEE_RECIPIENT }}
+          USDG_ADDRESS: ${{ vars.USDG_ADDRESS }}
+          WETH_ADDRESS: ${{ vars.WETH_ADDRESS }}
+          SWAP_TARGET: ${{ vars.SWAP_TARGET }}
+          DATA_STREAMS_VERIFIER: ${{ vars.DATA_STREAMS_VERIFIER }}
+        run: pnpm mainnet:preflight
+      - name: Broadcast protocol deployment
+        env:
+          ETH_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          EXPECTED_DEPLOYER_ADDRESS: ${{ vars.DEPLOYER_ADDRESS }}
+          RPC_HTTP_URL: ${{ secrets.PRODUCTION_RPC_URL }}
+          CHAIN_ID: "4663"
+          SAFE_ADDRESS: ${{ vars.SAFE_ADDRESS }}
+          FEE_RECIPIENT: ${{ vars.FEE_RECIPIENT }}
+          USDG_ADDRESS: ${{ vars.USDG_ADDRESS }}
+          SWAP_TARGET: ${{ vars.SWAP_TARGET }}
+        working-directory: packages/contracts
+        run: |
+          actual_deployer="$(cast wallet address --private-key "$ETH_PRIVATE_KEY")"
+          test "${actual_deployer,,}" = "${EXPECTED_DEPLOYER_ADDRESS,,}"
+          forge script script/Deploy.s.sol:Deploy \
+            --rpc-url "$RPC_HTTP_URL" \
+            --private-key "$ETH_PRIVATE_KEY" \
+            --broadcast \
+            --slow
+      - name: Preserve deployment receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robinhood-mainnet-deployment-${{ github.run_id }}
+          path: packages/contracts/broadcast/Deploy.s.sol/4663/
+          if-no-files-found: warn
+          retention-days: 90

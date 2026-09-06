@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { markets, marketStatusEnum } from "@pl/database";
+import { assets, markets, marketStatusEnum, oracleAssets } from "@pl/database";
 
 import type { ServerDeps } from "../server.js";
 
@@ -28,13 +28,45 @@ export const marketRoutes: FastifyPluginAsync<ServerDeps> = async (app, deps) =>
     const { status, limit, offset } = parsed.data;
 
     const rows = await deps.db
-      .select()
+      .select({
+        market: markets,
+        assetSymbol: assets.symbol,
+        feedAddress: oracleAssets.feedAddress,
+      })
       .from(markets)
-      .where(status ? and(eq(markets.status, status)) : undefined)
+      .leftJoin(
+        assets,
+        and(
+          eq(assets.chainId, markets.oracleAssetChainId),
+          eq(assets.address, markets.oracleAssetAddress),
+        ),
+      )
+      .leftJoin(
+        oracleAssets,
+        and(
+          eq(oracleAssets.chainId, markets.oracleAssetChainId),
+          eq(oracleAssets.address, markets.oracleAssetAddress),
+        ),
+      )
+      .where(
+        status
+          ? and(eq(markets.chainId, deps.env.CHAIN_ID), eq(markets.status, status))
+          : eq(markets.chainId, deps.env.CHAIN_ID),
+      )
       .orderBy(desc(markets.createdAt))
       .limit(limit)
       .offset(offset);
-    return { markets: rows.map(serializeMarket) };
+    if (rows.some((row) => !row.assetSymbol || !row.feedAddress)) {
+      return reply.code(503).send({ error: "market_metadata_unavailable" });
+    }
+    return {
+      markets: rows.map((row) =>
+        serializeMarket(row.market, {
+          assetSymbol: row.assetSymbol!,
+          feedAddress: row.feedAddress!,
+        }),
+      ),
+    };
   });
 
   app.get("/v1/markets/:address", async (request, reply) => {
@@ -57,7 +89,10 @@ export const marketRoutes: FastifyPluginAsync<ServerDeps> = async (app, deps) =>
   });
 };
 
-function serializeMarket(row: typeof markets.$inferSelect) {
+function serializeMarket(
+  row: typeof markets.$inferSelect,
+  metadata?: { assetSymbol: string; feedAddress: string },
+) {
   return {
     chainId: row.chainId,
     address: row.address,
@@ -69,6 +104,8 @@ function serializeMarket(row: typeof markets.$inferSelect) {
     strikeDecimals: row.strikeDecimals,
     collateral: { chainId: row.collateralChainId, address: row.collateralAddress },
     oracleAsset: { chainId: row.oracleAssetChainId, address: row.oracleAssetAddress },
+    assetSymbol: metadata?.assetSymbol ?? null,
+    feed: metadata?.feedAddress ?? null,
     resolver: row.resolver,
     feeBps: row.feeBps,
     openTime: row.openTime.toISOString(),

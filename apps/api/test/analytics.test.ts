@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { apiEnvSchema } from "@pl/config";
-import { markets, tokens, trades } from "@pl/database";
+import { assets, markets, oracleAssets, tokens, trades } from "@pl/database";
 
 import {
   buildCommunityAnalytics,
@@ -15,6 +15,7 @@ const tokenA = `0x${"11".repeat(20)}`;
 const tokenB = `0x${"22".repeat(20)}`;
 const usdg = `0x${"33".repeat(20)}`;
 const resolver = `0x${"44".repeat(20)}`;
+const feed = `0x${"45".repeat(20)}`;
 const marketA = `0x${"55".repeat(20)}`;
 const walletA = `0x${"66".repeat(20)}`;
 const walletB = `0x${"77".repeat(20)}`;
@@ -96,6 +97,20 @@ describe("analytics API", () => {
       decimals: 18,
       metadataStatus: "OK",
     });
+    await storage.db.insert(assets).values({
+      chainId: 46630,
+      address: tokenA,
+      symbol: "TOKA",
+      name: "Token A",
+      decimals: 18,
+    });
+    await storage.db.insert(oracleAssets).values({
+      chainId: 46630,
+      address: tokenA,
+      feedAddress: feed,
+      heartbeatSeconds: 86_400,
+      feedDecimals: 8,
+    });
     await storage.db.insert(markets).values({
       chainId: 46630,
       address: marketA,
@@ -165,6 +180,14 @@ describe("analytics API", () => {
   });
 
   it("serves directory, detail, market splits, leaderboard, and profile from verified rows only", async () => {
+    const marketsDirectory = await app.inject({ method: "GET", url: "/v1/markets" });
+    expect(marketsDirectory.statusCode, marketsDirectory.body).toBe(200);
+    expect(marketsDirectory.json().markets[0]).toMatchObject({
+      chainId: 46630,
+      assetSymbol: "TOKA",
+      feed,
+    });
+
     const directory = await app.inject({ method: "GET", url: "/v1/communities?window=all" });
     expect(directory.statusCode, directory.body).toBe(200);
     expect(directory.json().communities[0]).toMatchObject({

@@ -64,25 +64,54 @@ export function TwoSidedHero({ market }: { market: MarketView | null }) {
   return (
     <section className="two-sided-hero">
       <div className="two-sided-copy">
-        <h1>The market<br />has two sides.</h1>
-        <p>Binary prediction markets for real-world outcomes.<br />Trade YES or NO with your wallet on Robinhood Chain.</p>
+        <h1>
+          The market
+          <br />
+          has two sides.
+        </h1>
+        <p>
+          Binary prediction markets for real-world outcomes.
+          <br />
+          Trade YES or NO with your wallet on Robinhood Chain.
+        </p>
         <div className="hero-actions">
-          <Link href="/markets" className="black-action">Explore markets <span aria-hidden="true">→</span></Link>
-          <Link href="/docs#start" className="text-action">How it works <span aria-hidden="true">→</span></Link>
+          <Link href="/markets" className="black-action">
+            Explore markets <span aria-hidden="true">→</span>
+          </Link>
+          <Link href="/docs#start" className="text-action">
+            How it works <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </div>
 
       <div ref={visualRef} className="orbit-visual">
         <div className="orbit-art" aria-hidden="true">
-          <Image src="/two-sided-orbit.png" alt="" fill priority sizes="(min-width: 900px) 55vw, 100vw" className="object-contain" />
+          <Image
+            src="/two-sided-orbit.png"
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 900px) 55vw, 100vw"
+            className="object-contain"
+          />
         </div>
         <div className="orbit-stat orbit-stat-yes">
-          <span>YES</span><strong>{hasShare ? `${yes.toFixed(0)}%` : "—"}</strong><small>capital share</small>
+          <span>YES</span>
+          <strong>{hasShare ? `${yes.toFixed(0)}%` : "—"}</strong>
+          <small>capital share</small>
         </div>
         <div className="orbit-stat orbit-stat-no">
-          <span>NO</span><strong>{hasShare ? `${no.toFixed(0)}%` : "—"}</strong><small>capital share</small>
+          <span>NO</span>
+          <strong>{hasShare ? `${no.toFixed(0)}%` : "—"}</strong>
+          <small>capital share</small>
         </div>
-        {market ? <Link href={`/market/${market.slug}`} className="orbit-market-link" aria-label={`Open featured market: ${market.question}`} /> : null}
+        {market ? (
+          <Link
+            href={`/market/${market.slug}`}
+            className="orbit-market-link"
+            aria-label={`Open featured market: ${market.question}`}
+          />
+        ) : null}
       </div>
     </section>
   );
