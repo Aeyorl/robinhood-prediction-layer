@@ -21,6 +21,8 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
+      Volumes:
+        - Name: temporary-files
       ExecutionRoleArn: arn:aws:iam::498287372410:role/prediction-layer-production-task-execution
       TaskRoleArn: arn:aws:iam::498287372410:role/prediction-layer-production-task
       ContainerDefinitions:
@@ -28,6 +30,10 @@ Resources:
           Image: !Sub 498287372410.dkr.ecr.eu-west-1.amazonaws.com/prediction-layer/migrate:${ImageTag}
           Essential: true
           ReadonlyRootFilesystem: true
+          MountPoints:
+            - SourceVolume: temporary-files
+              ContainerPath: /tmp
+              ReadOnly: false
           Secrets:
             - Name: DATABASE_URL
               ValueFrom: !Sub "${DatabaseUrlSecretArn}:url::"
