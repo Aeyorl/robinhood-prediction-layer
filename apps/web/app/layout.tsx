@@ -22,18 +22,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Providers>
           <SiteHeader />
-          <main className="mx-auto w-full max-w-7xl px-4 pb-32 pt-8 sm:px-6 md:pb-24 md:pt-10">
+          <main className="mx-auto w-full max-w-[1600px] px-4 pb-32 pt-5 sm:px-7 md:pb-24 md:pt-7">
             {children}
           </main>
-          <footer className="border-t border-white/[0.07] px-4 py-10 text-xs text-slate-500">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p>
-                {branding.appName} on {branding.chainName}. Not affiliated with or endorsed by
-                Robinhood.
-              </p>
+          <footer className="site-footer">
+            <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+              <p><span className="footer-mark" aria-hidden="true">PL</span> Built on {branding.chainName}</p>
               <nav aria-label="Legal and documentation" className="flex flex-wrap gap-4">
                 <Link href="/docs" className="hover:text-slate-300">
-                  Docs
+                  User guide
                 </Link>
                 <Link href="/risks" className="hover:text-slate-300">
                   Risks
@@ -42,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   Terms
                 </Link>
               </nav>
+              <p className="footer-disclaimer">Independent product. Not affiliated with or endorsed by Robinhood.</p>
             </div>
           </footer>
         </Providers>

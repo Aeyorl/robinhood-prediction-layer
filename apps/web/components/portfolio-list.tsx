@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { binaryPoolMarketAbi } from "@pl/sdk";
-import { Badge, Button, Card, StatusBadge } from "@pl/ui";
+import { Button } from "@pl/ui";
 import { useAccount, useChainId, usePublicClient } from "wagmi";
 
 import { groupedAmount, type MarketView } from "@/lib/market-view";
@@ -38,7 +38,11 @@ const TABS: Array<{ key: Tab; label: string }> = [
 export function PortfolioList({ markets }: { markets: MarketView[] }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  return mounted ? <PortfolioBody markets={markets} /> : <Card>Loading portfolio…</Card>;
+  return mounted ? (
+    <PortfolioBody markets={markets} />
+  ) : (
+    <div className="portfolio-loading">Loading portfolio…</div>
+  );
 }
 
 function PortfolioBody({ markets }: { markets: MarketView[] }) {
@@ -134,6 +138,14 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
   }, [data, markets]);
 
   const withPosition = rows.filter((r) => r.totalStake > 0n);
+  const totalStake = withPosition.reduce((sum, row) => sum + row.totalStake, 0n);
+  const totalYes = withPosition.reduce((sum, row) => sum + row.yesStake, 0n);
+  const totalNo = withPosition.reduce((sum, row) => sum + row.noStake, 0n);
+  const openCapital = withPosition
+    .filter((row) => row.market.status === "OPEN" || row.market.status === "LOCKED")
+    .reduce((sum, row) => sum + row.totalStake, 0n);
+  const yesPct = totalStake > 0n ? Number((totalYes * 10_000n) / totalStake) / 100 : null;
+  const noPct = yesPct == null ? null : 100 - yesPct;
 
   const visible = withPosition.filter((r) => {
     switch (tab) {
@@ -149,57 +161,104 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="portfolio-ledger">
+      <div className="portfolio-summary">
+        <div className="portfolio-wallet-state">
+          <small>Wallet</small>
+          <strong>
+            {isConnected && address
+              ? `${address.slice(0, 6)}…${address.slice(-4)}`
+              : "Not connected"}
+          </strong>
+          <span>
+            {isConnected ? "Robinhood Chain" : "Connect from the header to load positions"}
+          </span>
+        </div>
+        <dl>
+          <div>
+            <dt>Total staked</dt>
+            <dd>{isConnected ? `${groupedAmount(totalStake)} USDG` : "—"}</dd>
+          </div>
+          <div>
+            <dt>Open capital</dt>
+            <dd>{isConnected ? `${groupedAmount(openCapital)} USDG` : "—"}</dd>
+          </div>
+          <div>
+            <dt>Claimable</dt>
+            <dd>
+              {isConnected
+                ? `${withPosition.filter((row) => row.actionable).length} positions`
+                : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt>Position history</dt>
+            <dd>{isConnected ? `${withPosition.length} markets` : "—"}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <section className="portfolio-exposure" aria-label="Position exposure">
+        <div>
+          <small>YES positions</small>
+          <strong className="yes-copy">{yesPct == null ? "—" : `${yesPct.toFixed(0)}%`}</strong>
+          <span>{groupedAmount(totalYes)} USDG</span>
+        </div>
+        <div
+          className={`portfolio-exposure-track ${yesPct == null ? "empty" : ""}`}
+          aria-label={yesPct == null ? "No position exposure" : `YES ${yesPct}%, NO ${noPct}%`}
+        >
+          <span style={{ width: `${yesPct ?? 0}%` }} />
+        </div>
+        <div>
+          <small>NO positions</small>
+          <strong className="no-copy">{noPct == null ? "—" : `${noPct.toFixed(0)}%`}</strong>
+          <span>{groupedAmount(totalNo)} USDG</span>
+        </div>
+      </section>
+
       {!isConnected ? (
-        <Card className="space-y-2">
-          <h2 className="text-base font-semibold text-white">Connect to see your positions</h2>
-          <p className="text-sm text-slate-400">
+        <div className="portfolio-connect-state">
+          <span className="section-kicker">Wallet required</span>
+          <h2>Connect to see your positions</h2>
+          <p>
             Your positions are read directly from the chain for your wallet address — no account
             signup needed.
           </p>
-          <Link
-            href="/markets"
-            className="inline-flex text-sm font-semibold text-indigo-300 hover:text-indigo-200"
-          >
-            Explore markets →
+          <Link href="/markets" className="black-action">
+            Explore markets <span>→</span>
           </Link>
-        </Card>
+        </div>
       ) : wrongChain ? (
-        <Card>
-          <p className="text-sm text-amber-400">
-            Wrong network — switch to Robinhood Chain (chain id 46630) to view your positions.
-          </p>
-        </Card>
+        <div className="portfolio-connect-state">
+          <p>Wrong network — switch to Robinhood Chain (chain id 46630) to view your positions.</p>
+        </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="portfolio-tabs">
             {TABS.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
-                className={
-                  tab === t.key
-                    ? "min-h-10 rounded-full bg-indigo-500/20 px-4 text-xs font-semibold text-indigo-200 ring-1 ring-indigo-400/40"
-                    : "min-h-10 rounded-full bg-white/5 px-4 text-xs text-slate-300 ring-1 ring-white/10 hover:bg-white/10"
-                }
+                className={tab === t.key ? "active" : ""}
               >
                 {t.label}
               </button>
             ))}
-            {isFetching && <span className="ml-1 text-xs text-slate-500">refreshing…</span>}
+            {isFetching && <span>Refreshing chain state…</span>}
           </div>
 
           {visible.length === 0 ? (
-            <Card className="border-dashed text-sm text-slate-400">
+            <div className="portfolio-empty">
               {tab === "claimable"
                 ? "Nothing claimable right now. Resolved winners and cancelled-market refunds show up here."
                 : withPosition.length === 0
                   ? "You have no positions yet. Browse markets and enter with USDG."
                   : "No positions in this tab."}
-            </Card>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="portfolio-position-list">
               {visible.map((r) => (
                 <div key={r.market.address}>
                   <PositionCard row={r} />
@@ -211,7 +270,7 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
                           t.fundingTokenAddress,
                       )
                       .map((t) => (
-                        <p key={t.txHash} className="mt-1 break-all px-3 text-xs text-slate-400">
+                        <p key={t.txHash} className="portfolio-funding-note">
                           {groupedAmount(t.amountUsdg)} USDG funded with {t.fundingTokenAddress} ·{" "}
                           {t.attribution === "SESSION_CORRELATED"
                             ? "session-correlated, not trustless attribution"
@@ -234,73 +293,42 @@ function PositionCard({ row }: { row: PositionRow }) {
   const shareOfPool = totalPool > 0n ? Number((totalStake * 10_000n) / totalPool) / 100 : null;
 
   return (
-    <Card className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Link
-          href={`/market/${market.slug}`}
-          className="text-sm font-medium text-slate-100 hover:text-indigo-300"
-        >
-          {market.question}
-        </Link>
-        <div className="flex items-center gap-2">
-          <StatusBadge
-            tone={
-              market.status === "OPEN"
-                ? "green"
-                : market.status === "LOCKED"
-                  ? "amber"
-                  : market.status === "RESOLVED"
-                    ? "indigo"
-                    : "red"
-            }
-          >
-            {market.status}
-          </StatusBadge>
-          {actionable && <StatusBadge tone="green">Actionable</StatusBadge>}
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
-        <span>
-          Stake:{" "}
-          <span className="font-mono text-slate-200">
-            {yesStake > 0n ? `YES ${groupedAmount(yesStake.toString())}` : ""}
-            {yesStake > 0n && noStake > 0n ? " + " : ""}
-            {noStake > 0n ? `NO ${groupedAmount(noStake.toString())}` : ""} USDG
-          </span>
+    <article className="portfolio-position-row">
+      <div className="position-market-cell">
+        <span className={`position-side-mark ${yesStake > 0n ? "yes" : "no"}`}>
+          {yesStake > 0n ? "YES" : "NO"}
         </span>
-        <span>
-          Share of pool:{" "}
-          <span className="text-slate-200">
-            {shareOfPool != null ? `${shareOfPool.toFixed(2)}%` : "—"}
-          </span>
-        </span>
-        {claimableReason && (
-          <span className="text-slate-300">
-            {claimableReason} ·{" "}
-            {market.status === "RESOLVED" || market.status === "CANCELLED"
-              ? "final"
-              : "no early exit in v0"}
-          </span>
-        )}
-        {totalStake > 0n && (
-          <Badge>
-            {market.status === "RESOLVED"
-              ? market.side === "YES"
-                ? "YES won"
-                : market.side === "NO"
-                  ? "NO won"
-                  : "—"
-              : ""}
-          </Badge>
-        )}
+        <Link href={`/market/${market.slug}`}>{market.question}</Link>
+        <small>
+          {market.assetSymbol} · {market.address.slice(0, 6)}…{market.address.slice(-4)}
+        </small>
       </div>
-      {actionable && (
-        <div>
+      <div className="position-data-cell">
+        <small>Position</small>
+        <strong>
+          {yesStake > 0n ? `YES ${groupedAmount(yesStake.toString())}` : ""}
+          {yesStake > 0n && noStake > 0n ? " + " : ""}
+          {noStake > 0n ? `NO ${groupedAmount(noStake.toString())}` : ""} USDG
+        </strong>
+      </div>
+      <div className="position-data-cell">
+        <small>Share of pool</small>
+        <strong>{shareOfPool != null ? `${shareOfPool.toFixed(2)}%` : "—"}</strong>
+      </div>
+      <div className="position-data-cell">
+        <small>Status</small>
+        <strong>{market.status}</strong>
+        <span>{claimableReason ?? (market.status === "OPEN" ? "Accepting capital" : "Final")}</span>
+      </div>
+      <div className="position-action-cell">
+        {actionable ? (
           <Link href={`/market/${market.slug}#actions`}>
             <Button size="sm">{claimableReason}</Button>
           </Link>
-        </div>
-      )}
-    </Card>
+        ) : (
+          <Link href={`/market/${market.slug}`}>View market →</Link>
+        )}
+      </div>
+    </article>
   );
 }

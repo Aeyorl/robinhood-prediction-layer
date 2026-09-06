@@ -24,7 +24,7 @@ export function ConnectWallet() {
   useEffect(() => setMounted(true), []);
   if (!mounted)
     return (
-      <Button size="sm" disabled>
+      <Button size="sm" className="wallet-connect-button" disabled>
         Connect wallet
       </Button>
     );
@@ -45,6 +45,7 @@ function ConnectWalletInner() {
     return (
       <Button
         size="sm"
+        className="wallet-connect-button"
         onClick={() => (injected ? connect({ connector: injected }) : undefined)}
         disabled={!injected || isConnecting}
         title={injected ? undefined : "No browser wallet detected"}

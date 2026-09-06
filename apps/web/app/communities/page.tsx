@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { Card, Section, StatusBadge } from "@pl/ui";
-import { AnalyticsUnavailable, CommunityCard } from "@/components/analytics";
+import { CommunitySignalMap } from "@/components/community-signal-map";
 import { getCommunities } from "@/lib/analytics-api";
 
 export const dynamic = "force-dynamic";
@@ -11,39 +9,24 @@ export default async function CommunitiesPage() {
     data = await getCommunities("7d");
   } catch {}
   return (
-    <div className="space-y-8">
-      <header className="space-y-3">
-        <StatusBadge tone="indigo">Verified funding attribution · 7 days</StatusBadge>
-        <h1 className="text-3xl font-bold text-white">Communities</h1>
-        <p className="max-w-3xl text-slate-400">
-          Activity grouped by the token participants used to fund a position. These views describe
-          participating wallets only; they do not represent every token holder.
-        </p>
+    <div className="light-route community-route">
+      <header className="community-page-heading">
+        <span className="section-kicker">Verified funding attribution · 7 days</span>
+        <h1 className="block-heading">
+          Community
+          <br />
+          signal map
+        </h1>
+        <p>Activity grouped by the token participants used to fund a position.</p>
       </header>
-      <Section eyebrow="Source-token activity" title="Community directory">
-        {!data ? (
-          <AnalyticsUnavailable />
-        ) : data.communities.length === 0 ? (
-          <Card className="space-y-2 text-sm text-slate-400">
-            <p>No verified source-token entries were indexed in the last 7 days.</p>
-            <Link
-              href="/markets"
-              className="inline-flex font-semibold text-indigo-300 hover:text-indigo-200"
-            >
-              Explore open markets →
-            </Link>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {data.communities.map((community) => (
-              <CommunityCard
-                key={`${community.chainId}:${community.tokenAddress}`}
-                community={community}
-              />
-            ))}
-          </div>
-        )}
-      </Section>
+      {!data ? (
+        <div className="community-empty">
+          <h2>Community analytics are unavailable</h2>
+          <p>The directory will return when the indexer API is healthy.</p>
+        </div>
+      ) : (
+        <CommunitySignalMap communities={data.communities} />
+      )}
     </div>
   );
 }

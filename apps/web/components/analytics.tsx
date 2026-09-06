@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { formatUnits } from "viem";
 
 import { Badge, Card, StatusBadge } from "@pl/ui";
@@ -146,6 +147,94 @@ export function WalletTable({ entries }: { entries: RankedWallet[] }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+export function LeaderboardBoard({ entries }: { entries: RankedWallet[] }) {
+  const leaders = entries.slice(0, 3);
+  const remainder = entries.slice(3);
+  return (
+    <div className="leaderboard-board">
+      <div className="leaderboard-podium">
+        <Image
+          src="/ui/leaderboard-podium.png"
+          alt="Abstract three-position predictor podium"
+          fill
+          priority
+          sizes="100vw"
+        />
+        <div className="leader-cards">
+          {leaders.map((entry, index) => (
+            <Link
+              key={entry.address}
+              href={`/profile/${entry.address}`}
+              className={`leader-card leader-${index + 1}`}
+            >
+              <span>0{index + 1}</span>
+              <strong>{shortAddress(entry.address)}</strong>
+              <dl>
+                <div>
+                  <dt>Realized PnL</dt>
+                  <dd>{formatUsdg(entry.realizedPnlUsdg)}</dd>
+                </div>
+                <div>
+                  <dt>ROI</dt>
+                  <dd>{formatBps(entry.roiBps)}</dd>
+                </div>
+                <div>
+                  <dt>Resolved</dt>
+                  <dd>{entry.resolvedMarkets}</dd>
+                </div>
+              </dl>
+              <small>
+                {entry.currentStreak === 0
+                  ? "No active streak"
+                  : `${entry.currentStreak > 0 ? "Win" : "Loss"} streak ${Math.abs(entry.currentStreak)}`}
+              </small>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {remainder.length > 0 && (
+        <div className="leaderboard-table-wrap">
+          <table className="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Wallet</th>
+                <th>Realized PnL</th>
+                <th>ROI</th>
+                <th>Hit rate</th>
+                <th>Volume</th>
+                <th>Resolved</th>
+                <th>Streak</th>
+              </tr>
+            </thead>
+            <tbody>
+              {remainder.map((entry, index) => (
+                <tr key={entry.address}>
+                  <td>{index + 4}</td>
+                  <td>
+                    <Link href={`/profile/${entry.address}`}>{shortAddress(entry.address)}</Link>
+                  </td>
+                  <td>{formatUsdg(entry.realizedPnlUsdg)}</td>
+                  <td>{formatBps(entry.roiBps)}</td>
+                  <td>{formatBps(entry.hitRateBps)}</td>
+                  <td>{formatUsdg(entry.volumeUsdg)}</td>
+                  <td>{entry.resolvedMarkets}</td>
+                  <td>
+                    {entry.currentStreak === 0
+                      ? "—"
+                      : `${entry.currentStreak > 0 ? "W" : "L"}${Math.abs(entry.currentStreak)}`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

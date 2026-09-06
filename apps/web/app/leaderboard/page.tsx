@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Card, StatusBadge } from "@pl/ui";
-import { AnalyticsUnavailable, WalletTable } from "@/components/analytics";
+import { LeaderboardBoard } from "@/components/analytics";
 import { getLeaderboard } from "@/lib/analytics-api";
 
 export const dynamic = "force-dynamic";
@@ -20,55 +19,69 @@ export default async function LeaderboardPage({
     data = await getLeaderboard(metric, window);
   } catch {}
   return (
-    <div className="space-y-8">
-      <header className="space-y-3">
-        <StatusBadge tone="indigo">Verified source-funded entries</StatusBadge>
-        <h1 className="text-3xl font-bold text-white">Predictor leaderboard</h1>
-        <p className="max-w-3xl text-slate-400">
-          Rank participating wallets by reproducible resolved-market performance.
-        </p>
-      </header>
-      <div className="flex flex-wrap gap-2">
-        {metrics.map((item) => (
-          <Link
-            key={item}
-            href={`/leaderboard?metric=${item}&window=${window}`}
-            className={`rounded-lg px-3 py-2 text-sm ${item === metric ? "bg-indigo-600 text-white" : "bg-white/5 text-slate-300"}`}
-          >
-            {item.replace("_", " ")}
-          </Link>
-        ))}
-        <span className="mx-1 border-l border-white/10" />
-        {windows.map((item) => (
-          <Link
-            key={item}
-            href={`/leaderboard?metric=${metric}&window=${item}`}
-            className={`rounded-lg px-3 py-2 text-sm ${item === window ? "bg-white/15 text-white" : "bg-white/5 text-slate-400"}`}
-          >
-            {item === "all" ? "All time" : item.toUpperCase()}
-          </Link>
-        ))}
+    <div className="light-route leaderboard-route">
+      <div className="leaderboard-heading">
+        <header>
+          <span className="section-kicker">Verified source-funded entries</span>
+          <h1 className="block-heading">Top predictors</h1>
+          <p>Reproducible resolved-market performance.</p>
+        </header>
+        <div className="leaderboard-controls">
+          <div>
+            {metrics.map((item) => (
+              <Link
+                key={item}
+                href={`/leaderboard?metric=${item}&window=${window}`}
+                className={item === metric ? "active" : ""}
+              >
+                {item.replace("_", " ")}
+              </Link>
+            ))}
+          </div>
+          <div>
+            {windows.map((item) => (
+              <Link
+                key={item}
+                href={`/leaderboard?metric=${metric}&window=${item}`}
+                className={item === window ? "active" : ""}
+              >
+                {item === "all" ? "All time" : item.toUpperCase()}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
       {!data ? (
-        <AnalyticsUnavailable />
+        <>
+          <LeaderboardBoard entries={[]} />
+          <div className="leaderboard-empty leaderboard-empty-overlay">
+            Leaderboard data is unavailable while the indexer API is offline.
+          </div>
+        </>
       ) : data.entries.length === 0 ? (
-        <Card className="space-y-2 text-sm text-slate-400">
-          <p>No wallets qualify for this ranking yet.</p>
-          <Link
-            href="/markets"
-            className="inline-flex font-semibold text-indigo-300 hover:text-indigo-200"
-          >
-            Make a prediction →
-          </Link>
-        </Card>
+        <>
+          <LeaderboardBoard entries={[]} />
+          <div className="leaderboard-empty leaderboard-empty-overlay">
+            <p>No wallets qualify for this ranking yet.</p>
+            <Link href="/markets">Make a prediction →</Link>
+          </div>
+        </>
       ) : (
-        <WalletTable entries={data.entries} />
+        <LeaderboardBoard entries={data.entries} />
       )}
       {(metric === "roi" || metric === "hit_rate") && (
-        <p className="text-xs text-slate-500">
+        <p className="leaderboard-method-note">
           Minimum {data?.minimumResolvedMarkets ?? 3} resolved markets required for this ranking.
         </p>
       )}
+      <div className="leaderboard-footer-row">
+        <span>
+          ROI and hit-rate rankings require at least {data?.minimumResolvedMarkets ?? 3} resolved
+          markets.
+        </span>
+        <Link href="/docs">View methodology →</Link>
+        <span>Window: {window === "all" ? "All time" : window.toUpperCase()}</span>
+      </div>
     </div>
   );
 }
