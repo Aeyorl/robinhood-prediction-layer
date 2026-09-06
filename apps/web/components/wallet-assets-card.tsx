@@ -9,7 +9,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { formatUnits } from "viem";
 import { getWalletAssets } from "@/lib/funding-api";
 
-export function WalletAssetsCard() {
+export function WalletAssetsCard({ showAllLink = true }: { showAllLink?: boolean }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -22,9 +22,14 @@ export function WalletAssetsCard() {
             ERC-20 balances with route eligibility to USDG collateral.
           </p>
         </div>
-        <Link href="/assets" className="text-xs text-indigo-400 hover:text-indigo-300">
-          View all →
-        </Link>
+        {showAllLink && (
+          <Link
+            href="/assets"
+            className="text-xs font-semibold text-indigo-300 hover:text-indigo-200"
+          >
+            View all →
+          </Link>
+        )}
       </div>
 
       {!mounted ? (

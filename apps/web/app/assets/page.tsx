@@ -12,7 +12,7 @@ export default function AssetsPage() {
           See which assets can currently route into USDG collateral before you choose a market.
         </p>
       </header>
-      <WalletAssetsCard />
+      <WalletAssetsCard showAllLink={false} />
     </div>
   );
 }

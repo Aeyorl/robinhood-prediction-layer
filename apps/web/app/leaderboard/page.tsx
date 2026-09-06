@@ -52,7 +52,15 @@ export default async function LeaderboardPage({
       {!data ? (
         <AnalyticsUnavailable />
       ) : data.entries.length === 0 ? (
-        <Card className="text-sm text-slate-400">No wallets qualify for this ranking yet.</Card>
+        <Card className="space-y-2 text-sm text-slate-400">
+          <p>No wallets qualify for this ranking yet.</p>
+          <Link
+            href="/markets"
+            className="inline-flex font-semibold text-indigo-300 hover:text-indigo-200"
+          >
+            Make a prediction →
+          </Link>
+        </Card>
       ) : (
         <WalletTable entries={data.entries} />
       )}

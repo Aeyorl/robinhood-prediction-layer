@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, Section, StatusBadge } from "@pl/ui";
 import { AnalyticsUnavailable, CommunityCard } from "@/components/analytics";
 import { getCommunities } from "@/lib/analytics-api";
@@ -23,8 +24,14 @@ export default async function CommunitiesPage() {
         {!data ? (
           <AnalyticsUnavailable />
         ) : data.communities.length === 0 ? (
-          <Card className="text-sm text-slate-400">
-            No verified source-token entries were indexed in the last 7 days.
+          <Card className="space-y-2 text-sm text-slate-400">
+            <p>No verified source-token entries were indexed in the last 7 days.</p>
+            <Link
+              href="/markets"
+              className="inline-flex font-semibold text-indigo-300 hover:text-indigo-200"
+            >
+              Explore open markets →
+            </Link>
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">

@@ -157,6 +157,12 @@ function PortfolioBody({ markets }: { markets: MarketView[] }) {
             Your positions are read directly from the chain for your wallet address — no account
             signup needed.
           </p>
+          <Link
+            href="/markets"
+            className="inline-flex text-sm font-semibold text-indigo-300 hover:text-indigo-200"
+          >
+            Explore markets →
+          </Link>
         </Card>
       ) : wrongChain ? (
         <Card>
