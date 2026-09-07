@@ -28,3 +28,9 @@ cast wallet verify --address <SAFE_OWNER> --data --from-file audit/safe-ceremony
 ```
 
 At least two verified owner signatures are required. These attestations confirm readiness and custody only; they do not authorize or broadcast a Safe transaction.
+
+## MetaMask-only owners
+
+When an existing Safe owner is controlled by a regular MetaMask software wallet, use the local signer at `tools/safe-ceremony/index.html` to collect the same EIP-712 readiness attestation without exposing a private key. The downloaded JSON evidence is public signature material and can be checked with `cast wallet verify` as shown above.
+
+A MetaMask signature proves control of the selected Safe owner address at signing time. It does not prove hardware isolation, independent physical custody or offline recovery readiness, so it does not satisfy a release policy that explicitly requires hardware wallets. Record that exception accurately and obtain the required client/security approval before changing the hardware-custody gate.

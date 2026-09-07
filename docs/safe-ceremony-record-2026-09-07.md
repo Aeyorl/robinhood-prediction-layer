@@ -23,6 +23,10 @@ Status: **prepared; hardware custody and recovery attestations are unsigned**.
 
 The owner addresses and threshold were read on Robinhood Chain mainnet. The prior MAG7 two-signer rehearsal proves transaction authorization on this Safe, but does not prove physical custody or recovery readiness for this release.
 
+## Software-wallet signatures
+
+One EIP-712 readiness signature from owner `0xa5e7…7f7A` was captured through MetaMask and independently verified with `cast wallet verify`. The public evidence is in `audit/safe-ceremony-metamask-signatures-v1.json`. A second owner signature is still required to match the Safe threshold. These software-wallet signatures do not satisfy the separate hardware-custody and offline-backup attestations below.
+
 ## Signer attestations
 
 Each owner completes one row without recording a seed phrase, PIN, private key, device serial number, or other authentication secret in this repository.

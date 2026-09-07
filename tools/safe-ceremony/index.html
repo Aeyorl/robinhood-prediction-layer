@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prediction Layer signer ceremony</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">LOCAL SIGNER TOOL · NO TRANSACTION</p>
+      <h1>MetaMask signer ceremony</h1>
+      <p class="intro">
+        Connect one approved Safe owner, verify the fixed release details, then sign the EIP-712
+        readiness attestation. This signature cannot move funds or authorize a deployment.
+      </p>
+
+      <section class="details" aria-label="Ceremony details">
+        <div><span>Chain</span><strong>Robinhood Chain · 4663</strong></div>
+        <div><span>Safe</span><strong>0x5A205159…7A4ab6a39</strong></div>
+        <div><span>Threshold</span><strong>2 of 3</strong></div>
+        <div><span>Audit candidate</span><strong>2a207ea…31376917</strong></div>
+        <div><span>Safe nonce observed</span><strong>4</strong></div>
+        <div><span>Deployment authorized</span><strong class="no">NO</strong></div>
+      </section>
+
+      <div class="notice">
+        Never enter a seed phrase or private key here. MetaMask should ask only for a typed-data
+        signature.
+      </div>
+
+      <button id="connect" type="button">Connect MetaMask</button>
+      <button id="sign" type="button" disabled>Review and sign</button>
+      <button id="download" type="button" disabled>Download evidence</button>
+
+      <p id="status" role="status">Waiting for an approved Safe owner.</p>
+      <pre id="signature" hidden></pre>
+    </main>
+    <script type="module" src="./sign.js"></script>
+  </body>
+</html>
