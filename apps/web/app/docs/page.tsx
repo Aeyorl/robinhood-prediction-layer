@@ -1,3 +1,4 @@
+import { branding } from "@pl/config";
 import Link from "next/link";
 
 const guides = [
@@ -43,7 +44,7 @@ export default function DocsPage() {
   return (
     <div className="docs-page">
       <header className="docs-hero">
-        <p className="section-kicker">Prediction Layer user guide</p>
+        <p className="section-kicker">{branding.appName} user guide</p>
         <h1 className="block-heading">
           Know every
           <br />
@@ -103,7 +104,7 @@ export default function DocsPage() {
           <h2 className="block-section-title">Inspect before you sign.</h2>
         </div>
         <p>
-          Every action remains visible in your wallet. Prediction Layer cannot approve or sign a
+          Every action remains visible in your wallet. {branding.appName} cannot approve or sign a
           transaction for you.
         </p>
         <Link href="/markets" className="lime-action">

@@ -1,4 +1,4 @@
-# Prediction Layer Safe ceremony record
+# Wagerly Safe ceremony record
 
 Status: **prepared; hardware custody and recovery attestations are unsigned**.
 

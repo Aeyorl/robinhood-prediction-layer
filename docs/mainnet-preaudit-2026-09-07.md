@@ -1,4 +1,4 @@
-# Prediction Layer mainnet pre-audit — 2026-09-07
+# Wagerly mainnet pre-audit — 2026-09-07
 
 ## 1. Executive summary
 
@@ -25,7 +25,7 @@ The reviewed local suite passes, but this document is an internal pre-audit hard
 | PL-09 | Medium               | Arithmetic edge cases could block settlement or payout               | `BinaryPoolMarket`, `MarketFactory`                  | Remediated; external retest required |
 | PL-10 | Medium               | Collateral accounting trusted requested transfer amount              | `BinaryPoolMarket._enter`                            | Remediated; external retest required |
 | PL-11 | High                 | Production Data Streams retrieval and stream policy not commissioned | API/worker, resolver configuration                   | Open                                 |
-| PL-12 | High                 | Prediction Layer signer ceremony evidence incomplete                 | Safe/timelock operations                             | Open                                 |
+| PL-12 | High                 | Wagerly signer ceremony evidence incomplete                 | Safe/timelock operations                             | Open                                 |
 
 ## 4. Detailed findings
 
@@ -77,7 +77,7 @@ The reviewed local suite passes, but this document is an internal pre-audit hard
 
 - **Location:** shared Safe and deployment procedure
 - **Category:** Key management / governance
-- **Description:** The 2-of-3 Safe and a prior MAG7 rehearsal are verified onchain, but Prediction Layer lacks signed hardware-wallet custody, recovery contact and ceremony records.
+- **Description:** The 2-of-3 Safe and a prior MAG7 rehearsal are verified onchain, but Wagerly lacks signed hardware-wallet custody, recovery contact and ceremony records.
 - **Attack scenario:** A signer device is unavailable or compromised during an incident, and operators cannot prove or execute the intended threshold process.
 - **Impact:** Delayed emergency response or unauthorized governance if custody assumptions are false.
 - **Likelihood:** Unknown until each signer attests.

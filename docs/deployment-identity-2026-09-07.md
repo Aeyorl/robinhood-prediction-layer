@@ -1,6 +1,6 @@
 # Production deployment identity — 2026-09-07
 
-The product owner authorized Prediction Layer to reuse existing MAG7 client-controlled addresses for the one-time deployer and fixed protocol-fee recipient.
+The product owner authorized Wagerly to reuse existing MAG7 client-controlled addresses for the one-time deployer and fixed protocol-fee recipient.
 
 ## Deployer
 
@@ -23,7 +23,7 @@ The address satisfies deployer/Safe role separation. Its current balance is not 
 - Zero-address administrator: no
 - Runtime code hash: `0x9e659b00ab93c9b14b6c603ab210f3d9306658babafe381767912b72bf6b2195`
 
-`FeeVault` holds collected tokens under the new Prediction Layer timelock and can withdraw only to this immutable recipient. Moving received USDG onward from the MAG7 timelock requires a separate transaction scheduled and executed by the shared client Safe after its 48-hour delay. This intentionally keeps fee custody away from the one-time deployer, while coupling fee disbursement to the client's existing governance timelock.
+`FeeVault` holds collected tokens under the new Wagerly timelock and can withdraw only to this immutable recipient. Moving received USDG onward from the MAG7 timelock requires a separate transaction scheduled and executed by the shared client Safe after its 48-hour delay. This intentionally keeps fee custody away from the one-time deployer, while coupling fee disbursement to the client's existing governance timelock.
 
 ## GitHub environment
 

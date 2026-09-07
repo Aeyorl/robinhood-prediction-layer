@@ -2,7 +2,7 @@
   "name": "@pl/worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Prediction Layer chain indexer",
+  "description": "Wagerly chain indexer",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

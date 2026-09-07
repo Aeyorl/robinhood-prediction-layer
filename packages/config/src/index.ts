@@ -3,12 +3,12 @@ import { z } from "zod";
 /**
  * Branding — rename the product in exactly one place.
  *
- * The working name is the placeholder "Prediction Layer". Nothing else in the
+ * The owner-approved product name is "Wagerly". Nothing else in the
  * codebase should hardcode the product name; import from here.
  */
 export const branding = {
-  /** Working name — placeholder, rename before launch. */
-  appName: "Prediction Layer",
+  /** Owner-approved product name. */
+  appName: "Wagerly",
   /** Robinhood Chain must always be spelled in full in external copy. */
   chainName: "Robinhood Chain",
 } as const;

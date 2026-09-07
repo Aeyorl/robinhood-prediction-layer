@@ -2,7 +2,7 @@
   "name": "@pl/api",
   "version": "0.1.0",
   "private": true,
-  "description": "Prediction Layer API (Fastify)",
+  "description": "Wagerly API (Fastify)",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

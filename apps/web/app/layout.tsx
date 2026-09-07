@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
               <p>
                 <span className="footer-mark" aria-hidden="true">
-                  PL
+                  W
                 </span>{" "}
                 Built on {branding.chainName}
               </p>

@@ -1,10 +1,10 @@
-# Prediction Layer
+# Wagerly
 
 Wallet-native binary prediction markets on **Robinhood Chain**. Users connect an EVM wallet, pick a YES/NO market on an objective financial outcome, fund their position with ERC-20 tokens they already hold (including meme tokens like PONS, DELTA, AI, CASHCAT), and the app swaps the funding token into canonical USDG collateral under the hood before entering the market onchain.
 
 This project is **standalone** — it does not reference, depend on, or reuse branding from ROOK or Strixis.
 
-> **Working name:** `Prediction Layer` (placeholder). Branding is centralized in `packages/config/src/branding.ts` so it can be renamed in one place.
+> **Product name:** `Wagerly`. Branding is centralized in `packages/config/src/index.ts` so it can be renamed in one place.
 
 ## Status
 

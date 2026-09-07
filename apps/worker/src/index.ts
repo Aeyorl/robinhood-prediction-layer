@@ -1,5 +1,5 @@
 /**
- * Prediction Layer chain indexer.
+ * Wagerly chain indexer.
  *
  * Runs a real loop today:
  *   - connects over WebSocket RPC (falls back to HTTP polling),

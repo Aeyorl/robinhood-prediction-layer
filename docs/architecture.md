@@ -2,7 +2,7 @@
 
 ## System overview
 
-Prediction Layer is a wallet-native binary prediction market on Robinhood Chain. Users connect an EVM wallet, choose YES/NO on objective price markets, fund with supported ERC-20s they already hold, and the app swaps the funding token into canonical USDG collateral before entering the market onchain.
+Wagerly is a wallet-native binary prediction market on Robinhood Chain. Users connect an EVM wallet, choose YES/NO on objective price markets, fund with supported ERC-20s they already hold, and the app swaps the funding token into canonical USDG collateral before entering the market onchain.
 
 ```text
 ┌────────────┐     ┌────────────┐     ┌────────────┐     ┌───────────────┐

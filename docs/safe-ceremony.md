@@ -10,7 +10,7 @@ Execution requires signer addresses, threshold, fee recipient, audited swap targ
 
 ## Existing Safe candidate
 
-The product owner confirmed on 2026-09-07 that Prediction Layer will reuse the same client governance Safe used for MAG7: `0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39`. A dedicated-RPC read on chain 4663 found deployed Safe v1.4.1 proxy code, nonce 4, three owners (`0xa5e7…7f7A`, `0x2603…812D`, `0x8cA7…A165`) and threshold 2. MAG7's successful two-owner signer rehearsal is carried forward as operational evidence. The selected one-time deployer is `0x913B8D346625736958664C77b0C8Efd3DA2a7bA2`; the immutable fee recipient is MAG7's existing timelock `0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8`. Hardware-wallet custody, recovery contacts and a signed Prediction Layer ceremony record remain required before deployment. See `safe-verification-2026-09-07.md` and `deployment-identity-2026-09-07.md`.
+The product owner confirmed on 2026-09-07 that Wagerly will reuse the same client governance Safe used for MAG7: `0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39`. A dedicated-RPC read on chain 4663 found deployed Safe v1.4.1 proxy code, nonce 4, three owners (`0xa5e7…7f7A`, `0x2603…812D`, `0x8cA7…A165`) and threshold 2. MAG7's successful two-owner signer rehearsal is carried forward as operational evidence. The selected one-time deployer is `0x913B8D346625736958664C77b0C8Efd3DA2a7bA2`; the immutable fee recipient is MAG7's existing timelock `0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8`. Hardware-wallet custody, recovery contacts and a signed Wagerly ceremony record remain required before deployment. See `safe-verification-2026-09-07.md` and `deployment-identity-2026-09-07.md`.
 
 ## Hardware-wallet attestation
 

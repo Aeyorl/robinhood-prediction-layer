@@ -1,5 +1,6 @@
 "use client";
 
+import { branding } from "@pl/config";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,8 +19,8 @@ export function SiteHeader() {
     <>
       <header className="site-header">
         <div className="site-header-inner">
-          <Link href="/" className="wordmark" aria-label="Prediction Layer home">
-            <strong>Prediction Layer</strong>
+          <Link href="/" className="wordmark" aria-label={`${branding.appName} home`}>
+            <strong>{branding.appName}</strong>
           </Link>
           <nav aria-label="Primary navigation" className="desktop-nav">
             {navLinks.map((link) => (

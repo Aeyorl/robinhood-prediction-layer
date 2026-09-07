@@ -2,7 +2,7 @@
   "name": "@pl/contracts",
   "version": "0.1.0",
   "private": true,
-  "description": "Foundry smart contracts for the Prediction Layer protocol",
+  "description": "Foundry smart contracts for the Wagerly protocol",
   "exports": {
     "./abi/*.json": "./abi/*.json"
   },

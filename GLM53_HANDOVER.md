@@ -104,7 +104,7 @@ The local environment was refreshed onto Anvil chain `46630` and is currently he
 3. **Production RPC:** official and public endpoints are verified, but the user's private Alchemy/other production HTTP and WSS endpoints are not supplied.
 4. **Safe ceremony/timelock:** contract and deployment script are ready; the existing Safe candidate needs ownership confirmation, signer-control attestation, fee recipient, audited swap target, production RPC, external audit, compliance clearance, and explicit deployment approval. Nothing was deployed to mainnet.
 5. **Monitoring:** generic webhook runner and evidence format exist. The actual paging webhook/log vendor, retention policy and staging environment are not supplied. Local evidence is not staging evidence.
-6. **Brand:** Robinhood usage is reviewed and compliant at the code/copy level. `Prediction Layer` is still a placeholder. A final name needs owner direction plus trademark counsel clearance; do not claim a trademark is clear from web searching.
+6. **Brand:** Robinhood usage is reviewed and compliant at the code/copy level. The owner selected `Wagerly` on 2026-09-07. Trademark counsel clearance remains pending; do not claim a trademark is clear from web searching.
 
 ## Required user inputs
 
