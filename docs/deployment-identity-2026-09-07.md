@@ -28,3 +28,16 @@ The address satisfies deployer/Safe role separation. Its current balance is not 
 ## GitHub environment
 
 The protected `mainnet` environment records the public `DEPLOYER_ADDRESS` and `FEE_RECIPIENT` values. `DEPLOYER_PRIVATE_KEY` remains unset. The values authorize configuration preparation only; they do not satisfy the audit/compliance gates or authorize a broadcast.
+
+## No-broadcast deployment simulation
+
+On 2026-09-07, `Deploy.s.sol` completed against Robinhood Chain mainnet state at block `56484199` with the selected deployer, shared Safe, MAG7 timelock fee recipient, and verified external dependency configuration. Foundry reported:
+
+- Estimated gas used: `8,896,047`
+- Estimated gas price: `0.709152001 gwei`
+- Estimated amount required: `0.006308649531040047 ETH`
+- Recommended bounded deployer funding ceiling: `0.01 ETH`
+
+The `0.01 ETH` ceiling adds approximately 58% headroom to the observed estimate. Re-run the simulation immediately before funding; if the fresh estimate exceeds the ceiling, stop and review rather than increasing it automatically. Transfer funds only after every signed release gate is satisfied and the final broadcast is explicitly approved.
+
+The contract addresses printed by this dry run are deterministic simulation outputs only. They are not deployed addresses and must not be published in the production address book. No transaction was broadcast.
