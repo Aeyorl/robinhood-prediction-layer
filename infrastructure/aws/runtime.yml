@@ -1,0 +1,169 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Prediction Layer gated production API and worker task definitions.
+
+Parameters:
+  ImageTag:
+    Type: String
+    AllowedPattern: "sha-[0-9a-f]{40}"
+  TaskExecutionRoleArn:
+    Type: String
+  TaskRoleArn:
+    Type: String
+  DatabaseUrlSecretArn:
+    Type: String
+  RedisUrlSecretArn:
+    Type: String
+  UniswapApiKeySecretArn:
+    Type: String
+  RpcEndpointsSecretArn:
+    Type: String
+  CorsOrigin:
+    Type: String
+    AllowedPattern: "https://.+"
+  PredictionEntryRouterAddress:
+    Type: String
+    AllowedPattern: "0x[0-9a-fA-F]{40}"
+  MarketFactoryAddress:
+    Type: String
+    AllowedPattern: "0x[0-9a-fA-F]{40}"
+  StartBlock:
+    Type: Number
+    MinValue: 1
+  ExternalAuditApproved:
+    Type: String
+    Default: "false"
+    AllowedValues: ["false", "true"]
+  ComplianceApproved:
+    Type: String
+    Default: "false"
+    AllowedValues: ["false", "true"]
+
+Resources:
+  ApiTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: prediction-layer-production-api
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn: !Ref TaskExecutionRoleArn
+      TaskRoleArn: !Ref TaskRoleArn
+      Volumes:
+        - Name: temporary-files
+      ContainerDefinitions:
+        - Name: api
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/prediction-layer/api:${ImageTag}
+          Essential: true
+          ReadonlyRootFilesystem: true
+          PortMappings:
+            - ContainerPort: 3001
+              Protocol: tcp
+          MountPoints:
+            - SourceVolume: temporary-files
+              ContainerPath: /tmp
+              ReadOnly: false
+          Environment:
+            - Name: PORT
+              Value: "3001"
+            - Name: CORS_ORIGIN
+              Value: !Ref CorsOrigin
+            - Name: PRODUCTION_MODE
+              Value: "true"
+            - Name: MAINNET_EXTERNAL_AUDIT_APPROVED
+              Value: !Ref ExternalAuditApproved
+            - Name: MAINNET_COMPLIANCE_APPROVED
+              Value: !Ref ComplianceApproved
+            - Name: CHAIN_ID
+              Value: "4663"
+            - Name: SWAP_ADAPTER
+              Value: uniswap
+            - Name: PREDICTION_ENTRY_ROUTER_ADDRESS
+              Value: !Ref PredictionEntryRouterAddress
+            - Name: USDG_ADDRESS
+              Value: 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "${DatabaseUrlSecretArn}:url::"
+            - Name: REDIS_URL
+              ValueFrom: !Sub "${RedisUrlSecretArn}:url::"
+            - Name: UNISWAP_API_KEY
+              ValueFrom: !Sub "${UniswapApiKeySecretArn}:key::"
+            - Name: RPC_HTTP_URL
+              ValueFrom: !Sub "${RpcEndpointsSecretArn}:RPC_HTTP_URL::"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/prediction-layer/production/api
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: task
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  WorkerTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: prediction-layer-production-worker
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn: !Ref TaskExecutionRoleArn
+      TaskRoleArn: !Ref TaskRoleArn
+      Volumes:
+        - Name: temporary-files
+      ContainerDefinitions:
+        - Name: worker
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/prediction-layer/worker:${ImageTag}
+          Essential: true
+          ReadonlyRootFilesystem: true
+          MountPoints:
+            - SourceVolume: temporary-files
+              ContainerPath: /tmp
+              ReadOnly: false
+          Environment:
+            - Name: CHAIN_ID
+              Value: "4663"
+            - Name: START_BLOCK
+              Value: !Ref StartBlock
+            - Name: FACTORY_ADDRESS
+              Value: !Ref MarketFactoryAddress
+            - Name: HTTP_POLL_INTERVAL_MS
+              Value: "4000"
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "${DatabaseUrlSecretArn}:url::"
+            - Name: REDIS_URL
+              ValueFrom: !Sub "${RedisUrlSecretArn}:url::"
+            - Name: RPC_HTTP_URL
+              ValueFrom: !Sub "${RpcEndpointsSecretArn}:RPC_HTTP_URL::"
+            - Name: RPC_WS_URL
+              ValueFrom: !Sub "${RpcEndpointsSecretArn}:RPC_WS_URL::"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/prediction-layer/production/worker
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: task
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+Outputs:
+  ApiTaskDefinitionArn:
+    Value: !Ref ApiTaskDefinition
+  WorkerTaskDefinitionArn:
+    Value: !Ref WorkerTaskDefinition
