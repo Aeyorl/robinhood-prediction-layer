@@ -5,6 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import {OracleRegistry} from "../src/oracle/OracleRegistry.sol";
 import {ChainlinkPriceResolver} from "../src/oracle/ChainlinkPriceResolver.sol";
 import {DataStreamsRwaResolver} from "../src/oracle/DataStreamsRwaResolver.sol";
+import {SafeClosingPriceResolver} from "../src/oracle/SafeClosingPriceResolver.sol";
 import {IVerifierProxy} from "../src/interfaces/IVerifierProxy.sol";
 import {FeeVault} from "../src/fee/FeeVault.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
@@ -50,6 +51,8 @@ contract Deploy is Script {
         ChainlinkPriceResolver resolver = new ChainlinkPriceResolver(address(timelock), registry);
         DataStreamsRwaResolver dataStreamsResolver =
             new DataStreamsRwaResolver(address(timelock), IVerifierProxy(dataStreamsVerifier));
+        SafeClosingPriceResolver safeClosingPriceResolver =
+            new SafeClosingPriceResolver(address(timelock), safe);
         FeeVault feeVault = new FeeVault(address(timelock), feeRecipient);
         MarketFactory factory = new MarketFactory(address(timelock));
         PredictionEntryRouter router =
@@ -62,6 +65,7 @@ contract Deploy is Script {
         console2.log("  oracleRegistry   ", address(registry));
         console2.log("  chainlinkResolver", address(resolver));
         console2.log("  streamsResolver  ", address(dataStreamsResolver));
+        console2.log("  safeCloseResolver", address(safeClosingPriceResolver));
         console2.log("  feeVault         ", address(feeVault));
         console2.log("  factory          ", address(factory));
         console2.log("  entryRouter      ", address(router));

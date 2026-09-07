@@ -1,6 +1,25 @@
 # Oracles
 
-Local/demo markets use Chainlink `AggregatorV3Interface` feeds through `ChainlinkPriceResolver`. Scheduled-time production equity markets use `DataStreamsRwaResolver` with Chainlink Data Streams RWA Advanced (v11) reports verified by the canonical Robinhood Chain verifier proxy.
+Local/demo markets use Chainlink `AggregatorV3Interface` feeds through `ChainlinkPriceResolver`. Production equity markets can use `SafeClosingPriceResolver`, which has no recurring data-subscription cost and resolves from delayed, evidence-bound closing prices approved through the protocol Safe and timelock. `DataStreamsRwaResolver` remains available as an optional paid automation path.
+
+## Zero-subscription Safe closing-price resolution
+
+`SafeClosingPriceResolver` is the default path while paid equity-stream entitlements are unavailable. It does not turn a public website into a trustless oracle. Governance is the oracle, and the product must disclose that fact on every affected market.
+
+For each supported equity, governance configures the price decimals, a challenge period, and the maximum delay allowed between the named close and observation submission. Recommended initial terms are 18 decimals, a 24-hour challenge period, and a four-day submission deadline. The deadline accommodates the protocol timelock before publication. These terms are included in the market's snapshotted config hash and cannot be changed for an existing market.
+
+After the named exchange close:
+
+1. Two operators independently record the official close from the primary source named in the market metadata and one independent secondary source.
+2. They record source URLs, retrieval timestamps, timezone, unadjusted closing price, market-calendar status, and any split or corporate-action notice in one canonical JSON evidence document.
+3. If the sources disagree, the session was not a normal trading day, or a corporate action makes the terms ambiguous, governance cancels the market so users can refund.
+4. Upload the evidence document to durable public storage, hash its exact bytes, and submit `proposeObservation(assetKey, resolutionTime, price, evidenceHash, evidenceUri)` through the Safe and timelock.
+5. Display the observation, evidence, and `usableAt` timestamp publicly during the challenge period. A valid challenge must cause the Safe guardian to call `cancelObservation` before the period ends. This cancellation is the Safe's only direct resolver power; configuration and publication remain timelock-controlled.
+6. After both the governance delay and resolver challenge period have elapsed, anyone may call the market's no-proof `resolve()` function.
+
+An observation is immutable after publication and cannot be replaced. A cancelled or late observation cannot resolve a market. If no valid observation is available, the factory owner cancels the market and users claim refunds.
+
+This removes the monthly oracle subscription, but mainnet gas, independent contract review, signer operations, monitoring, and legal/compliance work still carry costs. Do not describe it as automated, decentralized, Chainlink-verified, or guaranteed.
 
 `ChainlinkPriceResolver` returns the latest push-feed value and cannot prove the price at a past timestamp. It must not be configured for mainnet questions such as "close above at 4:00 PM". The no-proof resolver remains useful for local tests and for any separately reviewed market whose terms explicitly define resolution from the live value when the transaction executes.
 
@@ -24,7 +43,7 @@ Comparators are strict:
 - `PRICE_BELOW_AT_TIME` → YES if price < strike, NO if price > strike
 - price == strike → no winner → market cancels and refunds
 
-## Data Streams scheduled-time resolution
+## Optional Data Streams scheduled-time resolution
 
 `BinaryPoolMarket.resolve(bytes)` passes the signed report payload to `DataStreamsRwaResolver`. The resolver calls Chainlink's verifier proxy and accepts only an RWA Advanced v11 report that:
 
