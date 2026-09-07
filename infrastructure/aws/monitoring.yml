@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Prediction Layer production data-service monitoring and alert routing.
+
+Parameters:
+  DatabaseInstanceIdentifier:
+    Type: String
+    Default: prediction-layer-production
+  CacheClusterId:
+    Type: String
+    Default: prediction-layer-production-001
+
+Resources:
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: prediction-layer-production-alerts
+      DisplayName: Prediction Layer production alerts
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  AlertTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref AlertTopic
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudWatchAlarms
+            Effect: Allow
+            Principal:
+              Service: cloudwatch.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref AlertTopic
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:prediction-layer-production-*
+
+  DatabaseCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-rds-cpu-high
+      AlarmDescription: RDS CPU has exceeded 80 percent for three consecutive five-minute periods.
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DatabaseInstanceIdentifier
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
+      AlarmActions:
+        - !Ref AlertTopic
+      OKActions:
+        - !Ref AlertTopic
+
+  DatabaseStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-rds-storage-low
+      AlarmDescription: RDS free storage has remained below 2 GiB for two consecutive five-minute periods.
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DatabaseInstanceIdentifier
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: 2147483648
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmActions:
+        - !Ref AlertTopic
+      OKActions:
+        - !Ref AlertTopic
+
+  CacheCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-cache-cpu-high
+      AlarmDescription: Valkey engine CPU has exceeded 75 percent for three consecutive five-minute periods.
+      Namespace: AWS/ElastiCache
+      MetricName: EngineCPUUtilization
+      Dimensions:
+        - Name: CacheClusterId
+          Value: !Ref CacheClusterId
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 3
+      Threshold: 75
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
+      AlarmActions:
+        - !Ref AlertTopic
+      OKActions:
+        - !Ref AlertTopic
+
+  CacheMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-cache-memory-high
+      AlarmDescription: Valkey database memory usage has exceeded 80 percent for three consecutive five-minute periods.
+      Namespace: AWS/ElastiCache
+      MetricName: DatabaseMemoryUsagePercentage
+      Dimensions:
+        - Name: CacheClusterId
+          Value: !Ref CacheClusterId
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
+      AlarmActions:
+        - !Ref AlertTopic
+      OKActions:
+        - !Ref AlertTopic
+
+  DataServicesDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: prediction-layer-production
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "PostgreSQL health",
+                "region": "${AWS::Region}",
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${DatabaseInstanceIdentifier}", {"label": "CPU percent"}],
+                  [".", "DatabaseConnections", ".", ".", {"label": "Connections", "yAxis": "right"}],
+                  [".", "FreeStorageSpace", ".", ".", {"label": "Free storage bytes", "yAxis": "right"}]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Valkey health",
+                "region": "${AWS::Region}",
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/ElastiCache", "EngineCPUUtilization", "CacheClusterId", "${CacheClusterId}", {"label": "Engine CPU percent"}],
+                  [".", "DatabaseMemoryUsagePercentage", ".", ".", {"label": "Memory percent"}],
+                  [".", "CurrConnections", ".", ".", {"label": "Connections", "yAxis": "right"}],
+                  [".", "Evictions", ".", ".", {"label": "Evictions", "yAxis": "right"}]
+                ]
+              }
+            }
+          ]
+        }
+
+Outputs:
+  AlertTopicArn:
+    Description: Subscribe the approved on-call destination before enabling production traffic.
+    Value: !Ref AlertTopic
+  DashboardName:
+    Value: !Ref DataServicesDashboard

@@ -10,4 +10,4 @@ Execution requires signer addresses, threshold, fee recipient, audited swap targ
 
 ## Existing Safe candidate
 
-Read-only verification found Safe `0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39` on chain 4663 with deployed proxy code, nonce 1, three owners (`0xa5e7…7f7A`, `0x2603…812D`, `0x8cA7…A165`) and threshold 2. The owner must confirm that this Safe belongs to this product and that each signer meets the ceremony requirements before `Deploy.s.sol` uses it.
+Read-only verification on 2026-09-07 found Safe `0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39` on chain 4663 with deployed proxy code, nonce 4, three owners (`0xa5e7…7f7A`, `0x2603…812D`, `0x8cA7…A165`) and threshold 2. The owner must confirm that this Safe belongs to this product and that each signer meets the ceremony requirements before `Deploy.s.sol` uses it. See `safe-verification-2026-09-07.md` for the exact read-only evidence.
