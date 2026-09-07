@@ -1,11 +1,17 @@
 {
   "payload": "safe-ceremony-eip712-v1.json",
-  "status": "one-of-three-verified",
+  "status": "two-of-three-verified",
   "requiredForSafeThreshold": 2,
   "signatures": [
     {
       "owner": "0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A",
       "signature": "0x935e0c098421e82f9a2069d73f0a63916450d37e3cd28abdb9b23ae4adbba83d69c2718051e4f6d0ea6b4b2f7781f0e962be7ee0d1973ca89b6c763ea76fc22c1b",
+      "walletType": "MetaMask software wallet",
+      "verification": "cast wallet verify succeeded"
+    },
+    {
+      "owner": "0x8cA71B70C91BD8250073dfDD323b9219Bce6A165",
+      "signature": "0xd704b47949977be34ec1aee7d0970ab869c396c05888426cb95d7a2422a56d694bd2e2d8900b7a60c6157e1e072719fb419532225b86b35f5761eeedb1f07a261c",
       "walletType": "MetaMask software wallet",
       "verification": "cast wallet verify succeeded"
     }

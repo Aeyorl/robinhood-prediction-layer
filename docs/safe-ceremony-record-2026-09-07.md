@@ -25,7 +25,7 @@ The owner addresses and threshold were read on Robinhood Chain mainnet. The prio
 
 ## Software-wallet signatures
 
-One EIP-712 readiness signature from owner `0xa5e7…7f7A` was captured through MetaMask and independently verified with `cast wallet verify`. The public evidence is in `audit/safe-ceremony-metamask-signatures-v1.json`. A second owner signature is still required to match the Safe threshold. These software-wallet signatures do not satisfy the separate hardware-custody and offline-backup attestations below.
+Two EIP-712 readiness signatures from owners `0xa5e7…7f7A` and `0x8cA7…A165` were captured through MetaMask and independently verified with `cast wallet verify`. The public evidence is in `audit/safe-ceremony-metamask-signatures-v1.json`. The two signatures match the recorded Safe threshold. They attest to the fixed candidate and observed nonce 4 with deploymentAuthorized=false; they are not deployment authorization. These software-wallet signatures do not satisfy the separate hardware-custody and offline-backup attestations below.
 
 ## Signer attestations
 
