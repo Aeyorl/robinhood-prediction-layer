@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import {Script, console2} from "forge-std/Script.sol";
 import {OracleRegistry} from "../src/oracle/OracleRegistry.sol";
 import {ChainlinkPriceResolver} from "../src/oracle/ChainlinkPriceResolver.sol";
+import {DataStreamsRwaResolver} from "../src/oracle/DataStreamsRwaResolver.sol";
+import {IVerifierProxy} from "../src/interfaces/IVerifierProxy.sol";
 import {FeeVault} from "../src/fee/FeeVault.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {PredictionEntryRouter} from "../src/router/PredictionEntryRouter.sol";
@@ -23,6 +25,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 ///   SAFE_ADDRESS         — production multisig; sole proposer/executor
 ///   USDG_ADDRESS         — canonical collateral, re-verified before execution
 ///   SWAP_TARGET          — audited production swap router to allowlist
+///   DATA_STREAMS_VERIFIER — Chainlink Data Streams verifier proxy
 ///   CONFIG_JSON          — optional path to a JSON file of {assetKey: {...}}
 ///                          feed configs to preload into the registry
 contract Deploy is Script {
@@ -32,9 +35,12 @@ contract Deploy is Script {
         address feeRecipient = vm.envAddress("FEE_RECIPIENT");
         address usdg = vm.envAddress("USDG_ADDRESS");
         address swapTarget = vm.envAddress("SWAP_TARGET");
+        address dataStreamsVerifier = vm.envAddress("DATA_STREAMS_VERIFIER");
         require(chainId == 4663 || chainId == 46630, "unsupported CHAIN_ID");
         require(
-            safe != address(0) && usdg != address(0) && swapTarget != address(0), "zero address"
+            safe != address(0) && usdg != address(0) && swapTarget != address(0)
+                && dataStreamsVerifier != address(0),
+            "zero address"
         );
 
         vm.startBroadcast();
@@ -42,6 +48,8 @@ contract Deploy is Script {
         ProtocolTimelock timelock = new ProtocolTimelock(safe);
         OracleRegistry registry = new OracleRegistry(address(timelock));
         ChainlinkPriceResolver resolver = new ChainlinkPriceResolver(address(timelock), registry);
+        DataStreamsRwaResolver dataStreamsResolver =
+            new DataStreamsRwaResolver(address(timelock), IVerifierProxy(dataStreamsVerifier));
         FeeVault feeVault = new FeeVault(address(timelock), feeRecipient);
         MarketFactory factory = new MarketFactory(address(timelock));
         PredictionEntryRouter router =
@@ -53,6 +61,7 @@ contract Deploy is Script {
         console2.log("  timelock         ", address(timelock));
         console2.log("  oracleRegistry   ", address(registry));
         console2.log("  chainlinkResolver", address(resolver));
+        console2.log("  streamsResolver  ", address(dataStreamsResolver));
         console2.log("  feeVault         ", address(feeVault));
         console2.log("  factory          ", address(factory));
         console2.log("  entryRouter      ", address(router));

@@ -4,7 +4,7 @@ Status: **prepared for reviewers; no external approval has been received**.
 
 ## Independent smart-contract audit
 
-Scope the deployed release commit and all Solidity under `packages/contracts`, with emphasis on `BinaryPoolMarket`, `PredictionEntryRouter`, the oracle registry/resolver, fee accounting, factory authorization, timelock ownership, cancellation/refund behavior, token edge cases and adapter external calls. Reviewers should receive the build toolchain, dependency lockfile, deployment script, local test evidence and intended production address manifest.
+Scope the deployed release commit and all Solidity under `packages/contracts`, with emphasis on `BinaryPoolMarket`, `PredictionEntryRouter`, `DataStreamsRwaResolver`, the push-feed registry/resolver, fee accounting, factory authorization, timelock ownership, cancellation/refund behavior, token edge cases and adapter/verifier external calls. Reviewers should challenge the RWA v11 decoding, report-schema binding, validity-window and market-session rules, price timestamp policy, config-hash freeze and the operational report-fetch path. Reviewers should receive the build toolchain, dependency lockfile, deployment script, local test evidence and intended production address manifest.
 
 The accepted deliverable must identify the auditor and firm, qualifications, exact commit, scope, exclusions, methods, finding severities, remediation status, retest result, report hash, signature and completion date. Every accepted finding must link to a fix commit or a signed risk acceptance. An independent signed report and remediation retest are required before `MAINNET_EXTERNAL_AUDIT_APPROVED=true`.
 

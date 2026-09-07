@@ -67,6 +67,7 @@ jobs:
           FEE_RECIPIENT: ${{ vars.FEE_RECIPIENT }}
           USDG_ADDRESS: ${{ vars.USDG_ADDRESS }}
           SWAP_TARGET: ${{ vars.SWAP_TARGET }}
+          DATA_STREAMS_VERIFIER: ${{ vars.DATA_STREAMS_VERIFIER }}
         working-directory: packages/contracts
         run: |
           actual_deployer="$(cast wallet address --private-key "$ETH_PRIVATE_KEY")"

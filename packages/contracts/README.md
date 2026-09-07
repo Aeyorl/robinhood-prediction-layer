@@ -6,9 +6,9 @@ Binary pooled parimutuel prediction markets for Robinhood Chain.
 
 ```text
 src/
-  interfaces/   AggregatorV3Interface, IOracleResolver, IStockTokenOracleState, IMarket
+  interfaces/   AggregatorV3Interface, IOracleResolver, IVerifierProxy, IStockTokenOracleState, IMarket
   market/       BinaryPoolMarket (core), MarketFactory (admin creation)
-  oracle/       OracleRegistry, ChainlinkPriceResolver
+  oracle/       OracleRegistry, ChainlinkPriceResolver, DataStreamsRwaResolver
   fee/          FeeVault
   mocks/        MockUSDG, MockERC20, MockAggregatorV3, MockSequencerFeed, MockStockToken
 test/           unit, fuzz, invariant, and vertical-slice tests
@@ -64,6 +64,12 @@ cap (10%), contract always solvent.
   edits cannot change existing resolution terms.
 - Comparison between feed price and strike is normalized to a common decimal
   scale in `BinaryPoolMarket._evaluate`.
-- A Chainlink Data Streams resolver interface slot exists (`IOracleResolver`)
-  but verification is NOT faked — wire it up in a later milestone with the
-  real verifier proxy.
+- Scheduled-time production equity markets use `DataStreamsRwaResolver` and
+  `resolve(bytes)` with the unmodified signed RWA Advanced v11 payload. The
+  resolver calls the configured Chainlink verifier proxy, then binds the
+  verified feed ID, validity interval, expiry, expected market session, positive
+  mid price, and price timestamp to the market's frozen oracle terms.
+- `ChainlinkPriceResolver` remains the no-proof push-feed implementation for
+  local markets and separately reviewed terms that explicitly resolve from the
+  live value when the transaction executes. It must not settle a historical
+  scheduled-time question.

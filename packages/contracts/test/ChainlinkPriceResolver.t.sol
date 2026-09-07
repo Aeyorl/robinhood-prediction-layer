@@ -12,7 +12,7 @@ import {IMarket} from "../src/interfaces/IMarket.sol";
 contract ChainlinkPriceResolverTest is BaseTest {
     function test_resolve_happyPath() public {
         feed.setAnswer(123e18);
-        (int256 price, uint8 decimals) = resolver.resolve(assetKey, block.timestamp);
+        (int256 price, uint8 decimals) = resolver.resolve(assetKey, block.timestamp, bytes(""));
         assertEq(price, 123e18);
         assertEq(decimals, 18);
     }
@@ -20,38 +20,38 @@ contract ChainlinkPriceResolverTest is BaseTest {
     function test_resolve_unconfiguredAsset_reverts() public {
         bytes32 unknown = keccak256(abi.encode(uint256(46630), address(0x1234)));
         vm.expectRevert(bytes("asset not configured"));
-        resolver.resolve(unknown, block.timestamp);
+        resolver.resolve(unknown, block.timestamp, bytes(""));
     }
 
     function test_resolve_answerZero_reverts() public {
         feed.setAnswer(0);
         vm.expectRevert(bytes("invalid answer"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_negativeAnswer_reverts() public {
         feed.setAnswer(-1e18);
         vm.expectRevert(bytes("invalid answer"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_staleFeed_reverts() public {
         vm.warp(1 hours + 100); // enough history for an old, nonzero round timestamp
         feed.setAnswerAndTime(100e18, block.timestamp - 1 hours - 1); // 1s older than the 1h heartbeat
         vm.expectRevert(bytes("stale feed"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_updatedAtZero_reverts() public {
         feed.setAnswerAndTime(100e18, 0);
         vm.expectRevert(bytes("no update"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_sequencerDown_reverts() public {
         sequencer.setDown();
         vm.expectRevert(bytes("sequencer down"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_sequencerGracePeriod_reverts() public {
@@ -66,7 +66,7 @@ contract ChainlinkPriceResolverTest is BaseTest {
         gFeed.setAnswer(100e18);
         gSeq.setUp(); // status change at now → grace not elapsed yet
         vm.expectRevert(bytes("sequencer grace not elapsed"));
-        resolver.resolve(gKey, block.timestamp);
+        resolver.resolve(gKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_afterGracePeriod_succeeds() public {
@@ -80,7 +80,7 @@ contract ChainlinkPriceResolverTest is BaseTest {
         gSeq.setUp(); // grace starts now
         vm.warp(block.timestamp + 1 hours + 1); // grace elapsed
         gFeed.setAnswerAndTime(100e18, block.timestamp); // keep fresh
-        (int256 price,) = resolver.resolve(gKey, block.timestamp);
+        (int256 price,) = resolver.resolve(gKey, block.timestamp, bytes(""));
         assertEq(price, 100e18);
     }
 
@@ -88,7 +88,7 @@ contract ChainlinkPriceResolverTest is BaseTest {
         vm.prank(owner);
         registry.setPaused(assetKey, true);
         vm.expectRevert(bytes("oracle paused"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_stockTokenOraclePaused_reverts() public {
@@ -112,7 +112,7 @@ contract ChainlinkPriceResolverTest is BaseTest {
         assertTrue(h.tokenOraclePaused);
         assertTrue(h.tokenStateReadable);
         vm.expectRevert(bytes("oracle paused"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_unreadableStockTokenPause_failsClosed() public {
@@ -132,19 +132,19 @@ contract ChainlinkPriceResolverTest is BaseTest {
         assertFalse(h.healthy);
         assertFalse(h.tokenStateReadable);
         vm.expectRevert(bytes("oracle pause unreadable"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_futureTimestamp_revertsAsStale() public {
         feed.setAnswerAndTime(100e18, block.timestamp + 1);
         vm.expectRevert(bytes("stale feed"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_resolve_incompleteRound_reverts() public {
         feed.setRoundData(100e18, block.timestamp, 2, 1);
         vm.expectRevert(bytes("incomplete round"));
-        resolver.resolve(assetKey, block.timestamp);
+        resolver.resolve(assetKey, block.timestamp, bytes(""));
     }
 
     function test_configHash_changesOnlyWhenResolutionTermsChange() public {
@@ -191,7 +191,7 @@ contract ChainlinkPriceResolverTest is BaseTest {
         vm.prank(owner);
         registry.setAssetConfig(key, address(sixDecFeed), address(sequencer), 1 hours, 0, false);
         sixDecFeed.setAnswer(123_456_789); // 123.456789 USD
-        (int256 price, uint8 decimals) = resolver.resolve(key, block.timestamp);
+        (int256 price, uint8 decimals) = resolver.resolve(key, block.timestamp, bytes(""));
         assertEq(price, 123_456_789);
         assertEq(decimals, 6);
     }

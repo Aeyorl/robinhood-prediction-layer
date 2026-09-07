@@ -32,6 +32,10 @@ contract MarketFactory is Ownable {
         require(params.feeBps <= MAX_FEE_BPS, "fee exceeds cap");
         require(params.openTime < params.lockTime, "open must be before lock");
         require(params.lockTime <= params.resolutionTime, "lock must precede resolution");
+        require(
+            params.resolutionTime <= type(uint256).max - params.gracePeriod,
+            "resolution deadline overflow"
+        );
         require(params.minEntry > 0, "min entry is zero");
         require(params.strikeDecimals <= 36, "strike decimals too large");
         require(bytes(params.question).length > 0, "empty question");

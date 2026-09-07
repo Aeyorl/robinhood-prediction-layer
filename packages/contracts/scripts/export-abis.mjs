@@ -18,6 +18,7 @@ const contracts = [
   ["src/market/MarketFactory.sol", "MarketFactory"],
   ["src/oracle/OracleRegistry.sol", "OracleRegistry"],
   ["src/oracle/ChainlinkPriceResolver.sol", "ChainlinkPriceResolver"],
+  ["src/oracle/DataStreamsRwaResolver.sol", "DataStreamsRwaResolver"],
   ["src/fee/FeeVault.sol", "FeeVault"],
   ["src/router/PredictionEntryRouter.sol", "PredictionEntryRouter"],
   ["src/mocks/MockUSDG.sol", "MockUSDG"],

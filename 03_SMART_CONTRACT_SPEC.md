@@ -25,6 +25,7 @@ MarketFactory.sol
 BinaryPoolMarket.sol
 OracleRegistry.sol
 ChainlinkPriceResolver.sol
+DataStreamsRwaResolver.sol
 FeeVault.sol
 interfaces/
   IMarketFactory.sol
@@ -143,7 +144,7 @@ Requirements:
 - update user stake and pool,
 - emit event after state update.
 
-Do not infer actual received amount for fee-on-transfer tokens because collateral is canonical USDG and should be a known standard token.
+Measure the actual balance increase and require it to equal `amount`. This rejects fee-on-transfer, rebasing, or otherwise non-standard collateral behavior even if an incorrect token is configured.
 
 ### Event
 
@@ -176,24 +177,20 @@ Never allow a delayed lock transaction to extend the market.
 ## 7. Resolver interface
 
 ```solidity
-interface IPriceResolver {
+interface IOracleResolver {
     function resolve(
         bytes32 oracleAssetId,
-        uint64 targetTime
-    ) external view returns (
-        int256 price,
-        uint8 decimals,
-        uint256 observedAt,
-        bool valid
-    );
+        uint256 targetTime,
+        bytes calldata proof
+    ) external returns (int256 price, uint8 decimals);
 }
 ```
 
-A production Data Streams resolver may need a non-view function that accepts signed report bytes. In that case define a second resolver contract/interface rather than overloading semantics ambiguously.
+Push-feed resolvers require an empty proof. Pull-based production resolvers verify the supplied signed report before returning a value. `BinaryPoolMarket.resolve()` is the no-proof convenience overload; `resolve(bytes)` is used for Data Streams.
 
 ## 8. Resolution rule
 
-`resolve()` requirements:
+`resolve()` / `resolve(bytes)` requirements:
 
 - `block.timestamp >= resolutionTime`,
 - market not already resolved/cancelled,
@@ -229,7 +226,7 @@ Do not encode equality policy only in UI copy.
 - optionally query Stock Token `oraclePaused()` when configured,
 - return invalid rather than silently using stale data.
 
-For exact-time production resolution, implement a separate `ChainlinkDataStreamsResolver` that verifies signed reports through the official verifier proxy and enforces report timestamp constraints.
+For scheduled-time production equity resolution, `DataStreamsRwaResolver` verifies the unmodified RWA Advanced v11 payload through the official verifier proxy and enforces the configured feed ID, report validity interval around `resolutionTime`, report expiry, expected market status, positive mid price, and a bounded distance between the last-seen price timestamp and `resolutionTime`.
 
 ## 10. Cancel/refund policy
 

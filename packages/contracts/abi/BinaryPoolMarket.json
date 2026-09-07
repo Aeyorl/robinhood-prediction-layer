@@ -501,6 +501,19 @@
   },
   {
     "type": "function",
+    "name": "resolve",
+    "inputs": [
+      {
+        "name": "oracleProof",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "resolvedAt",
     "inputs": [],
     "outputs": [
@@ -916,6 +929,11 @@
   },
   {
     "type": "error",
+    "name": "InvalidOracleDecimals",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidSide",
     "inputs": []
   },
@@ -1000,6 +1018,11 @@
   {
     "type": "error",
     "name": "TooEarly",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnsupportedCollateralTransfer",
     "inputs": []
   }
 ]

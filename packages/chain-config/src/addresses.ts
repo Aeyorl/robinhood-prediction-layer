@@ -10,6 +10,7 @@ export interface ChainContractAddresses {
   marketFactory: `0x${string}` | null;
   oracleRegistry: `0x${string}` | null;
   chainlinkPriceResolver: `0x${string}` | null;
+  dataStreamsRwaResolver: `0x${string}` | null;
   feeVault: `0x${string}` | null;
   /** Backfill start block for the indexer. */
   deploymentBlock: number;
@@ -30,6 +31,7 @@ export const chainAddresses: Record<number, ChainContractAddresses> = {
     marketFactory: null,
     oracleRegistry: null,
     chainlinkPriceResolver: null,
+    dataStreamsRwaResolver: null,
     feeVault: null,
     deploymentBlock: 0,
   },
@@ -43,6 +45,7 @@ export const chainAddresses: Record<number, ChainContractAddresses> = {
     marketFactory: null,
     oracleRegistry: null,
     chainlinkPriceResolver: null,
+    dataStreamsRwaResolver: null,
     feeVault: null,
     deploymentBlock: 0,
   },

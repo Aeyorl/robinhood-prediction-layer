@@ -90,6 +90,12 @@ USDG (local only)” faucet (public `MockUSDG.mint`).
 
 Oracle rule reminder: the resolver rejects stale answers, so `setAnswer` must
 happen _after_ the final time warp (it stamps `updatedAt = block.timestamp`).
+This no-argument flow is local-only. Scheduled-time production equity markets
+must obtain a fresh signed RWA Advanced v11 payload from Chainlink Data Streams
+and submit it unchanged through `resolve(bytes)`. If no valid unexpired payload
+covering the immutable resolution timestamp is available, resolution fails
+closed; after the grace deadline, governance follows the documented
+cancellation/refund process.
 
 ## Browser E2E (Playwright)
 
@@ -136,7 +142,9 @@ E2E_REUSE=1 E2E_WEB_URL=http://127.0.0.1:3100 pnpm test:e2e
 
 ## Phase 5 oracle operations
 
-Open `/admin` before creating or resolving a Stock Token market. The page reads the curated AAPL, NVDA, and TSLA Chainlink rounds, each token's live `oraclePaused()` value, multiplier metadata, and corporate-action records. Any stale/incomplete round, future timestamp, operator pause, Stock Token pause, or unreadable dependency is unhealthy.
+Open `/admin` before creating a local push-feed Stock Token market. The page reads the curated AAPL, NVDA, and TSLA Chainlink rounds, each token's live `oraclePaused()` value, multiplier metadata, and corporate-action records. Any stale/incomplete round, future timestamp, operator pause, Stock Token pause, or unreadable dependency is unhealthy. This screen does not establish production Data Streams readiness.
+
+For a scheduled-time mainnet equity market, retrieve the exact configured v11 stream through the authenticated Data Streams API, retain the returned `fullReport` bytes without transformation, confirm the reported session matches the market terms, and call `resolve(bytes)`. The contract independently verifies and decodes the report. Never substitute `latestRoundData()` or the no-argument resolver for a historical close-time question.
 
 Factory-created markets freeze the feed-related config hash at creation. If a feed configuration must change while a market is locked, resolution remains blocked for that market. Once its exact `resolutionTime + gracePeriod` deadline passes and health remains false, call `cancelAfterOracleTimeout()` from any wallet. Participants then call `refund()` themselves. Do not use timeout cancellation while health is true; the contract rejects it.
 
@@ -186,13 +194,13 @@ Recovery: an expired quote before the swap can be refreshed; approvals already c
 
 ## Failure playbooks
 
-| Symptom                                               | Action                                                                                                                                                        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm install` fails                                  | Slow registry: `.npmrc` fetch timeouts are set for this machine; retry (`pnpm install` resumes). Lockfile is the source of truth in CI (`--frozen-lockfile`). |
-| `forge test` red                                      | Run `forge test -vvvv`; oracle-health tests depend on feed timestamps being stamped after the final `vm.warp` (fresh round) — see `test/Base.t.sol`.          |
-| API starts but `/v1/markets` returns 503              | Postgres down — `pnpm dev:infra`, then `pnpm db:migrate`.                                                                                                     |
-| Market resolves to CANCELLED unexpectedly             | Check for price == strike (strict equality cancels), or an empty winning side, or stale/sequencer/paused oracle states via `resolver.health(assetKey)`.       |
-| Worker cursor stuck                                   | Redis key `pl:worker:cursor`; delete it to backfill from the default start.                                                                                   |
-| Wrong chain shown                                     | `CHAIN_ID` / `NEXT_PUBLIC_CHAIN_ID` mismatch across apps — both must be 4663 or 46630.                                                                        |
-| Web shows “Local chain offline”                       | Manifest or chain missing. Run `pnpm dev:chain` + `pnpm contracts:local`, or point `PL_LOCAL_MANIFEST` at an existing `deployments/local.json`.               |
-| Page errors `ChainDoesNotSupportContract: multicall3` | Client/server reads no longer use multicall3 (anvil doesn't deploy it); if this reappears, check no new code path calls `client.multicall`.                   |
+| Symptom                                               | Action                                                                                                                                                                              |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install` fails                                  | Slow registry: `.npmrc` fetch timeouts are set for this machine; retry (`pnpm install` resumes). Lockfile is the source of truth in CI (`--frozen-lockfile`).                       |
+| `forge test` red                                      | Run `forge test -vvvv`; oracle-health tests depend on feed timestamps being stamped after the final `vm.warp` (fresh round) — see `test/Base.t.sol`.                                |
+| API starts but `/v1/markets` returns 503              | Postgres down — `pnpm dev:infra`, then `pnpm db:migrate`.                                                                                                                           |
+| Market resolves to CANCELLED unexpectedly             | Check for price == strike (strict equality cancels) or an empty winning side. For timeout cancellation, inspect the frozen resolver config and unavailable/invalid report evidence. |
+| Worker cursor stuck                                   | Redis key `pl:worker:cursor`; delete it to backfill from the default start.                                                                                                         |
+| Wrong chain shown                                     | `CHAIN_ID` / `NEXT_PUBLIC_CHAIN_ID` mismatch across apps — both must be 4663 or 46630.                                                                                              |
+| Web shows “Local chain offline”                       | Manifest or chain missing. Run `pnpm dev:chain` + `pnpm contracts:local`, or point `PL_LOCAL_MANIFEST` at an existing `deployments/local.json`.                                     |
+| Page errors `ChainDoesNotSupportContract: multicall3` | Client/server reads no longer use multicall3 (anvil doesn't deploy it); if this reappears, check no new code path calls `client.multicall`.                                         |

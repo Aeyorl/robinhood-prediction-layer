@@ -1,6 +1,8 @@
 # Oracles
 
-v0 uses Chainlink `AggregatorV3Interface` feeds via `ChainlinkPriceResolver`. Robinhood Chain also exposes a Chainlink Data Streams verifier proxy on mainnet — that integration is a later milestone and is not faked.
+Local/demo markets use Chainlink `AggregatorV3Interface` feeds through `ChainlinkPriceResolver`. Scheduled-time production equity markets use `DataStreamsRwaResolver` with Chainlink Data Streams RWA Advanced (v11) reports verified by the canonical Robinhood Chain verifier proxy.
+
+`ChainlinkPriceResolver` returns the latest push-feed value and cannot prove the price at a past timestamp. It must not be configured for mainnet questions such as "close above at 4:00 PM". The no-proof resolver remains useful for local tests and for any separately reviewed market whose terms explicitly define resolution from the live value when the transaction executes.
 
 ## Health checks (all enforced before a price is accepted)
 
@@ -22,11 +24,20 @@ Comparators are strict:
 - `PRICE_BELOW_AT_TIME` → YES if price < strike, NO if price > strike
 - price == strike → no winner → market cancels and refunds
 
-## Resolution timing
+## Data Streams scheduled-time resolution
 
-AggregatorV3 has no historical reads, so freshness is checked against the live feed at resolution time. `referenceTime` is passed for forward compatibility with a Data Streams resolver that verifies signed reports covering that timestamp.
+`BinaryPoolMarket.resolve(bytes)` passes the signed report payload to `DataStreamsRwaResolver`. The resolver calls Chainlink's verifier proxy and accepts only an RWA Advanced v11 report that:
 
-`BinaryPoolMarket` snapshots `resolver.configHash(assetKey)` at creation. A later feed, heartbeat, sequencer, or Stock Token address change cannot silently alter an existing market; resolution rejects a changed hash. After `resolutionTime + gracePeriod`, anyone may call `cancelAfterOracleTimeout()` when the snapshotted oracle is unhealthy, then participants reclaim principal through the normal `refund()` path. A healthy oracle cannot be bypassed through timeout cancellation.
+1. matches the configured stream feed ID;
+2. has a validity interval containing the market's immutable `resolutionTime`;
+3. has not expired;
+4. reports the configured market-session status;
+5. has a positive mid price; and
+6. has a mid-price update timestamp within the configured maximum distance from `resolutionTime`.
+
+The stream ID, decimals, expected session status and maximum price age are timelock-controlled resolution terms included in the market's snapshotted config hash. A wrong schema, feed, time window, session, price, or stale update fails closed.
+
+`BinaryPoolMarket` snapshots `resolver.configHash(assetKey)` at creation. A later feed or resolution-term change cannot silently alter an existing market; resolution rejects a changed hash. Push-feed markets retain the permissionless timeout cancellation path when live health is bad. A Data Streams outage cannot be proven from onchain configuration alone, so a signed report resolves the market or the timelock cancels it and enables refunds.
 
 ## Admin UI hook
 
@@ -34,7 +45,7 @@ AggregatorV3 has no historical reads, so freshness is checked against the live f
 
 ## Curated mainnet feeds
 
-`packages/chain-config/src/oracles.ts` contains the launch allowlist for AAPL, NVDA, and TSLA. The token addresses come from Robinhood's Stock Token API and the feed proxies/24-hour heartbeat come from Chainlink's Robinhood mainnet reference-data directory; both were rechecked on September 5, 2026. No official Robinhood Chain sequencer uptime feed is currently listed there, so mainnet entries deliberately keep `sequencerFeed: null` rather than inventing an address. The resolver and tests enforce Chainlink's `0 = up`, `1 = down` convention whenever a verified feed is configured.
+`packages/chain-config/src/oracles.ts` contains the push-feed metadata previously curated for AAPL, NVDA, and TSLA. Those entries are not sufficient to create scheduled-time mainnet markets. Before launch, record the production v11 stream IDs, decimals, exact session status and price-age policy from the Chainlink Data Streams account and official stream directory, then schedule `DataStreamsRwaResolver.setAssetConfig` through the Safe and timelock.
 
 ## Asset keys
 

@@ -6,6 +6,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IMarket} from "../interfaces/IMarket.sol";
 import {IOracleResolver} from "../interfaces/IOracleResolver.sol";
 
@@ -107,6 +108,10 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         require(params.feeVault != address(0), "fee vault is zero");
         require(params.openTime < params.lockTime, "open must be before lock");
         require(params.lockTime <= params.resolutionTime, "lock must precede resolution");
+        require(
+            params.resolutionTime <= type(uint256).max - params.gracePeriod,
+            "resolution deadline overflow"
+        );
         require(params.minEntry > 0, "min entry is zero");
         require(params.strike > 0, "strike must be positive");
         require(params.strikeDecimals <= 36, "strike decimals too large");
@@ -167,7 +172,11 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
             if (existing + amount > maxEntry) revert AboveMaxEntry();
         }
 
+        uint256 balanceBefore = collateral.balanceOf(address(this));
         collateral.safeTransferFrom(payer, address(this), amount);
+        if (collateral.balanceOf(address(this)) - balanceBefore != amount) {
+            revert UnsupportedCollateralTransfer();
+        }
 
         if (side == Side.YES) {
             yesPool += amount;
@@ -195,6 +204,17 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     ///         may call it at/after `resolutionTime`; the resolver verifies
     ///         the outcome deterministically (no admin-typed winners).
     function resolve() external nonReentrant {
+        _resolve(bytes(""));
+    }
+
+    /// @notice Resolve using oracle-specific proof data. Data Streams markets
+    ///         pass the signed report payload here; push-feed markets use the
+    ///         no-argument overload.
+    function resolve(bytes calldata oracleProof) external nonReentrant {
+        _resolve(oracleProof);
+    }
+
+    function _resolve(bytes memory oracleProof) private {
         if (block.timestamp < resolutionTime) revert TooEarly();
         if (status != Status.LOCKED) revert NotLocked();
         if (
@@ -202,7 +222,8 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
                 && _readConfigHash(address(resolver), oracleAssetKey) != oracleConfigHash
         ) revert OracleConfigChanged();
 
-        (int256 price, uint8 feedDecimals) = resolver.resolve(oracleAssetKey, resolutionTime);
+        (int256 price, uint8 feedDecimals) =
+            resolver.resolve(oracleAssetKey, resolutionTime, oracleProof);
         Side outcome = _evaluate(price, feedDecimals);
         resolvedPrice = price;
 
@@ -319,7 +340,7 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         returns (uint256 gross, uint256 profit, uint256 fee, uint256 net)
     {
         uint256 total = winningPool_ + losingPool_;
-        gross = (stake * total) / winningPool_;
+        gross = Math.mulDiv(stake, total, winningPool_);
         profit = gross - stake;
         fee = (profit * feeBps) / FEE_DENOMINATOR;
         net = gross - fee;
@@ -338,24 +359,38 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     ///      yields no winner → cancel/refund. Both price and strike are
     ///      positive (enforced by the resolver and constructor).
     function _evaluate(int256 price, uint8 feedDecimals) internal view returns (Side) {
-        // Normalize to the higher precision: compare price/10^feedDecimals with
-        // strike/10^strikeDecimals by scaling the lower-precision side up.
-        uint256 scaledPrice = uint256(price);
-        uint256 scaledStrike = uint256(strike);
-        if (feedDecimals >= strikeDecimals) {
-            scaledStrike = scaledStrike * 10 ** (feedDecimals - strikeDecimals);
-        } else {
-            scaledPrice = scaledPrice * 10 ** (strikeDecimals - feedDecimals);
-        }
+        if (feedDecimals > 36) revert InvalidOracleDecimals();
+        int8 comparison =
+            _compareDecimalValues(uint256(price), feedDecimals, uint256(strike), strikeDecimals);
 
         if (comparator == Comparator.PRICE_ABOVE_AT_TIME) {
-            if (scaledPrice > scaledStrike) return Side.YES;
-            if (scaledPrice < scaledStrike) return Side.NO;
+            if (comparison > 0) return Side.YES;
+            if (comparison < 0) return Side.NO;
         } else {
-            if (scaledPrice < scaledStrike) return Side.YES;
-            if (scaledPrice > scaledStrike) return Side.NO;
+            if (comparison < 0) return Side.YES;
+            if (comparison > 0) return Side.NO;
         }
         return Side.NONE; // strict equality → no winner → cancel/refund
+    }
+
+    function _compareDecimalValues(
+        uint256 left,
+        uint8 leftDecimals,
+        uint256 right,
+        uint8 rightDecimals
+    ) private pure returns (int8) {
+        if (leftDecimals < rightDecimals) {
+            uint256 factor = 10 ** (rightDecimals - leftDecimals);
+            if (left > type(uint256).max / factor) return 1;
+            left *= factor;
+        } else if (rightDecimals < leftDecimals) {
+            uint256 factor = 10 ** (leftDecimals - rightDecimals);
+            if (right > type(uint256).max / factor) return -1;
+            right *= factor;
+        }
+        if (left > right) return 1;
+        if (left < right) return -1;
+        return 0;
     }
 
     function _payout(uint256 stake, uint256 winningPool_, uint256 losingPool_)
@@ -393,4 +428,6 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     error OracleConfigChanged();
     error OracleHealthy();
     error InvalidBeneficiary();
+    error InvalidOracleDecimals();
+    error UnsupportedCollateralTransfer();
 }

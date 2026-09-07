@@ -17,12 +17,14 @@ contract ChainlinkPriceResolver is Ownable, IOracleResolver {
 
     function resolve(
         bytes32 assetKey,
-        uint256 /* referenceTime */
+        uint256, /* referenceTime */
+        bytes calldata proof
     )
         external
         view
         returns (int256 price, uint8 decimals)
     {
+        require(proof.length == 0, "unexpected proof");
         registry.get(assetKey);
         Health memory h = health(assetKey);
         require(h.sequencerUp, "sequencer down");
@@ -33,6 +35,7 @@ contract ChainlinkPriceResolver is Ownable, IOracleResolver {
         require(h.updatedAt > 0, "no update");
         require(h.roundComplete, "incomplete round");
         require(!h.isStale, "stale feed");
+        require(h.decimals <= 36, "feed decimals too large");
         return (h.price, h.decimals);
     }
 
@@ -71,7 +74,7 @@ contract ChainlinkPriceResolver is Ownable, IOracleResolver {
         }
 
         h.healthy = h.sequencerUp && h.sequencerGraceElapsed && h.tokenStateReadable && !h.paused
-            && h.price > 0 && h.updatedAt > 0 && h.roundComplete && !h.isStale;
+            && h.price > 0 && h.updatedAt > 0 && h.roundComplete && !h.isStale && h.decimals <= 36;
     }
 
     function configHash(bytes32 assetKey) external view returns (bytes32) {

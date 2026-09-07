@@ -6,8 +6,8 @@ pragma solidity ^0.8.24;
 /// The market calls `resolve` to obtain the price of the oracle asset at
 /// `referenceTime`; the market itself evaluates the comparator against the
 /// strike. The resolver is responsible for proving/validating the price
-/// (Chainlink AggregatorV3 today, Chainlink Data Streams via a verifier in a
-/// later version — do not fake Data Streams verification).
+/// Push feeds use an empty proof. Pull-based resolvers verify the supplied
+/// signed report before returning a value.
 interface IOracleResolver {
     struct Health {
         bool healthy;
@@ -26,11 +26,11 @@ interface IOracleResolver {
 
     /// @return price The resolved price of `assetKey` as of `referenceTime`.
     /// @return decimals The decimal scale of `price` (feed decimals).
-    /// @dev Reverts when the oracle is unhealthy (stale, sequencer down,
-    ///      paused, unconfigured, or invalid answer).
-    function resolve(bytes32 assetKey, uint256 referenceTime)
+    /// @param proof Resolver-specific proof data; empty for push feeds.
+    /// @dev Reverts when the oracle is unhealthy or the proof does not bind the
+    ///      configured asset to `referenceTime`.
+    function resolve(bytes32 assetKey, uint256 referenceTime, bytes calldata proof)
         external
-        view
         returns (int256 price, uint8 decimals);
 
     /// @notice Non-reverting health snapshot for admin/UI surfaces.

@@ -2,7 +2,7 @@
 
 ## Executive summary
 
-This repository review covered the Solidity market, oracle, fee, factory, and entry-router paths; API and worker trust boundaries; browser transaction construction; production configuration; deployment controls; dependencies; and operational documentation. Local unit, integration, fuzz and invariant checks provide useful pre-audit evidence, but this is not an independent credentialed audit and does not authorize handling mainnet funds.
+This repository review covered the Solidity market, oracle, fee, factory, and entry-router paths; API and worker trust boundaries; browser transaction construction; production configuration; deployment controls; dependencies; and operational documentation. The updated 2026-09-07 review and remediation record is in `mainnet-preaudit-2026-09-07.md`. Local unit, integration, fuzz and invariant checks provide useful pre-audit evidence, but this is not an independent credentialed audit and does not authorize handling mainnet funds.
 
 The code now has an atomic entry router, onchain funding attribution, a two-day Safe-controlled timelock deployment design, fail-closed production configuration, API rate limits, security headers, metrics, and a load-test harness. Mainnet remains blocked until the external audit and remediation, counsel/compliance approval, official production addresses and oracle parameters, Safe membership, monitoring destinations, and production load results are recorded.
 
@@ -21,6 +21,10 @@ Reviewed source is the current repository working tree on 2026-09-05. Testing is
 | PL-05 | Medium               | Mitigated in code | Atomic routing must constrain arbitrary external calls and approvals           |
 | PL-06 | Medium               | Mitigated in code | API abuse and unsafe production defaults could degrade availability            |
 | PL-07 | Medium               | Open              | Production alerting and capacity evidence are not yet available                |
+| PL-08 | High                 | Mitigated in code | Scheduled-time resolution previously used a later live push-feed price         |
+| PL-09 | Medium               | Mitigated in code | Arithmetic edge cases could block settlement or payout                         |
+| PL-10 | Medium               | Mitigated in code | Collateral accounting trusted the requested transfer amount                    |
+| PL-11 | High                 | Open              | Production Data Streams retrieval and exact stream policy are not commissioned |
 
 ## Detailed findings
 
