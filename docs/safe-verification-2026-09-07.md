@@ -1,6 +1,6 @@
 # Safe candidate verification — 2026-09-07
 
-This is read-only onchain evidence, not proof that the Safe belongs to Prediction Layer and not a completed signer ceremony.
+The product owner confirmed on 2026-09-07 that Prediction Layer will reuse the same governance Safe used for MAG7 because both products are being built for the same client. This records the governance-address decision and current onchain state; it does not prove hardware-wallet custody, backup quality or incident-response readiness.
 
 ## Observed state
 
@@ -17,11 +17,17 @@ This is read-only onchain evidence, not proof that the Safe belongs to Predictio
 - Proxy singleton slot: `0x00000000000000000000000029fcb43b46531bca003ddc8fcb67ffe91900c762`
 - Proxy bytecode hash: `0xd7d408ebcd99b2b70be43e20253d6d92a8ea8fab29bd3be7f55b10032331fb4c`
 
-The state was read using standard Safe view calls (`getOwners()`, `getThreshold()`, `nonce()` and `VERSION()`) plus proxy storage and code-hash reads through a Robinhood Chain public RPC. Public RPC was used only for independent read verification; it is not approved as the production service endpoint.
+The state was read using standard Safe view calls (`getOwners()`, `getThreshold()`, `nonce()` and `VERSION()`) plus proxy storage and code-hash reads through the dedicated production RPC. Both the Safe state and RPC chain ID `4663` were rechecked after the ownership decision.
 
-## Required owner evidence
+## Reused MAG7 signer evidence
 
-Before deployment, the product owner must identify this address as the intended protocol Safe, map each owner address to an independently controlled hardware wallet, name the deployer and fee recipient, record recovery contacts, and sign the ceremony record. The Safe needs bounded native gas before it can execute transactions.
+The MAG7 governance record documents a successful two-signer rehearsal on this exact Safe. Two owners authorized a zero-value `changeThreshold(2)` call, a separate non-owner executor submitted it, and transaction `0xc314cc2aa7eebf683221ea98fb5bf2f332bd06baad800b9e886d1808eb3fb4b6` succeeded at block `55120772`. The Safe retained the same three owners and 2-of-3 threshold.
+
+That rehearsal establishes that two independently controlled owners could authorize a Safe transaction. It does not establish the physical custody or recovery controls required for Prediction Layer's launch record.
+
+## Required operator evidence
+
+Before deployment, the operator must map each owner address to an independently controlled hardware wallet, name the deployer and fee recipient, record recovery contacts, and sign the Prediction Layer ceremony record. The Safe needs bounded native gas before it can execute transactions.
 
 ## Deployment evidence still required
 
