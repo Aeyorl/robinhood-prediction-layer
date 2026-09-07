@@ -25,7 +25,7 @@ The reviewed local suite passes, but this document is an internal pre-audit hard
 | PL-09 | Medium               | Arithmetic edge cases could block settlement or payout               | `BinaryPoolMarket`, `MarketFactory`                  | Remediated; external retest required |
 | PL-10 | Medium               | Collateral accounting trusted requested transfer amount              | `BinaryPoolMarket._enter`                            | Remediated; external retest required |
 | PL-11 | High                 | Production Data Streams retrieval and stream policy not commissioned | API/worker, resolver configuration                   | Open                                 |
-| PL-12 | High                 | Wagerly signer ceremony evidence incomplete                 | Safe/timelock operations                             | Open                                 |
+| PL-12 | High                 | Wagerly signer ceremony evidence incomplete                          | Safe/timelock operations                             | Open                                 |
 
 ## 4. Detailed findings
 
