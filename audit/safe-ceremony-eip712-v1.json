@@ -1,0 +1,29 @@
+{
+  "types": {
+    "EIP712Domain": [
+      { "name": "name", "type": "string" },
+      { "name": "version", "type": "string" },
+      { "name": "chainId", "type": "uint256" },
+      { "name": "verifyingContract", "type": "address" }
+    ],
+    "CeremonyAttestation": [
+      { "name": "auditCandidateCommit", "type": "bytes32" },
+      { "name": "ceremonyMessageSha256", "type": "bytes32" },
+      { "name": "safeNonce", "type": "uint256" },
+      { "name": "deploymentAuthorized", "type": "bool" }
+    ]
+  },
+  "primaryType": "CeremonyAttestation",
+  "domain": {
+    "name": "Prediction Layer Safe Ceremony",
+    "version": "1",
+    "chainId": 4663,
+    "verifyingContract": "0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39"
+  },
+  "message": {
+    "auditCandidateCommit": "0x2a207eaaca9b2c60ff93c0f1b086c35331376917",
+    "ceremonyMessageSha256": "0xeb50117a10e61ba7d0e41031602dda6ebe6dc9ad2327e323d11dfecdde4a70e2",
+    "safeNonce": 4,
+    "deploymentAuthorized": false
+  }
+}

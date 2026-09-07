@@ -45,7 +45,9 @@ The stream ID, decimals, expected session status and maximum price age are timel
 
 ## Curated mainnet feeds
 
-`packages/chain-config/src/oracles.ts` contains the push-feed metadata previously curated for AAPL, NVDA, and TSLA. Those entries are not sufficient to create scheduled-time mainnet markets. Before launch, record the production v11 stream IDs, decimals, exact session status and price-age policy from the Chainlink Data Streams account and official stream directory, then schedule `DataStreamsRwaResolver.setAssetConfig` through the Safe and timelock.
+`packages/chain-config/src/oracles.ts` contains both the push-feed metadata and the live mainnet RWA Advanced v11 stream IDs discovered for AAPL, NVDA, and TSLA on 2026-09-07. The v11 price fields use 18 decimals. Scheduled regular-hours closing-price terms use the regular-hours stream and expected `marketStatus = 2`; extended and overnight IDs are recorded for market terms that explicitly name those sessions and are never silent fallbacks. Before launch, authenticate the production entitlement with `pnpm data-streams:verify`, select a reviewed maximum price age, and schedule `DataStreamsRwaResolver.setAssetConfig` through the Safe and timelock.
+
+The ECS worker receives `DATA_STREAMS_API_KEY`, `DATA_STREAMS_USER_SECRET`, and `DATA_STREAMS_ENDPOINT` from the dedicated `prediction-layer/production/data-streams` Secrets Manager secret. The secret must contain JSON keys `API_KEY`, `USER_SECRET`, and `ENDPOINT`; credentials must never be placed in a repository file, browser bundle, command argument, or log.
 
 ## Asset keys
 

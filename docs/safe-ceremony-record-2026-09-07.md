@@ -13,7 +13,13 @@ Status: **prepared; hardware custody and recovery attestations are unsigned**.
 - One-time deployer: `0x913B8D346625736958664C77b0C8Efd3DA2a7bA2`
 - Fee recipient: `0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8`
 - Protocol timelock delay: `172800` seconds
-- Audit release tag: `prediction-layer-mainnet-audit-rc1` (to be attached to the frozen candidate commit)
+- Audit release tag: `prediction-layer-mainnet-audit-rc1`
+- Audit candidate commit: `2a207eaaca9b2c60ff93c0f1b086c35331376917`
+- Safe version observed: `1.4.1`
+- Safe nonce observed before ceremony: `4`
+- Ceremony message: `audit/safe-ceremony-attestation-v1.txt`
+- Ceremony message SHA-256: generated alongside the message in `audit/safe-ceremony-attestation-v1.sha256`
+- Hardware signing payload: `audit/safe-ceremony-eip712-v1.json`
 
 The owner addresses and threshold were read on Robinhood Chain mainnet. The prior MAG7 two-signer rehearsal proves transaction authorization on this Safe, but does not prove physical custody or recovery readiness for this release.
 

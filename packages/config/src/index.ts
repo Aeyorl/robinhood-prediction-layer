@@ -160,6 +160,10 @@ export const workerEnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
   HTTP_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(4000),
+  /** Chainlink Data Streams credentials are server-side only. */
+  DATA_STREAMS_API_KEY: z.string().uuid().optional(),
+  DATA_STREAMS_USER_SECRET: z.string().min(1).optional(),
+  DATA_STREAMS_ENDPOINT: z.url().default("https://api.dataengine.chain.link"),
 });
 export type WorkerEnv = z.infer<typeof workerEnvSchema>;
 

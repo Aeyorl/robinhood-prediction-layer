@@ -1,0 +1,23 @@
+PREDICTION LAYER MAINNET SAFE CEREMONY ATTESTATION V1
+
+Chain ID: 4663
+Governance Safe: 0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39
+Safe version observed: 1.4.1
+Safe nonce observed before ceremony: 4
+Threshold: 2 of 3
+Owner 1: 0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A
+Owner 2: 0x26032745BcB969B95B4610A9a48D33Bd4340812D
+Owner 3: 0x8cA71B70C91BD8250073dfDD323b9219Bce6A165
+One-time deployer: 0x913B8D346625736958664C77b0C8Efd3DA2a7bA2
+Fee recipient: 0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8
+Protocol timelock delay: 172800 seconds
+Audit release tag: prediction-layer-mainnet-audit-rc1
+Audit candidate commit: 2a207eaaca9b2c60ff93c0f1b086c35331376917
+Maximum approved deployment funding: 0.012 ETH
+
+I independently verified the Safe address, chain ID, owner set, threshold,
+audit tag and candidate commit shown above. I control the signing hardware for
+my listed owner address. My recovery material was tested offline and its secure
+recovery contact is recorded outside this repository. This attestation records
+ceremony readiness only. It does not authorize a contract deployment, transfer,
+funding transaction, governance action, or change to an approval gate.

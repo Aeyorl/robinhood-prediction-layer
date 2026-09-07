@@ -17,6 +17,8 @@ Parameters:
     Type: String
   RpcEndpointsSecretArn:
     Type: String
+  DataStreamsSecretArn:
+    Type: String
   CorsOrigin:
     Type: String
     AllowedPattern: "https://.+"
@@ -150,6 +152,12 @@ Resources:
               ValueFrom: !Sub "${RpcEndpointsSecretArn}:RPC_HTTP_URL::"
             - Name: RPC_WS_URL
               ValueFrom: !Sub "${RpcEndpointsSecretArn}:RPC_WS_URL::"
+            - Name: DATA_STREAMS_API_KEY
+              ValueFrom: !Sub "${DataStreamsSecretArn}:API_KEY::"
+            - Name: DATA_STREAMS_USER_SECRET
+              ValueFrom: !Sub "${DataStreamsSecretArn}:USER_SECRET::"
+            - Name: DATA_STREAMS_ENDPOINT
+              ValueFrom: !Sub "${DataStreamsSecretArn}:ENDPOINT::"
           LogConfiguration:
             LogDriver: awslogs
             Options:
