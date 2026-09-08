@@ -1,14 +1,561 @@
 [
-  {"type":"constructor","inputs":[{"name":"initialOwner","type":"address","internalType":"address"},{"name":"guardian_","type":"address","internalType":"address"}],"stateMutability":"nonpayable"},
-  {"type":"function","name":"cancelObservation","inputs":[{"name":"assetKey","type":"bytes32","internalType":"bytes32"},{"name":"referenceTime","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},
-  {"type":"function","name":"configHash","inputs":[{"name":"assetKey","type":"bytes32","internalType":"bytes32"}],"outputs":[{"name":"","type":"bytes32","internalType":"bytes32"}],"stateMutability":"view"},
-  {"type":"function","name":"guardian","inputs":[],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},
-  {"type":"function","name":"observations","inputs":[{"name":"assetKey","type":"bytes32","internalType":"bytes32"},{"name":"referenceTime","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"price","type":"int256","internalType":"int256"},{"name":"proposedAt","type":"uint64","internalType":"uint64"},{"name":"evidenceHash","type":"bytes32","internalType":"bytes32"},{"name":"cancelled","type":"bool","internalType":"bool"}],"stateMutability":"view"},
-  {"type":"function","name":"owner","inputs":[],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},
-  {"type":"function","name":"proposeObservation","inputs":[{"name":"assetKey","type":"bytes32","internalType":"bytes32"},{"name":"referenceTime","type":"uint256","internalType":"uint256"},{"name":"price","type":"int256","internalType":"int256"},{"name":"evidenceHash","type":"bytes32","internalType":"bytes32"},{"name":"evidenceUri","type":"string","internalType":"string"}],"outputs":[],"stateMutability":"nonpayable"},
-  {"type":"function","name":"resolve","inputs":[{"name":"assetKey","type":"bytes32","internalType":"bytes32"},{"name":"referenceTime","type":"uint256","internalType":"uint256"},{"name":"proof","type":"bytes","internalType":"bytes"}],"outputs":[{"name":"price","type":"int256","internalType":"int256"},{"name":"decimals","type":"uint8","internalType":"uint8"}],"stateMutability":"view"},
-  {"type":"function","name":"setAssetConfig","inputs":[{"name":"assetKey","type":"bytes32","internalType":"bytes32"},{"name":"decimals","type":"uint8","internalType":"uint8"},{"name":"challengePeriod","type":"uint64","internalType":"uint64"},{"name":"maxObservationDelay","type":"uint64","internalType":"uint64"},{"name":"paused","type":"bool","internalType":"bool"}],"outputs":[],"stateMutability":"nonpayable"},
-  {"type":"function","name":"setPaused","inputs":[{"name":"assetKey","type":"bytes32","internalType":"bytes32"},{"name":"paused","type":"bool","internalType":"bool"}],"outputs":[],"stateMutability":"nonpayable"},
-  {"type":"event","name":"ObservationCancelled","inputs":[{"name":"assetKey","type":"bytes32","indexed":true,"internalType":"bytes32"},{"name":"referenceTime","type":"uint256","indexed":true,"internalType":"uint256"}],"anonymous":false},
-  {"type":"event","name":"ObservationProposed","inputs":[{"name":"assetKey","type":"bytes32","indexed":true,"internalType":"bytes32"},{"name":"referenceTime","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"price","type":"int256","indexed":false,"internalType":"int256"},{"name":"evidenceHash","type":"bytes32","indexed":true,"internalType":"bytes32"},{"name":"evidenceUri","type":"string","indexed":false,"internalType":"string"},{"name":"usableAt","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false}
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "initialOwner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "guardian_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "cancelObservation",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "referenceTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "configHash",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "configs",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "challengePeriod",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "maxObservationDelay",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "paused",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "exists",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "guardian",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "health",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "h",
+        "type": "tuple",
+        "internalType": "struct IOracleResolver.Health",
+        "components": [
+          {
+            "name": "healthy",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "price",
+            "type": "int256",
+            "internalType": "int256"
+          },
+          {
+            "name": "decimals",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "updatedAt",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "isStale",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "sequencerUp",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "sequencerGraceElapsed",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "paused",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "operatorPaused",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "tokenOraclePaused",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "tokenStateReadable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "roundComplete",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "observations",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "referenceTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "price",
+        "type": "int256",
+        "internalType": "int256"
+      },
+      {
+        "name": "proposedAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "evidenceHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "cancelled",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "proposeObservation",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "referenceTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "price",
+        "type": "int256",
+        "internalType": "int256"
+      },
+      {
+        "name": "evidenceHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "evidenceUri",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "resolutionAvailable",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "referenceTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "resolve",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "referenceTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "proof",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "price",
+        "type": "int256",
+        "internalType": "int256"
+      },
+      {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setAssetConfig",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "challengePeriod",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "maxObservationDelay",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "paused",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setPaused",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "paused",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "AssetConfigured",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "decimals",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      },
+      {
+        "name": "challengePeriod",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "maxObservationDelay",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "paused",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "AssetPaused",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "paused",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ObservationCancelled",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "referenceTime",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ObservationProposed",
+    "inputs": [
+      {
+        "name": "assetKey",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "referenceTime",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "price",
+        "type": "int256",
+        "indexed": false,
+        "internalType": "int256"
+      },
+      {
+        "name": "evidenceHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "evidenceUri",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "usableAt",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "OwnableInvalidOwner",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OwnableUnauthorizedAccount",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  }
 ]

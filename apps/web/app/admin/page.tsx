@@ -30,10 +30,35 @@ export default async function AdminPage() {
         <Badge>Phase 5 oracle gate</Badge>
         <h1 className="text-2xl font-bold text-white">Oracle health</h1>
         <p className="max-w-3xl text-sm text-slate-400">
-          Live Chainlink rounds and Robinhood Stock Token pause state for the curated launch assets.
-          Create or resolve markets only while every required check is healthy.
+          Live Chainlink rounds, Robinhood Stock Token pause state, and the governed closing-price
+          resolver used for scheduled equity markets. Create or resolve markets only while every
+          required check is healthy.
         </p>
       </div>
+
+      <Card className={data.safeResolver.readable ? "border-emerald-500/30" : "border-amber-500/30"}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-slate-500">Safe closing-price resolver</p>
+            <p className="mt-2 font-semibold text-white">
+              {data.safeResolver.address ? compactAddress(data.safeResolver.address) : "Not deployed"}
+            </p>
+            <p className="mt-2 max-w-2xl text-sm text-slate-400">
+              Evidence-bound observations have a challenge period before use. The guardian may
+              cancel a disputed observation, and missing observations permit timeout refunds.
+            </p>
+          </div>
+          <StatusBadge tone={data.safeResolver.readable ? "green" : "amber"}>
+            {data.safeResolver.readable ? "Readable onchain" : "Awaiting mainnet deployment"}
+          </StatusBadge>
+        </div>
+        {data.safeResolver.readable ? (
+          <div className="mt-4 grid gap-3 border-t border-white/10 pt-4 font-mono text-xs text-slate-400 sm:grid-cols-2">
+            <p title={data.safeResolver.owner ?? undefined}>Owner {compactAddress(data.safeResolver.owner!)}</p>
+            <p title={data.safeResolver.guardian ?? undefined}>Guardian {compactAddress(data.safeResolver.guardian!)}</p>
+          </div>
+        ) : null}
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>

@@ -7,7 +7,6 @@ const CANONICAL = {
   USDG_ADDRESS: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
   WETH_ADDRESS: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
   SWAP_TARGET: "0x8876789976decbfcbbbe364623c63652db8c0904",
-  DATA_STREAMS_VERIFIER: "0xcE73c8ad08CBDEaCa6078BF0627C8fe0a9a536E7",
 };
 
 const safeAbi = parseAbi([
@@ -57,10 +56,11 @@ async function main() {
     USDG_ADDRESS: address("USDG_ADDRESS", CANONICAL.USDG_ADDRESS),
     WETH_ADDRESS: address("WETH_ADDRESS", CANONICAL.WETH_ADDRESS),
     SWAP_TARGET: address("SWAP_TARGET", CANONICAL.SWAP_TARGET),
-    DATA_STREAMS_VERIFIER: address("DATA_STREAMS_VERIFIER", CANONICAL.DATA_STREAMS_VERIFIER),
     SAFE_ADDRESS: address("SAFE_ADDRESS", ""),
     FEE_RECIPIENT: address("FEE_RECIPIENT", ""),
   };
+  const optionalVerifier = process.env.DATA_STREAMS_VERIFIER?.trim();
+  if (optionalVerifier) addresses.DATA_STREAMS_VERIFIER = getAddress(optionalVerifier);
 
   for (const [name, expected] of Object.entries(CANONICAL)) {
     if (addresses[name] !== getAddress(expected)) {

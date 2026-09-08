@@ -32,11 +32,7 @@ contract SafeClosingPriceResolver is Ownable, IOracleResolver {
     mapping(bytes32 assetKey => mapping(uint256 referenceTime => Observation)) public observations;
 
     event AssetConfigured(
-        bytes32 indexed assetKey,
-        uint8 decimals,
-        uint64 challengePeriod,
-        uint64 maxObservationDelay,
-        bool paused
+        bytes32 indexed assetKey, uint8 decimals, uint64 challengePeriod, uint64 maxObservationDelay, bool paused
     );
     event AssetPaused(bytes32 indexed assetKey, bool paused);
     event ObservationProposed(
@@ -64,9 +60,7 @@ contract SafeClosingPriceResolver is Ownable, IOracleResolver {
         require(assetKey != bytes32(0), "asset key is zero");
         require(decimals <= 36, "decimals too large");
         require(challengePeriod >= 1 hours && challengePeriod <= 7 days, "invalid challenge period");
-        require(
-            maxObservationDelay > 0 && maxObservationDelay <= 7 days, "invalid observation delay"
-        );
+        require(maxObservationDelay > 0 && maxObservationDelay <= 7 days, "invalid observation delay");
 
         configs[assetKey] = AssetConfig({
             decimals: decimals,
@@ -102,25 +96,14 @@ contract SafeClosingPriceResolver is Ownable, IOracleResolver {
         require(evidenceHash != bytes32(0), "evidence hash is zero");
         require(bytes(evidenceUri).length > 0, "evidence URI is empty");
         require(referenceTime <= block.timestamp, "reference is in future");
-        require(
-            block.timestamp - referenceTime <= cfg.maxObservationDelay,
-            "observation submitted too late"
-        );
+        require(block.timestamp - referenceTime <= cfg.maxObservationDelay, "observation submitted too late");
         require(observations[assetKey][referenceTime].proposedAt == 0, "observation already exists");
 
         observations[assetKey][referenceTime] = Observation({
-            price: price,
-            proposedAt: uint64(block.timestamp),
-            evidenceHash: evidenceHash,
-            cancelled: false
+            price: price, proposedAt: uint64(block.timestamp), evidenceHash: evidenceHash, cancelled: false
         });
         emit ObservationProposed(
-            assetKey,
-            referenceTime,
-            price,
-            evidenceHash,
-            evidenceUri,
-            block.timestamp + cfg.challengePeriod
+            assetKey, referenceTime, price, evidenceHash, evidenceUri, block.timestamp + cfg.challengePeriod
         );
     }
 
@@ -131,8 +114,7 @@ contract SafeClosingPriceResolver is Ownable, IOracleResolver {
         require(observation.proposedAt != 0, "observation not found");
         require(!observation.cancelled, "observation already cancelled");
         require(
-            block.timestamp < observation.proposedAt + configs[assetKey].challengePeriod,
-            "challenge period elapsed"
+            block.timestamp < observation.proposedAt + configs[assetKey].challengePeriod, "challenge period elapsed"
         );
         observation.cancelled = true;
         emit ObservationCancelled(assetKey, referenceTime);
@@ -151,10 +133,7 @@ contract SafeClosingPriceResolver is Ownable, IOracleResolver {
         Observation memory observation = observations[assetKey][referenceTime];
         require(observation.proposedAt != 0, "observation not found");
         require(!observation.cancelled, "observation cancelled");
-        require(
-            block.timestamp >= observation.proposedAt + cfg.challengePeriod,
-            "challenge period active"
-        );
+        require(block.timestamp >= observation.proposedAt + cfg.challengePeriod, "challenge period active");
         return (observation.price, cfg.decimals);
     }
 
@@ -171,13 +150,18 @@ contract SafeClosingPriceResolver is Ownable, IOracleResolver {
         h.roundComplete = true;
     }
 
+    /// @notice Whether a specific close has been published and remains usable.
+    /// @dev Markets use this optional status hook after their oracle timeout so
+    /// missing or cancelled observations cannot block permissionless refunds.
+    function resolutionAvailable(bytes32 assetKey, uint256 referenceTime) external view returns (bool) {
+        Observation memory observation = observations[assetKey][referenceTime];
+        return observation.proposedAt != 0 && !observation.cancelled;
+    }
+
     function configHash(bytes32 assetKey) external view returns (bytes32) {
         AssetConfig memory cfg = configs[assetKey];
         if (!cfg.exists) return bytes32(0);
-        return keccak256(
-            abi.encode(
-                address(this), guardian, cfg.decimals, cfg.challengePeriod, cfg.maxObservationDelay
-            )
-        );
+        return
+            keccak256(abi.encode(address(this), guardian, cfg.decimals, cfg.challengePeriod, cfg.maxObservationDelay));
     }
 }

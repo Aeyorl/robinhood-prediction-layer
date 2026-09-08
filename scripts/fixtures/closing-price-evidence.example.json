@@ -1,0 +1,26 @@
+{
+  "assetKey": "0x1111111111111111111111111111111111111111111111111111111111111111",
+  "resolverAddress": "0x1111111111111111111111111111111111111111",
+  "evidenceUri": "ipfs://replace-with-reviewed-evidence-cid/nvda-close.json",
+  "symbol": "NVDA",
+  "referenceTime": 1788901200,
+  "marketSession": "regular-close",
+  "decimals": 18,
+  "price": "200000000000000000000",
+  "corporateActionChecked": true,
+  "notes": "Example values only. Replace every field with reviewed market evidence.",
+  "sources": [
+    {
+      "name": "Primary source",
+      "url": "https://example.com/primary",
+      "retrievedAt": "2026-09-08T21:10:00Z",
+      "price": "200000000000000000000"
+    },
+    {
+      "name": "Independent secondary source",
+      "url": "https://example.org/secondary",
+      "retrievedAt": "2026-09-08T21:12:00Z",
+      "price": "200000000000000000000"
+    }
+  ]
+}

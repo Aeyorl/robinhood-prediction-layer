@@ -50,6 +50,15 @@ contract SafeClosingPriceResolverTest is Test {
         resolver.resolve(ASSET_KEY, REFERENCE_TIME, "");
     }
 
+    function test_resolutionAvailabilityTracksObservationLifecycle() public {
+        assertFalse(resolver.resolutionAvailable(ASSET_KEY, REFERENCE_TIME));
+        _propose(200e18);
+        assertTrue(resolver.resolutionAvailable(ASSET_KEY, REFERENCE_TIME));
+        vm.prank(guardian);
+        resolver.cancelObservation(ASSET_KEY, REFERENCE_TIME);
+        assertFalse(resolver.resolutionAvailable(ASSET_KEY, REFERENCE_TIME));
+    }
+
     function test_safeGuardianCanCancelWithoutTimelockDelay() public {
         _propose(200e18);
         vm.prank(guardian);
@@ -69,18 +78,14 @@ contract SafeClosingPriceResolverTest is Test {
         _propose(200e18);
         vm.expectRevert(bytes("observation already exists"));
         vm.prank(owner);
-        resolver.proposeObservation(
-            ASSET_KEY, REFERENCE_TIME, 201e18, EVIDENCE_HASH, "ipfs://replacement"
-        );
+        resolver.proposeObservation(ASSET_KEY, REFERENCE_TIME, 201e18, EVIDENCE_HASH, "ipfs://replacement");
     }
 
     function test_rejectsLateObservation() public {
         vm.warp(REFERENCE_TIME + MAX_OBSERVATION_DELAY + 1);
         vm.expectRevert(bytes("observation submitted too late"));
         vm.prank(owner);
-        resolver.proposeObservation(
-            ASSET_KEY, REFERENCE_TIME, 200e18, EVIDENCE_HASH, "ipfs://evidence"
-        );
+        resolver.proposeObservation(ASSET_KEY, REFERENCE_TIME, 200e18, EVIDENCE_HASH, "ipfs://evidence");
     }
 
     function test_configHashDoesNotChangeWhenObservationIsPublished() public {
@@ -142,8 +147,6 @@ contract SafeClosingPriceResolverTest is Test {
 
     function _propose(int256 price) private {
         vm.prank(owner);
-        resolver.proposeObservation(
-            ASSET_KEY, REFERENCE_TIME, price, EVIDENCE_HASH, "ipfs://evidence"
-        );
+        resolver.proposeObservation(ASSET_KEY, REFERENCE_TIME, price, EVIDENCE_HASH, "ipfs://evidence");
     }
 }

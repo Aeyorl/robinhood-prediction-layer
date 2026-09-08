@@ -15,6 +15,7 @@
 import {
   createPublicClient,
   http,
+  parseAbiItem,
   webSocket,
   type Address,
   type Chain,
@@ -45,7 +46,43 @@ interface IndexerDeps {
   chainId: number;
   factoryAddress: Address;
   entryRouterAddress?: Address;
+  safeClosingPriceResolverAddress?: Address;
   marketAddresses: Set<Address>;
+}
+
+const observationProposedEvent = parseAbiItem(
+  "event ObservationProposed(bytes32 indexed assetKey, uint256 indexed referenceTime, int256 price, bytes32 indexed evidenceHash, string evidenceUri, uint256 usableAt)",
+);
+const observationCancelledEvent = parseAbiItem(
+  "event ObservationCancelled(bytes32 indexed assetKey, uint256 indexed referenceTime)",
+);
+
+async function monitorClosingPriceResolver(deps: IndexerDeps, blockNumber: bigint): Promise<void> {
+  if (!deps.safeClosingPriceResolverAddress) return;
+  const [proposed, cancelled] = await Promise.all([
+    deps.client.getLogs({
+      address: deps.safeClosingPriceResolverAddress,
+      event: observationProposedEvent,
+      fromBlock: blockNumber,
+      toBlock: blockNumber,
+    }),
+    deps.client.getLogs({
+      address: deps.safeClosingPriceResolverAddress,
+      event: observationCancelledEvent,
+      fromBlock: blockNumber,
+      toBlock: blockNumber,
+    }),
+  ]);
+  for (const log of proposed) {
+    console.warn(
+      `[oracle-observation] proposed asset=${log.args.assetKey} reference=${log.args.referenceTime} usableAt=${log.args.usableAt} evidence=${log.args.evidenceHash} tx=${log.transactionHash}`,
+    );
+  }
+  for (const log of cancelled) {
+    console.error(
+      `[oracle-observation] cancelled asset=${log.args.assetKey} reference=${log.args.referenceTime} tx=${log.transactionHash}`,
+    );
+  }
 }
 
 function makeClient(): { client: PublicClient; transport: "ws" | "http" } {
@@ -186,6 +223,12 @@ async function loadKnownMarkets(
 
 async function indexBlock(deps: IndexerDeps, blockNumber: bigint): Promise<void> {
   const block = await deps.client.getBlock({ blockNumber });
+  await monitorClosingPriceResolver(deps, blockNumber).catch((err) =>
+    console.warn(
+      "[worker] closing-price resolver monitoring failed:",
+      err instanceof Error ? err.message : err,
+    ),
+  );
   let createdMarkets = 0;
   let events = 0;
   let transfers = 0;
@@ -226,6 +269,9 @@ async function run() {
   const factoryAddress = env.FACTORY_ADDRESS.toLowerCase() as Address;
   const entryRouterAddress = env.PREDICTION_ENTRY_ROUTER_ADDRESS?.toLowerCase() as
     Address | undefined;
+  const safeClosingPriceResolverAddress = env.SAFE_CLOSING_PRICE_RESOLVER_ADDRESS?.toLowerCase() as
+    | Address
+    | undefined;
   const { client, transport } = makeClient();
   console.log(`[worker] starting on chain ${chain.id} via ${transport}`);
   console.log(`[worker] factory ${factoryAddress}`);
@@ -266,6 +312,7 @@ async function run() {
     chainId: chain.id,
     factoryAddress,
     entryRouterAddress,
+    safeClosingPriceResolverAddress,
     marketAddresses,
   };
   const ring = makeHashRing();

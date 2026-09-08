@@ -1,7 +1,7 @@
 import "server-only";
 
 import { robinhoodMainnet, stockTokenOracles, stockTokenOracleSources } from "@pl/chain-config";
-import { createPublicClient, formatUnits, http } from "viem";
+import { createPublicClient, formatUnits, getAddress, http, isAddress } from "viem";
 
 const feedAbi = [
   {
@@ -36,6 +36,11 @@ const stockTokenAbi = [
   },
 ] as const;
 
+const safeResolverAbi = [
+  { type: "function", name: "owner", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
+  { type: "function", name: "guardian", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
+] as const;
+
 interface RobinhoodAsset {
   tokenSymbol: string;
   status: string;
@@ -64,6 +69,7 @@ async function readJson<T>(url: string, revalidate: number): Promise<T> {
 export async function loadOracleAdminData() {
   const client = createPublicClient({ chain: robinhoodMainnet, transport: http() });
   const now = Math.floor(Date.now() / 1_000);
+  const configuredResolver = process.env.SAFE_CLOSING_PRICE_RESOLVER_ADDRESS;
 
   const [assetsResult, actionsResult] = await Promise.allSettled([
     readJson<{ assets: RobinhoodAsset[] }>(stockTokenOracleSources.assets, 300),
@@ -135,10 +141,38 @@ export async function loadOracleAdminData() {
     }),
   );
 
+  let safeResolver: {
+    configured: boolean;
+    address: string | null;
+    owner: string | null;
+    guardian: string | null;
+    readable: boolean;
+  } = { configured: false, address: null, owner: null, guardian: null, readable: false };
+  if (configuredResolver && isAddress(configuredResolver)) {
+    const address = getAddress(configuredResolver);
+    try {
+      const [code, owner, guardian] = await Promise.all([
+        client.getCode({ address }),
+        client.readContract({ address, abi: safeResolverAbi, functionName: "owner" }),
+        client.readContract({ address, abi: safeResolverAbi, functionName: "guardian" }),
+      ]);
+      safeResolver = {
+        configured: true,
+        address,
+        owner,
+        guardian,
+        readable: Boolean(code && code !== "0x"),
+      };
+    } catch {
+      safeResolver = { configured: true, address, owner: null, guardian: null, readable: false };
+    }
+  }
+
   return {
     rows,
     warnings: actions.filter((action) => supportedSymbols.has(action.tokenSymbol)).slice(0, 12),
     assetsAvailable: assetsResult.status === "fulfilled",
     actionsAvailable: actionsResult.status === "fulfilled",
+    safeResolver,
   };
 }

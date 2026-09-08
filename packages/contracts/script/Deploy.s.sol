@@ -26,7 +26,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 ///   SAFE_ADDRESS         — production multisig; sole proposer/executor
 ///   USDG_ADDRESS         — canonical collateral, re-verified before execution
 ///   SWAP_TARGET          — audited production swap router to allowlist
-///   DATA_STREAMS_VERIFIER — Chainlink Data Streams verifier proxy
+///   DATA_STREAMS_VERIFIER — optional Chainlink Data Streams verifier proxy
 ///   CONFIG_JSON          — optional path to a JSON file of {assetKey: {...}}
 ///                          feed configs to preload into the registry
 contract Deploy is Script {
@@ -36,27 +36,24 @@ contract Deploy is Script {
         address feeRecipient = vm.envAddress("FEE_RECIPIENT");
         address usdg = vm.envAddress("USDG_ADDRESS");
         address swapTarget = vm.envAddress("SWAP_TARGET");
-        address dataStreamsVerifier = vm.envAddress("DATA_STREAMS_VERIFIER");
+        address dataStreamsVerifier = vm.envOr("DATA_STREAMS_VERIFIER", address(0));
         require(chainId == 4663 || chainId == 46630, "unsupported CHAIN_ID");
-        require(
-            safe != address(0) && usdg != address(0) && swapTarget != address(0)
-                && dataStreamsVerifier != address(0),
-            "zero address"
-        );
+        require(safe != address(0) && usdg != address(0) && swapTarget != address(0), "zero address");
 
         vm.startBroadcast();
 
         ProtocolTimelock timelock = new ProtocolTimelock(safe);
         OracleRegistry registry = new OracleRegistry(address(timelock));
         ChainlinkPriceResolver resolver = new ChainlinkPriceResolver(address(timelock), registry);
-        DataStreamsRwaResolver dataStreamsResolver =
-            new DataStreamsRwaResolver(address(timelock), IVerifierProxy(dataStreamsVerifier));
-        SafeClosingPriceResolver safeClosingPriceResolver =
-            new SafeClosingPriceResolver(address(timelock), safe);
+        address dataStreamsResolver;
+        if (dataStreamsVerifier != address(0)) {
+            dataStreamsResolver =
+                address(new DataStreamsRwaResolver(address(timelock), IVerifierProxy(dataStreamsVerifier)));
+        }
+        SafeClosingPriceResolver safeClosingPriceResolver = new SafeClosingPriceResolver(address(timelock), safe);
         FeeVault feeVault = new FeeVault(address(timelock), feeRecipient);
         MarketFactory factory = new MarketFactory(address(timelock));
-        PredictionEntryRouter router =
-            new PredictionEntryRouter(address(timelock), IERC20(usdg), factory);
+        PredictionEntryRouter router = new PredictionEntryRouter(address(timelock), IERC20(usdg), factory);
 
         vm.stopBroadcast();
 
@@ -64,7 +61,7 @@ contract Deploy is Script {
         console2.log("  timelock         ", address(timelock));
         console2.log("  oracleRegistry   ", address(registry));
         console2.log("  chainlinkResolver", address(resolver));
-        console2.log("  streamsResolver  ", address(dataStreamsResolver));
+        console2.log("  streamsResolver  ", dataStreamsResolver);
         console2.log("  safeCloseResolver", address(safeClosingPriceResolver));
         console2.log("  feeVault         ", address(feeVault));
         console2.log("  factory          ", address(factory));

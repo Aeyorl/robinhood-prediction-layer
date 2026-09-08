@@ -76,6 +76,10 @@ export const apiEnvSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .optional(),
+  SAFE_CLOSING_PRICE_RESOLVER_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
   /** Optional override for the deterministic Uniswap proxy approval contract. */
   UNISWAP_PROXY_ADDRESS: z
     .string()
@@ -154,6 +158,10 @@ export const workerEnvSchema = z.object({
   /** MarketFactory the worker indexes events from — must be configured per chain. */
   FACTORY_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "invalid FACTORY_ADDRESS"),
   PREDICTION_ENTRY_ROUTER_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
+  SAFE_CLOSING_PRICE_RESOLVER_ADDRESS: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .optional(),
