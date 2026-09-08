@@ -88,7 +88,9 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     /// @dev True once the user has claimed (winner) or been refunded (cancel).
     mapping(address => bool) public hasClaimed;
 
-    event PositionEntered(address indexed user, Side side, uint256 amount, uint256 yesPool, uint256 noPool);
+    event PositionEntered(
+        address indexed user, Side side, uint256 amount, uint256 yesPool, uint256 noPool
+    );
     event MarketLocked();
     event MarketResolved(Side winningOutcome, int256 price);
     event MarketCancelled(string reason);
@@ -106,7 +108,10 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         require(params.feeVault != address(0), "fee vault is zero");
         require(params.openTime < params.lockTime, "open must be before lock");
         require(params.lockTime <= params.resolutionTime, "lock must precede resolution");
-        require(params.resolutionTime <= type(uint256).max - params.gracePeriod, "resolution deadline overflow");
+        require(
+            params.resolutionTime <= type(uint256).max - params.gracePeriod,
+            "resolution deadline overflow"
+        );
         require(params.minEntry > 0, "min entry is zero");
         require(params.strike > 0, "strike must be positive");
         require(params.strikeDecimals <= 36, "strike decimals too large");
@@ -147,7 +152,11 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @notice Enter for `beneficiary`, taking collateral from the caller.
-    function enterFor(address beneficiary, Side side, uint256 amount) external nonReentrant whenNotPaused {
+    function enterFor(address beneficiary, Side side, uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+    {
         if (beneficiary == address(0)) revert InvalidBeneficiary();
         _enter(msg.sender, beneficiary, side, amount);
     }
@@ -158,7 +167,8 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         if (status != Status.OPEN) revert NotOpen();
         if (amount < minEntry) revert BelowMinEntry();
         if (maxEntry != 0) {
-            uint256 existing = side == Side.YES ? userYesStake[beneficiary] : userNoStake[beneficiary];
+            uint256 existing =
+                side == Side.YES ? userYesStake[beneficiary] : userNoStake[beneficiary];
             if (existing + amount > maxEntry) revert AboveMaxEntry();
         }
 
@@ -207,11 +217,15 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     function _resolve(bytes memory oracleProof) private {
         if (block.timestamp < resolutionTime) revert TooEarly();
         if (status != Status.LOCKED) revert NotLocked();
-        if (oracleConfigHash != bytes32(0) && _readConfigHash(address(resolver), oracleAssetKey) != oracleConfigHash) {
+        if (
+            oracleConfigHash != bytes32(0)
+                && _readConfigHash(address(resolver), oracleAssetKey) != oracleConfigHash
+        ) {
             revert OracleConfigChanged();
         }
 
-        (int256 price, uint8 feedDecimals) = resolver.resolve(oracleAssetKey, resolutionTime, oracleProof);
+        (int256 price, uint8 feedDecimals) =
+            resolver.resolve(oracleAssetKey, resolutionTime, oracleProof);
         Side outcome = _evaluate(price, feedDecimals);
         resolvedPrice = price;
 
@@ -244,7 +258,10 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         if (block.timestamp < resolutionTime + gracePeriod) revert TooEarly();
 
         bool healthy;
-        if (oracleConfigHash == bytes32(0) || _readConfigHash(address(resolver), oracleAssetKey) != oracleConfigHash) {
+        if (
+            oracleConfigHash == bytes32(0)
+                || _readConfigHash(address(resolver), oracleAssetKey) != oracleConfigHash
+        ) {
             healthy = false;
         } else {
             try resolver.health(oracleAssetKey) returns (IOracleResolver.Health memory h) {
@@ -255,7 +272,9 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
             if (healthy) {
                 (bool ok, bytes memory result) = address(resolver)
                     .staticcall(
-                        abi.encodeWithSignature("resolutionAvailable(bytes32,uint256)", oracleAssetKey, resolutionTime)
+                        abi.encodeWithSignature(
+                            "resolutionAvailable(bytes32,uint256)", oracleAssetKey, resolutionTime
+                        )
                     );
                 if (ok && result.length == 32) healthy = abi.decode(result, (bool));
             }
@@ -276,7 +295,8 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         if (status != Status.RESOLVED) revert NotResolved();
         if (hasClaimed[msg.sender]) revert AlreadyClaimed();
 
-        uint256 stake = winningOutcome == Side.YES ? userYesStake[msg.sender] : userNoStake[msg.sender];
+        uint256 stake =
+            winningOutcome == Side.YES ? userYesStake[msg.sender] : userNoStake[msg.sender];
         if (stake == 0) revert NothingToClaim();
 
         uint256 winningPool = winningOutcome == Side.YES ? yesPool : noPool;
@@ -351,7 +371,8 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
     ///      positive (enforced by the resolver and constructor).
     function _evaluate(int256 price, uint8 feedDecimals) internal view returns (Side) {
         if (feedDecimals > 36) revert InvalidOracleDecimals();
-        int8 comparison = _compareDecimalValues(uint256(price), feedDecimals, uint256(strike), strikeDecimals);
+        int8 comparison =
+            _compareDecimalValues(uint256(price), feedDecimals, uint256(strike), strikeDecimals);
 
         if (comparator == Comparator.PRICE_ABOVE_AT_TIME) {
             if (comparison > 0) return Side.YES;
@@ -363,11 +384,12 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         return Side.NONE; // strict equality → no winner → cancel/refund
     }
 
-    function _compareDecimalValues(uint256 left, uint8 leftDecimals, uint256 right, uint8 rightDecimals)
-        private
-        pure
-        returns (int8)
-    {
+    function _compareDecimalValues(
+        uint256 left,
+        uint8 leftDecimals,
+        uint256 right,
+        uint8 rightDecimals
+    ) private pure returns (int8) {
         if (leftDecimals < rightDecimals) {
             uint256 factor = 10 ** (rightDecimals - leftDecimals);
             if (left > type(uint256).max / factor) return 1;
@@ -390,8 +412,13 @@ contract BinaryPoolMarket is IMarket, Ownable, Pausable, ReentrancyGuard {
         (,, fee, net) = previewPayout(stake, winningPool_, losingPool_);
     }
 
-    function _readConfigHash(address resolver_, bytes32 assetKey) internal view returns (bytes32 hash) {
-        (bool ok, bytes memory data) = resolver_.staticcall(abi.encodeCall(IOracleResolver.configHash, (assetKey)));
+    function _readConfigHash(address resolver_, bytes32 assetKey)
+        internal
+        view
+        returns (bytes32 hash)
+    {
+        (bool ok, bytes memory data) =
+            resolver_.staticcall(abi.encodeCall(IOracleResolver.configHash, (assetKey)));
         if (ok && data.length == 32) hash = abi.decode(data, (bytes32));
     }
 

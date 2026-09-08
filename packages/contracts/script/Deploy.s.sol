@@ -38,7 +38,9 @@ contract Deploy is Script {
         address swapTarget = vm.envAddress("SWAP_TARGET");
         address dataStreamsVerifier = vm.envOr("DATA_STREAMS_VERIFIER", address(0));
         require(chainId == 4663 || chainId == 46630, "unsupported CHAIN_ID");
-        require(safe != address(0) && usdg != address(0) && swapTarget != address(0), "zero address");
+        require(
+            safe != address(0) && usdg != address(0) && swapTarget != address(0), "zero address"
+        );
 
         vm.startBroadcast();
 
@@ -47,13 +49,16 @@ contract Deploy is Script {
         ChainlinkPriceResolver resolver = new ChainlinkPriceResolver(address(timelock), registry);
         address dataStreamsResolver;
         if (dataStreamsVerifier != address(0)) {
-            dataStreamsResolver =
-                address(new DataStreamsRwaResolver(address(timelock), IVerifierProxy(dataStreamsVerifier)));
+            dataStreamsResolver = address(
+                new DataStreamsRwaResolver(address(timelock), IVerifierProxy(dataStreamsVerifier))
+            );
         }
-        SafeClosingPriceResolver safeClosingPriceResolver = new SafeClosingPriceResolver(address(timelock), safe);
+        SafeClosingPriceResolver safeClosingPriceResolver =
+            new SafeClosingPriceResolver(address(timelock), safe);
         FeeVault feeVault = new FeeVault(address(timelock), feeRecipient);
         MarketFactory factory = new MarketFactory(address(timelock));
-        PredictionEntryRouter router = new PredictionEntryRouter(address(timelock), IERC20(usdg), factory);
+        PredictionEntryRouter router =
+            new PredictionEntryRouter(address(timelock), IERC20(usdg), factory);
 
         vm.stopBroadcast();
 

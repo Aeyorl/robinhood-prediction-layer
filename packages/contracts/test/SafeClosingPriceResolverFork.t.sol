@@ -24,7 +24,11 @@ contract SafeClosingPriceResolverForkTest is Test {
         resolver.setAssetConfig(assetKey, 18, 24 hours, 2 days, false);
         vm.prank(timelock);
         resolver.proposeObservation(
-            assetKey, REFERENCE_TIME, 200e18, keccak256("fork-rehearsal-evidence"), "ipfs://fork-rehearsal-evidence"
+            assetKey,
+            REFERENCE_TIME,
+            200e18,
+            keccak256("fork-rehearsal-evidence"),
+            "ipfs://fork-rehearsal-evidence"
         );
 
         assertTrue(resolver.resolutionAvailable(assetKey, REFERENCE_TIME));
