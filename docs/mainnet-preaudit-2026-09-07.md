@@ -25,7 +25,7 @@ The reviewed local suite passes, but this document is an internal pre-audit hard
 | PL-09 | Medium               | Arithmetic edge cases could block settlement or payout               | `BinaryPoolMarket`, `MarketFactory`                  | Remediated; external retest required |
 | PL-10 | Medium               | Collateral accounting trusted requested transfer amount              | `BinaryPoolMarket._enter`                            | Remediated; external retest required |
 | PL-11 | High                 | Production Data Streams retrieval and stream policy not commissioned | API/worker, resolver configuration                   | Open                                 |
-| PL-12 | High                 | Wagerly signer ceremony evidence incomplete                          | Safe/timelock operations                             | Open                                 |
+| PL-12 | High                 | Wagerly signer-control ceremony                                      | Safe/timelock operations                             | Remediated; recovery record pending  |
 
 ## 4. Detailed findings
 
@@ -73,15 +73,16 @@ The reviewed local suite passes, but this document is an internal pre-audit hard
 - **Recommendation:** Create the Data Streams account outside the repository, store credentials in AWS Secrets Manager, verify each stream through official discovery, implement redundant REST/WebSocket retrieval, rehearse a signed v11 resolution on a local fork, monitor expiry and lag, and retain the payload hash and receipt. Never log credentials or full authenticated responses.
 - **References:** CWE-345; CWE-400; Chainlink Data Streams developer responsibilities.
 
-### [HIGH] PL-12 — signer ceremony evidence incomplete
+### [HIGH] PL-12 — signer-control ceremony
 
 - **Location:** shared Safe and deployment procedure
 - **Category:** Key management / governance
-- **Description:** The 2-of-3 Safe and a prior MAG7 rehearsal are verified onchain, but Wagerly lacks signed hardware-wallet custody, recovery contact and ceremony records.
+- **Description:** Wagerly reuses the same client Safe as MAG7. Two owners authorized a harmless threshold transaction and a separate executor submitted it successfully. Wagerly accepted this transaction as its signer-control ceremony, and the unchanged owner set and 2-of-3 threshold were rechecked on chain 4663 on 2026-09-08.
 - **Attack scenario:** A signer device is unavailable or compromised during an incident, and operators cannot prove or execute the intended threshold process.
 - **Impact:** Delayed emergency response or unauthorized governance if custody assumptions are false.
-- **Likelihood:** Unknown until each signer attests.
-- **Recommendation:** Complete the checked-in ceremony record with each signer, verify chain ID and release hashes independently, execute the harmless delayed rehearsal after deployment, and retain receipts.
+- **Likelihood:** Signer control is demonstrated. Recovery readiness remains unknown until the private operator record is completed.
+- **Recommendation:** Keep the responsible-person and recovery-contact mapping outside the repository, confirm independent MetaMask backups, verify release hashes before signing, and execute the harmless delayed timelock rehearsal after deployment.
+- **Status:** Signer-control ceremony remediated and verified onchain. Private recovery record remains operational work.
 - **References:** CWE-320; NIST key-management principles.
 
 ### [MEDIUM] PL-09 — arithmetic edge cases could block settlement or payout

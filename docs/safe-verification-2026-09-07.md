@@ -1,6 +1,6 @@
 # Safe candidate verification — 2026-09-07
 
-The product owner confirmed on 2026-09-07 that Wagerly will reuse the same governance Safe used for MAG7 because both products are being built for the same client. This records the governance-address decision and current onchain state; it does not prove hardware-wallet custody, backup quality or incident-response readiness.
+The product owner confirmed on 2026-09-07 that Wagerly will reuse the same governance Safe used for MAG7 because both products are being built for the same client. This records the governance-address decision, signer-control ceremony and current onchain state. The owners use regular MetaMask wallets, as confirmed by the product owner; hardware-wallet custody is therefore not claimed.
 
 ## Observed state
 
@@ -25,9 +25,15 @@ The MAG7 governance record documents a successful two-signer rehearsal on this e
 
 That rehearsal establishes that two independently controlled owners could authorize a Safe transaction. It does not establish the physical custody or recovery controls required for Wagerly's launch record.
 
+## Wagerly ceremony acceptance — 2026-09-08
+
+Wagerly accepts the successful MAG7 transaction as its signer-control ceremony because it uses the same client Safe and unchanged owner set. A live recheck on Robinhood Chain mainnet returned chain ID `4663`, the same three owners and threshold `2`. The ceremony transaction receipt returned status `1` at block `55120772` and contains the Safe threshold-change event setting threshold `2`.
+
+Signer-control ceremony status: **complete and verified onchain**.
+
 ## Required operator evidence
 
-Before deployment, the operator must map each owner address to an independently controlled hardware wallet, name the deployer and fee recipient, record recovery contacts, and sign the Wagerly ceremony record. The Safe needs bounded native gas before it can execute transactions.
+Before deployment, the operator must retain a private mapping from each owner address to its responsible person, record recovery contacts, and confirm that each MetaMask seed backup is independently controlled. Never store names, seed phrases or private keys in this repository. The Safe needs bounded native gas before it can execute transactions.
 
 ## Deployment evidence still required
 
