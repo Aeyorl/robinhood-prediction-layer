@@ -86,14 +86,25 @@ export function TwoSidedHero({ market }: { market: MarketView | null }) {
 
       <div ref={visualRef} className="orbit-visual">
         <div className="orbit-art" aria-hidden="true">
-          <Image
-            src="/two-sided-orbit.png"
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 900px) 55vw, 100vw"
-            className="object-contain"
-          />
+          <div className="orbit-orb orbit-orb-base">
+            <Image
+              src="/two-sided-orbit.png"
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 900px) 55vw, 100vw"
+              className="object-contain"
+            />
+          </div>
+          <div className="orbit-orb orbit-orb-charge">
+            <Image
+              src="/two-sided-orbit.png"
+              alt=""
+              fill
+              sizes="(min-width: 900px) 55vw, 100vw"
+              className="object-contain"
+            />
+          </div>
         </div>
         <div className="orbit-stat orbit-stat-yes">
           <span>YES</span>

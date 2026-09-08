@@ -19,7 +19,7 @@ export function MarketCard({ market }: { market: MarketView }) {
         </span>
         <strong>{market.assetSymbol}</strong>
         <span className="market-kind">
-          {market.comparator === "PRICE_ABOVE_AT_TIME" ? "Price" : "Threshold"}
+          {market.comparator === "PRICE_ABOVE_AT_TIME" ? "Price above" : "Price below"}
         </span>
         <span className="market-volume">
           <b>{groupedAmount(market.totalPool)}</b>
@@ -35,6 +35,23 @@ export function MarketCard({ market }: { market: MarketView }) {
         <span className="oracle-copy">
           Oracle: {market.feed.slice(0, 6)}…{market.feed.slice(-4)}
         </span>
+      </div>
+      <div className="market-badges">
+        <span className="market-category-badge">Stock Token</span>
+        {market.status === "RESOLVED" && (
+          <span className="market-chainlink-badge" aria-label="Chainlink oracle resolved">
+            ◆ Chainlink resolved
+          </span>
+        )}
+        {market.status === "OPEN" && (
+          <span className="market-status-badge market-status-open">Open</span>
+        )}
+        {market.status === "LOCKED" && (
+          <span className="market-status-badge market-status-locked">Locked</span>
+        )}
+        {market.status === "RESOLVED" && (
+          <span className="market-status-badge market-status-resolved">Resolved</span>
+        )}
       </div>
       <div className="market-outcomes">
         <span className="market-yes">

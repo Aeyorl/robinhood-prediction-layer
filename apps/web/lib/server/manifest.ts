@@ -57,17 +57,22 @@ export type LocalDeployment = z.infer<typeof manifestSchema>;
 function candidatePaths(): string[] {
   const paths: string[] = [];
   if (process.env.PL_LOCAL_MANIFEST) paths.push(process.env.PL_LOCAL_MANIFEST);
-  // dev/build/start run with cwd = apps/web → repo root is two levels up.
+  // From apps/web (dev/start/build):
+  paths.push(resolve(process.cwd(), "../packages/contracts/deployments/local.json"));
+  // From repo root (turbo dev / tests):
+  paths.push(resolve(process.cwd(), "packages/contracts/deployments/local.json"));
+  // Two levels up fallback:
   paths.push(resolve(process.cwd(), "../../packages/contracts/deployments/local.json"));
   // Source layout: apps/web/lib/server → repo root.
   const here = dirname(fileURLToPath(import.meta.url));
+  paths.push(resolve(here, "../../../../packages/contracts/deployments/local.json"));
   paths.push(resolve(here, "../../../packages/contracts/deployments/local.json"));
   return paths;
 }
 
 export const MANIFEST_PATH: string =
   candidatePaths().find((p) => existsSync(p)) ??
-  resolve(process.cwd(), "../../packages/contracts/deployments/local.json");
+  resolve(process.cwd(), "../packages/contracts/deployments/local.json");
 
 let cached: LocalDeployment | null = null;
 

@@ -381,11 +381,45 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
             {needsApproval ? "Approve USDG" : "Approved ✓"}
           </Button>
         </div>
-        {needsApproval && amount > 0n && (
-          <p className="text-xs text-slate-500">
-            Step 1: approve USDG for this market. Step 2: submit the entry. Each appears as its own
-            wallet confirmation.
-          </p>
+        {amount > 0n && isConnected && !onWrongChain && entryOpen && (
+          <div
+            className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/20 p-2 text-xs"
+            role="group"
+            aria-label="Transaction steps"
+          >
+            <div
+              className={`flex items-center gap-2 rounded px-2 py-1.5 ${
+                !needsApproval
+                  ? "text-emerald-400"
+                  : busy === "approve"
+                    ? "text-amber-300"
+                    : "text-slate-400"
+              }`}
+            >
+              <span className="font-mono font-bold">1</span>
+              <span>
+                {!needsApproval ? "Approve ✓" : busy === "approve" ? "Approving…" : "Approve USDG"}
+              </span>
+            </div>
+            <div
+              className={`flex items-center gap-2 rounded px-2 py-1.5 ${
+                busy === "enter"
+                  ? "text-amber-300"
+                  : needsApproval
+                    ? "text-slate-600"
+                    : "text-slate-400"
+              }`}
+            >
+              <span className="font-mono font-bold">2</span>
+              <span>
+                {busy === "enter"
+                  ? "Entering…"
+                  : needsApproval
+                    ? "Enter position"
+                    : "Enter position"}
+              </span>
+            </div>
+          </div>
         )}
         {notice && (
           <p

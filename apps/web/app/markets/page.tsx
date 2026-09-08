@@ -18,7 +18,8 @@ export default async function MarketsPage({
   let chainDown = false;
   try {
     views = (await loadMarketViews()).views;
-  } catch {
+  } catch (err) {
+    console.error("loadMarketViews error:", err);
     chainDown = true;
   }
 

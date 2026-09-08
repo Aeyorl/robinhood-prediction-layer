@@ -7,6 +7,7 @@ import { Badge, Card, StatusBadge } from "@pl/ui";
 import { MarketActions } from "@/components/market-actions";
 import { formatBps, formatUsdg, shortAddress } from "@/components/analytics";
 import { Countdown } from "@/components/countdown";
+import { MarketChart } from "@/components/market-chart";
 import { TradePanel } from "@/components/trade-panel";
 import { isLocalChainEnv } from "@/lib/chain";
 import { getMarketCommunitySplits } from "@/lib/analytics-api";
@@ -54,33 +55,50 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
     communitySplits = await getMarketCommunitySplits(market.address);
   } catch {}
 
+  const totalParticipants =
+    communitySplits?.reduce((sum, split) => sum + split.participantCount, 0) ??
+    (BigInt(market.totalPool) > 0n ? 1 : 0);
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <section className="space-y-3">
+      {/* Header — Spec §6 */}
+      <section className="space-y-3" aria-label="Market overview">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge tone={STATUS_TONE[market.status]}>{market.status}</StatusBadge>
           <Badge>{market.assetSymbol}</Badge>
           <Badge>{market.comparatorLabel}</Badge>
+          <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-xs text-slate-300">
+            {totalParticipants} {totalParticipants === 1 ? "participant" : "participants"}
+          </span>
+          <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-xs text-slate-300">
+            Volume: {total} USDG
+          </span>
           {isLocal && <StatusBadge tone="amber">Local chain</StatusBadge>}
         </div>
         <h1 className="max-w-3xl text-2xl font-bold leading-tight text-white sm:text-3xl">
           {market.question}
         </h1>
-        <p className="font-mono text-xs text-slate-500">Market: {market.address}</p>
+        <p className="font-mono text-xs text-slate-500">Market contract: {market.address}</p>
         <LifecycleLine market={market} nowSeconds={nowSeconds} />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Left: pools + terms */}
-        <div className="space-y-6 lg:col-span-3">
-          {/* Capital split */}
+      {/* Main layout with Spec §17 Mobile ordering */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        {/* Spec §17 #2: YES/NO capital split summary */}
+        <div className="order-1 space-y-6 lg:col-span-3">
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">YES / NO capital split</h2>
-              <span className="text-sm text-slate-400">Volume {total} USDG</span>
+              <span className="text-sm text-slate-400">Total volume {total} USDG</span>
             </div>
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-rose-500/40">
+            <div
+              className="flex h-3 w-full overflow-hidden rounded-full bg-rose-500/40"
+              role="progressbar"
+              aria-valuenow={market.yesSharePct ?? 50}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`YES share ${market.yesSharePct ?? 50}%, NO share ${market.noSharePct ?? 50}%`}
+            >
               {market.yesSharePct != null && market.yesSharePct > 0 && (
                 <div
                   className="h-full bg-emerald-400/80 transition-all"
@@ -106,7 +124,27 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
               Shares of staked capital — not mathematically exact implied probabilities.
             </p>
           </Card>
+        </div>
 
+        {/* Spec §17 #4 & Desktop Right: Trade panel */}
+        <div
+          id="trade-panel"
+          className="order-3 scroll-mt-24 space-y-6 lg:order-2 lg:col-span-2 lg:row-span-2 lg:sticky lg:top-24 lg:self-start"
+        >
+          <TradePanel market={market} isLocal={isLocal} />
+          <MarketActions market={market} />
+          <p className="text-center text-xs text-slate-600">
+            Markets on {branding.chainName}. Not affiliated with or endorsed by Robinhood.
+          </p>
+        </div>
+
+        {/* Spec §17 #3: Market capital share chart */}
+        <div className="order-2 space-y-6 lg:order-3 lg:col-span-3">
+          <MarketChart market={market} />
+        </div>
+
+        {/* Spec §17 #5: Resolution terms & outcome */}
+        <div className="order-4 space-y-6 lg:col-span-3">
           {/* Resolution terms */}
           <Card className="space-y-3">
             <h2 className="text-lg font-semibold text-white">Resolution terms</h2>
@@ -158,6 +196,7 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
             </Card>
           )}
 
+          {/* Spec §17 #6: Activity & community splits */}
           <Card className="space-y-2">
             <h2 className="text-lg font-semibold text-white">Activity</h2>
             <p className="text-sm text-slate-400">
@@ -210,19 +249,9 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
             )}
           </Card>
         </div>
-
-        {/* Right: trade + actions */}
-        <div
-          id="trade-panel"
-          className="scroll-mt-24 space-y-6 lg:sticky lg:top-24 lg:col-span-2 lg:self-start"
-        >
-          <TradePanel market={market} isLocal={isLocal} />
-          <MarketActions market={market} />
-          <p className="text-center text-xs text-slate-600">
-            Markets on {branding.chainName}. Not affiliated with or endorsed by Robinhood.
-          </p>
-        </div>
       </div>
+
+      {/* Sticky mobile trade button */}
       {market.status === "OPEN" && (
         <a
           href="#trade-panel"
@@ -265,8 +294,11 @@ function SidePoolCard({
       }
     >
       <div className="flex items-center justify-between">
-        <span className={`text-sm font-bold ${yes ? "text-emerald-400" : "text-rose-400"}`}>
-          {side}
+        <span
+          className={`flex items-center gap-1.5 text-sm font-bold ${yes ? "text-emerald-400" : "text-rose-400"}`}
+        >
+          <span aria-hidden="true">{yes ? "✓" : "✕"}</span>
+          <span>{side}</span>
         </span>
         {highlight && <StatusBadge tone="green">Won</StatusBadge>}
       </div>
