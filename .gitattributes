@@ -1,0 +1,3 @@
+# Normalize all text files to LF so formatting checks and evidence hashes
+# (forge fmt, ARTIFACTS.sha256) are reproducible on every platform.
+* text=auto eol=lf

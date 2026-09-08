@@ -4,7 +4,7 @@
 
 This review covered the Solidity market, factory, routing, fee, governance and oracle paths; the browser transaction boundary; API and worker controls; deployment workflow; production configuration; dependency state; and operational evidence. A release-blocking error was found in the scheduled-time oracle design: the push-feed resolver accepted a reference timestamp but returned the latest value. The candidate now includes a Chainlink Data Streams RWA Advanced v11 resolver that cryptographically verifies a signed report and binds its feed, validity interval, market status and price timestamp to the market's immutable resolution terms.
 
-The reviewed local suite passes, but this document is an internal pre-audit hardening record. It is not an independent credentialed audit and does not authorize mainnet deployment or user funds. Mainnet remains **NO-GO** until the open gates below are closed with signed external evidence.
+The reviewed local suite passes, but this document is an internal pre-audit hardening record. It is not an independent credentialed audit and does not authorize mainnet deployment or user funds. Mainnet remains **NO-GO** until the open gates below are closed with signed external evidence. A follow-up internal review on 2026-09-08 re-verified this candidate's tests, rehearsal and Safe state, remediated two dev-tooling findings, and found that the recorded ceremony signatures are not independently reproducible and bind rc1 rather than the current candidate — see `docs/internal-security-review-2026-09-08.md` (ISR-01, ISR-02).
 
 ## 2. Scope and limitations
 
@@ -16,16 +16,16 @@ The reviewed local suite passes, but this document is an internal pre-audit hard
 
 ## 3. Findings summary
 
-| ID    | Severity             | Title                                                                | Location                                             | Status                               |
-| ----- | -------------------- | -------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------ |
-| PL-01 | Critical launch gate | Independent audit and remediation absent                             | Entire contract system                               | Open                                 |
-| PL-04 | High                 | Counsel-approved eligibility and compliance policy absent            | Product and API enforcement                          | Open                                 |
-| PL-07 | Medium               | Production paging and load evidence incomplete                       | AWS runtime/monitoring                               | Open                                 |
-| PL-08 | High                 | Scheduled-time resolver used a later live price                      | `ChainlinkPriceResolver`, `BinaryPoolMarket.resolve` | Remediated; external retest required |
-| PL-09 | Medium               | Arithmetic edge cases could block settlement or payout               | `BinaryPoolMarket`, `MarketFactory`                  | Remediated; external retest required |
-| PL-10 | Medium               | Collateral accounting trusted requested transfer amount              | `BinaryPoolMarket._enter`                            | Remediated; external retest required |
-| PL-11 | High                 | Production Data Streams retrieval and stream policy not commissioned | API/worker, resolver configuration                   | Open                                 |
-| PL-12 | High                 | Wagerly signer-control ceremony                                      | Safe/timelock operations                             | Remediated; recovery record pending  |
+| ID    | Severity             | Title                                                                | Location                                             | Status                                                                                     |
+| ----- | -------------------- | -------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| PL-01 | Critical launch gate | Independent audit and remediation absent                             | Entire contract system                               | Open                                                                                       |
+| PL-04 | High                 | Counsel-approved eligibility and compliance policy absent            | Product and API enforcement                          | Open                                                                                       |
+| PL-07 | Medium               | Production paging and load evidence incomplete                       | AWS runtime/monitoring                               | Open                                                                                       |
+| PL-08 | High                 | Scheduled-time resolver used a later live price                      | `ChainlinkPriceResolver`, `BinaryPoolMarket.resolve` | Remediated; external retest required                                                       |
+| PL-09 | Medium               | Arithmetic edge cases could block settlement or payout               | `BinaryPoolMarket`, `MarketFactory`                  | Remediated; external retest required                                                       |
+| PL-10 | Medium               | Collateral accounting trusted requested transfer amount              | `BinaryPoolMarket._enter`                            | Remediated; external retest required                                                       |
+| PL-11 | High                 | Production Data Streams retrieval and stream policy not commissioned | API/worker, resolver configuration                   | Open                                                                                       |
+| PL-12 | High                 | Wagerly signer-control ceremony                                      | Safe/timelock operations                             | Signer-control ceremony recorded; signature evidence requires re-recording (ISR-01/ISR-02) |
 
 ## 4. Detailed findings
 
@@ -82,7 +82,7 @@ The reviewed local suite passes, but this document is an internal pre-audit hard
 - **Impact:** Delayed emergency response or unauthorized governance if custody assumptions are false.
 - **Likelihood:** Signer control is demonstrated. Recovery readiness remains unknown until the private operator record is completed.
 - **Recommendation:** Keep the responsible-person and recovery-contact mapping outside the repository, confirm independent MetaMask backups, verify release hashes before signing, and execute the harmless delayed timelock rehearsal after deployment.
-- **Status:** Signer-control ceremony remediated and verified onchain. Private recovery record remains operational work.
+- **Status:** Signer-control ceremony recorded and Safe state re-verified onchain on 2026-09-08. The recorded EIP-712 signatures are not independently reproducible and the evidence binds rc1, not the current candidate; they must be re-recorded against the final release candidate with a schema-valid payload (ISR-01/ISR-02). Private recovery record remains operational work.
 - **References:** CWE-320; NIST key-management principles.
 
 ### [MEDIUM] PL-09 — arithmetic edge cases could block settlement or payout
