@@ -113,7 +113,10 @@ const transaction = {
   method: "proposeObservation(bytes32,uint256,int256,bytes32,string)",
   evidence: { uri: evidenceUri, keccak256: evidenceHash, sha256: `0x${sha256}` },
 };
-const transactionPath = resolve(outputDirectory, `${input.symbol.toLowerCase()}-${input.referenceTime}-safe-tx.json`);
+const transactionPath = resolve(
+  outputDirectory,
+  `${input.symbol.toLowerCase()}-${input.referenceTime}-safe-tx.json`,
+);
 if (!dryRun) writeFileSync(transactionPath, `${JSON.stringify(transaction, null, 2)}\n`);
 
 console.log(`Evidence: ${basename(evidencePath)}`);

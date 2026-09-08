@@ -270,8 +270,7 @@ async function run() {
   const entryRouterAddress = env.PREDICTION_ENTRY_ROUTER_ADDRESS?.toLowerCase() as
     Address | undefined;
   const safeClosingPriceResolverAddress = env.SAFE_CLOSING_PRICE_RESOLVER_ADDRESS?.toLowerCase() as
-    | Address
-    | undefined;
+    Address | undefined;
   const { client, transport } = makeClient();
   console.log(`[worker] starting on chain ${chain.id} via ${transport}`);
   console.log(`[worker] factory ${factoryAddress}`);
