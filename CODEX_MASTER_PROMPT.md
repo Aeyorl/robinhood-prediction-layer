@@ -10,7 +10,7 @@ This is a completely standalone project.
 
 Do **not** reference, import, mention, brand, connect, or reuse concepts from ROOK or Strixis anywhere in code, documentation, UI copy, commit messages, environment names, or comments.
 
-The owner-approved project name is `Wagerly`. Keep branding easy to rename through one config file.
+The owner-approved project name is `Poku`. Keep branding easy to rename through one config file.
 
 ## 1. Product to build
 

@@ -1,5 +1,5 @@
 /**
- * Wagerly chain indexer.
+ * Poku chain indexer.
  *
  * Runs a real loop today:
  *   - connects over WebSocket RPC (falls back to HTTP polling),

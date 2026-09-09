@@ -2,7 +2,7 @@
 
 ## 1. Product definition
 
-`Wagerly` is a standalone wallet-native prediction application deployed on Robinhood Chain.
+`Poku` is a standalone wallet-native prediction application deployed on Robinhood Chain.
 
 Users take positions on objective future outcomes. The first category is financial price-based markets that can be resolved from trusted onchain price data.
 
