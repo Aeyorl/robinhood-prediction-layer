@@ -9,8 +9,15 @@ import {
   type SampleMarket,
   type SampleMarketStatus,
 } from "@/lib/sample-markets";
+type MemeDiscoveryState = { status: "live" } | { status: "unavailable"; message: string };
 
-export function SampleMarketDirectory({ markets }: { markets: readonly SampleMarket[] }) {
+export function SampleMarketDirectory({
+  markets,
+  memeDiscovery,
+}: {
+  markets: readonly SampleMarket[];
+  memeDiscovery: MemeDiscoveryState;
+}) {
   const [category, setCategory] = useState<"ALL" | MarketCategory>("ALL");
   const [status, setStatus] = useState<"ALL" | SampleMarketStatus>("ALL");
   const [query, setQuery] = useState("");
@@ -105,6 +112,12 @@ export function SampleMarketDirectory({ markets }: { markets: readonly SampleMar
           </select>
         </label>
       </section>
+      {memeDiscovery.status === "unavailable" && (
+        <div className="sample-unavailable-state">
+          <strong>Robinhood meme discovery unavailable</strong>
+          <p>{memeDiscovery.message}</p>
+        </div>
+      )}
       {filtered.length ? (
         <div className="sample-market-grid">
           {filtered.map((market) => (
@@ -145,6 +158,11 @@ export function SampleMarketCard({ market }: { market: SampleMarket }) {
         <span>{market.closeLabel}</span>
         <span>{market.volume} volume</span>
       </div>
+      {market.sourceLabel && (
+        <span className="sample-data-source">
+          {market.sourceLabel} · {market.marketCapLabel}
+        </span>
+      )}
       <div
         className="sample-shares"
         aria-label={`YES ${market.yesShare}% capital share, NO ${market.noShare}% capital share`}

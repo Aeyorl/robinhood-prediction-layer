@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getSampleMarket } from "@/lib/sample-markets";
+import { loadPublicMarkets } from "@/lib/server/dexscreener";
 
 export default async function MarketDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const market = getSampleMarket(slug);
+  const { markets } = await loadPublicMarkets();
+  const market = markets.find((item) => item.slug === slug);
   if (!market) notFound();
 
   return (
@@ -56,6 +57,23 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
               <span>Market terms</span>
               <p>{market.terms}</p>
             </article>
+            {market.sourceUrl && (
+              <article className="sample-information-card">
+                <span>Discovery source</span>
+                <h2>{market.sourceLabel}</h2>
+                <p>
+                  {market.marketCapLabel} · {market.liquidityLabel}
+                </p>
+                <a
+                  href={market.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="sample-source-link"
+                >
+                  View the source pair →
+                </a>
+              </article>
+            )}
             <article className="sample-information-card">
               <span>Resolution source</span>
               <h2>{market.oracle}</h2>

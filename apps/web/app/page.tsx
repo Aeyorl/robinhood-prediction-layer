@@ -1,9 +1,12 @@
 import Link from "next/link";
 
 import { SampleMarketCard } from "@/components/sample-market-directory";
-import { sampleMarkets } from "@/lib/sample-markets";
+import { loadPublicMarkets } from "@/lib/server/dexscreener";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const { markets: sampleMarkets } = await loadPublicMarkets();
   const featured = sampleMarkets[0];
   if (!featured) return null;
   return (

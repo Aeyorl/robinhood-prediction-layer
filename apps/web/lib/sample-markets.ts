@@ -20,10 +20,14 @@ export interface SampleMarket {
   resolutionMethod: string;
   evidenceStatus: string;
   terms: string;
+  sourceLabel?: string;
+  sourceUrl?: string;
+  marketCapLabel?: string;
+  liquidityLabel?: string;
 }
 
 /** Public discovery data. It contains no contract addresses, wallet state, or transaction payloads. */
-export const sampleMarkets: readonly SampleMarket[] = [
+export const stockSampleMarkets: readonly SampleMarket[] = [
   {
     slug: "nvda-above-200-sep-30",
     category: "STOCKS",
@@ -114,62 +118,7 @@ export const sampleMarkets: readonly SampleMarket[] = [
     terms:
       "YES resolves if the reference closing price is strictly above $175.00 at the stated close; otherwise NO resolves.",
   },
-  {
-    slug: "pons-above-090-oct-31",
-    category: "MEMECOINS",
-    symbol: "PONS",
-    assetName: "Pons",
-    question: "Will PONS trade above $0.90 on Oct 31?",
-    closeLabel: "Closes Oct 31, 11:59 PM UTC",
-    closeTime: "Oct 31",
-    status: "OPEN",
-    volume: "7.7M USD / 24h",
-    yesShare: 58,
-    noShare: 42,
-    oracle: "DexScreener discovery data · Robinhood Chain",
-    resolutionMethod: "Future market: defined reference price and timestamped evidence",
-    evidenceStatus: "Preview — PONS qualified above the $30m discovery screen",
-    terms:
-      "YES resolves only if the future defined reference price is strictly above $0.90 at the deadline.",
-  },
-  {
-    slug: "cashcat-above-025-oct-31",
-    category: "MEMECOINS",
-    symbol: "CASHCAT",
-    assetName: "Cashcat",
-    question: "Will CASHCAT trade above $0.25 on Oct 31?",
-    closeLabel: "Closes Oct 31, 11:59 PM UTC",
-    closeTime: "Oct 31",
-    status: "OPEN",
-    volume: "3.1M USD / 24h",
-    yesShare: 47,
-    noShare: 53,
-    oracle: "DexScreener discovery data · Robinhood Chain",
-    resolutionMethod: "Future market: defined reference price and timestamped evidence",
-    evidenceStatus: "Preview — CASHCAT qualified above the $30m discovery screen",
-    terms:
-      "YES resolves only if the future defined reference price is strictly above $0.25 at the deadline.",
-  },
-  {
-    slug: "ai-above-030-oct-31",
-    category: "MEMECOINS",
-    symbol: "AI",
-    assetName: "Artificial Inu",
-    question: "Will AI trade above $0.30 on Oct 31?",
-    closeLabel: "Closes Oct 31, 11:59 PM UTC",
-    closeTime: "Oct 31",
-    status: "OPEN",
-    volume: "6.0M USD / 24h",
-    yesShare: 44,
-    noShare: 56,
-    oracle: "DexScreener discovery data · Robinhood Chain",
-    resolutionMethod: "Future market: defined reference price and timestamped evidence",
-    evidenceStatus: "Preview — AI qualified above the $30m discovery screen",
-    terms:
-      "YES resolves only if the future defined reference price is strictly above $0.30 at the deadline.",
-  },
 ];
 
-export function getSampleMarket(slug: string) {
-  return sampleMarkets.find((market) => market.slug === slug);
-}
+/** Backwards-compatible stock-only preview export. Server discovery adds memecoins. */
+export const sampleMarkets = stockSampleMarkets;

@@ -1,10 +1,13 @@
 import { SampleMarketDirectory } from "@/components/sample-market-directory";
-import { sampleMarkets } from "@/lib/sample-markets";
+import { loadPublicMarkets } from "@/lib/server/dexscreener";
 
-export default function MarketsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function MarketsPage() {
+  const { markets, memeDiscovery } = await loadPublicMarkets();
   return (
     <div className="read-only-route">
-      <SampleMarketDirectory markets={sampleMarkets} />
+      <SampleMarketDirectory markets={markets} memeDiscovery={memeDiscovery} />
     </div>
   );
 }
