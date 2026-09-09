@@ -1,133 +1,342 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { loadPublicMarkets } from "@/lib/server/dexscreener";
+import { branding } from "@pl/config";
+import { Badge, Card, StatusBadge } from "@pl/ui";
+
+import { MarketActions } from "@/components/market-actions";
+import { formatBps, formatUsdg, shortAddress } from "@/components/analytics";
+import { Countdown } from "@/components/countdown";
+import { MarketChart } from "@/components/market-chart";
+import { TradePanel } from "@/components/trade-panel";
+import { isLocalChainEnv } from "@/lib/chain";
+import { getMarketCommunitySplits } from "@/lib/analytics-api";
+import { groupedAmount, type MarketView } from "@/lib/market-view";
+import { loadMarketViewBySlug } from "@/lib/server/markets";
+import { NoLocalChain } from "@/components/no-local-chain";
+
+export const dynamic = "force-dynamic";
+
+const STATUS_TONE: Record<MarketView["status"], "green" | "red" | "amber" | "slate" | "indigo"> = {
+  OPEN: "green",
+  LOCKED: "amber",
+  RESOLVED: "indigo",
+  CANCELLED: "red",
+};
 
 export default async function MarketDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { markets } = await loadPublicMarkets();
-  const market = markets.find((item) => item.slug === slug);
+
+  let market: MarketView | null = null;
+  let chainDown = false;
+  try {
+    market = await loadMarketViewBySlug(slug);
+  } catch {
+    chainDown = true;
+  }
+
+  if (chainDown) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-xl font-bold text-white">Market unavailable</h1>
+        <NoLocalChain />
+      </div>
+    );
+  }
   if (!market) notFound();
 
-  return (
-    <div className="read-only-route">
-      <div className="sample-detail">
-        <Link href="/markets" className="sample-back">
-          ← All markets
-        </Link>
-        <div className="sample-preview-banner">
-          <strong>Preview market</strong>
-          <span>Market discovery is live. Trading is not open.</span>
-        </div>
-        <header className="sample-detail-header">
-          <div>
-            <span className={`sample-category sample-category-${market.category.toLowerCase()}`}>
-              {market.category === "MEMECOINS" ? "Memecoin" : "Stock"}
-            </span>
-            <div className="sample-asset-line">
-              <strong>{market.symbol}</strong>
-              <span>{market.assetName}</span>
-            </div>
-            <h1>{market.question}</h1>
-            <p>
-              {market.closeLabel} · {market.status.replace("_", " ")} · {market.volume} sample
-              volume
-            </p>
-          </div>
-          <div
-            className="sample-detail-split"
-            aria-label={`YES ${market.yesShare}% capital share, NO ${market.noShare}% capital share`}
-          >
-            <div className="sample-share sample-yes">
-              <span>▲ YES</span>
-              <strong>{market.yesShare}%</strong>
-              <small>capital share</small>
-            </div>
-            <div className="sample-share sample-no">
-              <span>○ NO</span>
-              <strong>{market.noShare}%</strong>
-              <small>capital share</small>
-            </div>
-          </div>
-        </header>
+  const isLocal = isLocalChainEnv();
+  const total = groupedAmount(market.totalPool);
+  const yesAmt = groupedAmount(market.yesPool);
+  const noAmt = groupedAmount(market.noPool);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  let communitySplits: Awaited<ReturnType<typeof getMarketCommunitySplits>> | null = null;
+  try {
+    communitySplits = await getMarketCommunitySplits(market.address);
+  } catch {}
 
-        <div className="sample-detail-grid">
-          <section className="sample-detail-content">
-            <article className="sample-information-card">
-              <span>Market terms</span>
-              <p>{market.terms}</p>
-            </article>
-            {market.sourceUrl && (
-              <article className="sample-information-card">
-                <span>Discovery source</span>
-                <h2>{market.sourceLabel}</h2>
-                <p>
-                  {market.marketCapLabel} · {market.liquidityLabel}
-                </p>
-                <a
-                  href={market.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="sample-source-link"
-                >
-                  View the source pair →
-                </a>
-              </article>
-            )}
-            <article className="sample-information-card">
-              <span>Resolution source</span>
-              <h2>{market.oracle}</h2>
-              <p>
-                {market.resolutionMethod}. Evidence status: {market.evidenceStatus}.
-              </p>
-            </article>
-            <article className="sample-information-card">
-              <span>How resolution works</span>
-              <ol>
-                <li>The stated source and close time define the observation window.</li>
-                <li>Evidence is reviewed against the published market terms.</li>
-                <li>
-                  A future deployed market may resolve onchain only after its evidence requirements
-                  are met.
-                </li>
-              </ol>
-            </article>
-            <article className="sample-information-card">
-              <span>Activity</span>
-              <p>
-                Sample activity is intentionally unavailable. No wallet positions, deposits, or
-                transactions have been created for this preview.
-              </p>
-            </article>
-          </section>
-          <aside className="sample-disabled-trade" aria-label="Trading unavailable">
-            <span className="sample-kicker">Transaction panel</span>
-            <h2>Trading not open yet</h2>
-            <p>
-              Trading opens after onchain deployment and final launch checks. This preview does not
-              connect wallets, request approvals, construct transactions, or accept deposits.
-            </p>
-            <div className="sample-disabled-options">
-              <div>
-                <span>▲ YES</span>
-                <strong>{market.yesShare}% capital share</strong>
-              </div>
-              <div>
-                <span>○ NO</span>
-                <strong>{market.noShare}% capital share</strong>
-              </div>
-            </div>
-            <button type="button" disabled>
-              Trading not open yet
-            </button>
-            <small>Capital share is not guaranteed probability.</small>
-          </aside>
+  const totalParticipants =
+    communitySplits?.reduce((sum, split) => sum + split.participantCount, 0) ??
+    (BigInt(market.totalPool) > 0n ? 1 : 0);
+
+  return (
+    <div className="space-y-8">
+      {/* Header — Spec §6 */}
+      <section className="space-y-3" aria-label="Market overview">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge tone={STATUS_TONE[market.status]}>{market.status}</StatusBadge>
+          <Badge>{market.assetSymbol}</Badge>
+          <Badge>{market.comparatorLabel}</Badge>
+          <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-xs text-slate-300">
+            {totalParticipants} {totalParticipants === 1 ? "participant" : "participants"}
+          </span>
+          <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-xs text-slate-300">
+            Volume: {total} USDG
+          </span>
+          {isLocal && <StatusBadge tone="amber">Local chain</StatusBadge>}
         </div>
-        <p className="sample-detail-disclaimer">
-          Independent product. Not affiliated with or endorsed by Robinhood. All displayed market
-          and volume figures are demonstration data until deployed markets exist.
-        </p>
+        <h1 className="max-w-3xl text-2xl font-bold leading-tight text-white sm:text-3xl">
+          {market.question}
+        </h1>
+        <p className="font-mono text-xs text-slate-500">Market contract: {market.address}</p>
+        <LifecycleLine market={market} nowSeconds={nowSeconds} />
+      </section>
+
+      {/* Main layout with Spec §17 Mobile ordering */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        {/* Spec §17 #2: YES/NO capital split summary */}
+        <div className="order-1 space-y-6 lg:col-span-3">
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">YES / NO capital split</h2>
+              <span className="text-sm text-slate-400">Total volume {total} USDG</span>
+            </div>
+            <div
+              className="flex h-3 w-full overflow-hidden rounded-full bg-rose-500/40"
+              role="progressbar"
+              aria-valuenow={market.yesSharePct ?? 50}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`YES share ${market.yesSharePct ?? 50}%, NO share ${market.noSharePct ?? 50}%`}
+            >
+              {market.yesSharePct != null && market.yesSharePct > 0 && (
+                <div
+                  className="h-full bg-emerald-400/80 transition-all"
+                  style={{ width: `${market.yesSharePct}%` }}
+                />
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <SidePoolCard
+                side="YES"
+                amount={yesAmt}
+                pct={market.yesSharePct}
+                highlight={market.status === "RESOLVED" && market.side === "YES"}
+              />
+              <SidePoolCard
+                side="NO"
+                amount={noAmt}
+                pct={market.noSharePct}
+                highlight={market.status === "RESOLVED" && market.side === "NO"}
+              />
+            </div>
+            <p className="text-xs text-slate-500">
+              Shares of staked capital — not mathematically exact implied probabilities.
+            </p>
+          </Card>
+        </div>
+
+        {/* Spec §17 #4 & Desktop Right: Trade panel */}
+        <div
+          id="trade-panel"
+          className="order-3 scroll-mt-24 space-y-6 lg:order-2 lg:col-span-2 lg:row-span-2 lg:sticky lg:top-24 lg:self-start"
+        >
+          <TradePanel market={market} isLocal={isLocal} />
+          <MarketActions market={market} />
+          <p className="text-center text-xs text-slate-600">
+            Markets on {branding.chainName}. Not affiliated with or endorsed by Robinhood.
+          </p>
+        </div>
+
+        {/* Spec §17 #3: Market capital share chart */}
+        <div className="order-2 space-y-6 lg:order-3 lg:col-span-3">
+          <MarketChart market={market} />
+        </div>
+
+        {/* Spec §17 #5: Resolution terms & outcome */}
+        <div className="order-4 space-y-6 lg:col-span-3">
+          {/* Resolution terms */}
+          <Card className="space-y-3">
+            <h2 className="text-lg font-semibold text-white">Resolution terms</h2>
+            <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+              <Term label="Oracle asset" value={market.assetSymbol} mono={false} />
+              <Term label="Comparator" value={market.comparatorLabel} mono={false} />
+              <Term
+                label="Strike"
+                value={`${market.strike} ${market.collateralSymbol}`}
+                mono={false}
+              />
+              <Term label="Strike decimals" value="18" mono />
+              <Term
+                label="Collateral"
+                value={`${market.collateralSymbol} (${market.collateral})`}
+                mono
+              />
+              <Term label="Price feed" value={market.feed} mono />
+              <Term
+                label="Min entry"
+                value={`${groupedAmount(market.minEntry)} USDG`}
+                mono={false}
+              />
+              <Term
+                label="Fee (on profit)"
+                value={`${BigInt(market.feeBps) / 100n}%`}
+                mono={false}
+              />
+            </dl>
+            <p className="text-xs text-slate-500">
+              Terms are frozen onchain at creation. In v0 there is no early exit; winners share the
+              full pool pro rata after resolution.
+            </p>
+          </Card>
+
+          {/* Resolution outcome */}
+          {market.status === "RESOLVED" && (
+            <Card className="space-y-2 border-emerald-500/30 bg-emerald-500/5">
+              <h2 className="text-lg font-semibold text-white">Outcome</h2>
+              <p className="text-sm text-slate-200">
+                <span className="font-bold text-emerald-400">{market.side}</span> won. The oracle
+                price at resolution was{" "}
+                <span className="font-semibold">{market.resolvedPrice ?? "—"} USDG</span>.
+              </p>
+              <p className="text-xs text-slate-400">
+                Winners claim pro rata; if the winning side had no stake the market would cancel and
+                refund. No early exit in v0.
+              </p>
+            </Card>
+          )}
+
+          {/* Spec §17 #6: Activity & community splits */}
+          <Card className="space-y-2">
+            <h2 className="text-lg font-semibold text-white">Activity</h2>
+            <p className="text-sm text-slate-400">
+              Confirmed position, resolution, and claim events feed the connected portfolio and
+              community analytics. The chain remains the source of truth.
+            </p>
+            <Link
+              href="/portfolio"
+              className="inline-flex text-sm font-semibold text-indigo-300 hover:text-indigo-200"
+            >
+              View your portfolio →
+            </Link>
+          </Card>
+
+          <Card className="space-y-2">
+            <h2 className="text-lg font-semibold text-white">Community split</h2>
+            {communitySplits == null ? (
+              <p className="text-sm text-slate-400">
+                Funding attribution is temporarily unavailable.
+              </p>
+            ) : communitySplits.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                No verified source-token entries have been indexed for this market.
+              </p>
+            ) : (
+              <div className="divide-y divide-white/[0.08]">
+                {communitySplits.map((split) => (
+                  <Link
+                    key={split.fundingToken.address}
+                    href={`/community/${split.fundingToken.chainId}/${split.fundingToken.address}`}
+                    className="flex items-center justify-between gap-4 py-3 first:pt-1 last:pb-1"
+                  >
+                    <span>
+                      <span className="block font-semibold text-white">
+                        {split.fundingToken.symbol ?? shortAddress(split.fundingToken.address)}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {split.participantCount} participating wallets
+                      </span>
+                    </span>
+                    <span className="text-right text-sm text-slate-300">
+                      {formatUsdg(split.volumeUsdg)}
+                      <span className="block text-xs text-slate-500">
+                        YES {formatBps(split.yesShareBps)}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
+
+      {/* Sticky mobile trade button */}
+      {market.status === "OPEN" && (
+        <a
+          href="#trade-panel"
+          className="fixed bottom-20 left-4 right-4 z-40 flex min-h-12 items-center justify-center rounded-xl bg-indigo-500 px-5 text-sm font-bold text-white shadow-2xl shadow-indigo-950/60 md:hidden"
+        >
+          Trade this market
+        </a>
+      )}
     </div>
+  );
+}
+
+function Term({ label, value, mono }: { label: string; value: string; mono: boolean }) {
+  return (
+    <div>
+      <dt className="text-xs text-slate-500">{label}</dt>
+      <dd className={`break-all text-slate-200 ${mono ? "font-mono text-xs" : ""}`}>{value}</dd>
+    </div>
+  );
+}
+
+function SidePoolCard({
+  side,
+  amount,
+  pct,
+  highlight,
+}: {
+  side: "YES" | "NO";
+  amount: string;
+  pct: number | null;
+  highlight: boolean;
+}) {
+  const yes = side === "YES";
+  return (
+    <div
+      className={
+        highlight
+          ? "rounded-xl border border-emerald-400/50 bg-emerald-500/10 p-4"
+          : "rounded-xl border border-white/10 bg-white/5 p-4"
+      }
+    >
+      <div className="flex items-center justify-between">
+        <span
+          className={`flex items-center gap-1.5 text-sm font-bold ${yes ? "text-emerald-400" : "text-rose-400"}`}
+        >
+          <span aria-hidden="true">{yes ? "✓" : "✕"}</span>
+          <span>{side}</span>
+        </span>
+        {highlight && <StatusBadge tone="green">Won</StatusBadge>}
+      </div>
+      <p className="mt-1 text-2xl font-semibold text-white">{amount}</p>
+      <p className="text-xs text-slate-400">
+        USDG · {pct != null ? `${pct.toFixed(1)}%` : "—"} of pool
+      </p>
+    </div>
+  );
+}
+
+function LifecycleLine({ market, nowSeconds }: { market: MarketView; nowSeconds: number }) {
+  const fmt = (s: number) =>
+    new Date(s * 1000).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  return (
+    <p className="text-xs text-slate-400">
+      {market.status === "OPEN" &&
+        (nowSeconds < market.lockTime ? (
+          <>
+            Entry closes in <Countdown targetSeconds={market.lockTime} /> ·{" "}
+          </>
+        ) : (
+          <>Entry closed · </>
+        ))}
+      {market.status === "LOCKED" &&
+        (nowSeconds < market.resolutionTime ? (
+          <>
+            Resolves in <Countdown targetSeconds={market.resolutionTime} /> ·{" "}
+          </>
+        ) : (
+          <>Ready to resolve · </>
+        ))}
+      Lock {fmt(market.lockTime)} · Resolution {fmt(market.resolutionTime)}
+    </p>
   );
 }
