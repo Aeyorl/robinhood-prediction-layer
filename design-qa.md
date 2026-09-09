@@ -6,15 +6,15 @@
 - Implementation: `http://127.0.0.1:3000/`
 - Source pixels: 1487 x 1058.
 - Browser-rendered implementation capture: Codex in-app Browser capture; the browser API did not expose a persistent local screenshot path.
-- Implementation capture pixels: 910 x 880 at browser device scale factor 1.
-- CSS viewport: responsive narrow-desktop state. The existing desktop rules apply above 950 CSS px and preserve the source's side-by-side hero.
-- Density normalization: source composition was compared at its native desktop size; the implementation was also reviewed at the available responsive viewport to confirm its intended stacked adaptation.
+- Implementation capture pixels: 1265 x 710 at browser device scale factor 1.
+- CSS viewport: desktop state with the two-column hero and three-card market row.
+- Density normalization: source and implementation were compared at desktop scale; the shorter implementation capture was used to judge the complete above-the-fold composition.
 - State: read-only sample discovery with centralized stock data and the server-side Robinhood Chain memecoin feed.
 
 ## Full-view comparison evidence
 
 - The implementation restores the source's warm-ivory canvas, oversized condensed black headline, cobalt/lime split orbit artwork, two outcome labels, black primary action, three-card market row, signal tape, and four-column trust band.
-- At the available 910 px capture, the hero intentionally stacks and the mobile navigation appears. The orbit remains centered and both outcome labels remain visible without horizontal overflow.
+- At the available 1265 px capture, the hero remains side-by-side, the orbit stays centered, both outcome labels remain visible, and the three-card row begins above the fold without horizontal overflow.
 - Poku branding and the disabled `Trading not open` control replace the older name and active wallet action without changing the selected visual direction.
 
 ## Focused-region comparison evidence
@@ -55,6 +55,6 @@
 
 ## Follow-up polish
 
-- Re-capture at 1487 x 1058 when a resizable browser surface is available for pixel-level desktop comparison.
+- The remaining name and disabled-control differences are intentional product-state changes.
 
 final result: passed
