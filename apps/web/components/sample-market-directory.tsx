@@ -182,3 +182,44 @@ export function SampleMarketCard({ market }: { market: SampleMarket }) {
     </Link>
   );
 }
+
+export function LightSampleMarketCard({ market }: { market: SampleMarket }) {
+  return (
+    <Link href={`/market/${market.slug}`} className="light-market-card">
+      <div className="light-market-meta">
+        <span className="light-asset-mark" aria-hidden="true">
+          {market.symbol.slice(0, 2)}
+        </span>
+        <strong>{market.symbol}</strong>
+        <span className="market-kind">
+          {market.category === "MEMECOINS" ? "Memecoin" : "Stock"}
+        </span>
+        <span className="market-volume">
+          <b>{market.volume}</b>
+          <small>sample volume</small>
+        </span>
+      </div>
+      <h3>{market.question}</h3>
+      <div className="market-timing">
+        <span className="clock-mark" aria-hidden="true" />
+        <span>{market.closeLabel}</span>
+        <span className="oracle-copy">Source: {market.oracle}</span>
+      </div>
+      <div
+        className="market-outcomes"
+        aria-label={`YES ${market.yesShare}% capital share, NO ${market.noShare}% capital share`}
+      >
+        <span className="market-yes">
+          <b>▲ YES</b>
+          <strong>{market.yesShare}%</strong>
+          <small>capital share</small>
+        </span>
+        <span className="market-no">
+          <b>○ NO</b>
+          <strong>{market.noShare}%</strong>
+          <small>capital share</small>
+        </span>
+      </div>
+    </Link>
+  );
+}

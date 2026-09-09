@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import type { MarketView } from "@/lib/market-view";
+import type { SampleMarket } from "@/lib/sample-markets";
 
 function useCountUp(target: number) {
   const [value, setValue] = useState(0);
@@ -26,11 +26,11 @@ function useCountUp(target: number) {
   return value;
 }
 
-export function TwoSidedHero({ market }: { market: MarketView | null }) {
+export function TwoSidedHero({ market }: { market: SampleMarket | null }) {
   const visualRef = useRef<HTMLDivElement>(null);
-  const yesTarget = market?.yesSharePct ?? 0;
-  const noTarget = market?.noSharePct ?? 0;
-  const hasShare = market?.yesSharePct != null && market.noSharePct != null;
+  const yesTarget = market?.yesShare ?? 0;
+  const noTarget = market?.noShare ?? 0;
+  const hasShare = market != null;
   const yes = useCountUp(yesTarget);
   const no = useCountUp(noTarget);
 
@@ -70,9 +70,9 @@ export function TwoSidedHero({ market }: { market: MarketView | null }) {
           has two sides.
         </h1>
         <p>
-          Binary prediction markets for real-world outcomes.
+          Read-only prediction market discovery for real-world outcomes.
           <br />
-          Trade YES or NO with your wallet on Robinhood Chain.
+          Compare YES and NO capital share on Robinhood Chain.
         </p>
         <div className="hero-actions">
           <Link href="/markets" className="black-action">
