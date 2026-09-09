@@ -48,7 +48,7 @@ export default function HomePage() {
             <span className="sample-kicker">Markets</span>
             <h2>Stocks and memecoins</h2>
           </div>
-          <Link href="/markets">See all 10 →</Link>
+          <Link href="/markets">See all {sampleMarkets.length} →</Link>
         </div>
         <div className="sample-market-grid">
           {sampleMarkets.slice(0, 6).map((market) => (

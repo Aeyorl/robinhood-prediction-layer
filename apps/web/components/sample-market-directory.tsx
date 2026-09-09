@@ -48,7 +48,7 @@ export function SampleMarketDirectory({ markets }: { markets: readonly SampleMar
           </p>
         </div>
         <div className="sample-discovery-note">
-          <strong>10</strong>
+          <strong>{markets.length}</strong>
           <span>
             sample markets
             <br />
