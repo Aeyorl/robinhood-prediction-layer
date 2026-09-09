@@ -1,5 +1,6 @@
 import { CommunitySignalMap } from "@/components/community-signal-map";
 import { getCommunities } from "@/lib/analytics-api";
+import { demoCommunities } from "@/lib/demo-analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +20,12 @@ export default async function CommunitiesPage() {
         </h1>
         <p>Activity grouped by the token participants used to fund a position.</p>
       </header>
-      {!data ? (
-        <div className="community-empty">
-          <h2>Community analytics are unavailable</h2>
-          <p>The directory will return when the indexer API is healthy.</p>
-        </div>
-      ) : (
-        <CommunitySignalMap communities={data.communities} />
-      )}
+      {!data || data.communities.length === 0 ? (
+        <div className="demo-banner">Demonstration activity · live indexer data is unavailable</div>
+      ) : null}
+      <CommunitySignalMap
+        communities={data?.communities.length ? data.communities : demoCommunities}
+      />
     </div>
   );
 }

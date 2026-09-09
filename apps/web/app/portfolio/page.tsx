@@ -1,25 +1,16 @@
-import { PortfolioList } from "@/components/portfolio-list";
-import { NoLocalChain } from "@/components/no-local-chain";
-import { loadMarketViews } from "@/lib/server/markets";
+import { PortfolioPreview } from "@/components/portfolio-preview";
 
 export const dynamic = "force-dynamic";
 
 export default async function PortfolioPage() {
-  let views: Awaited<ReturnType<typeof loadMarketViews>>["views"] | null = null;
-  try {
-    views = (await loadMarketViews()).views;
-  } catch {
-    views = null;
-  }
-
   return (
     <div className="light-route portfolio-route">
       <header className="portfolio-heading">
-        <span className="section-kicker">Connected wallet positions</span>
+        <span className="section-kicker">Portfolio preview</span>
         <h1 className="block-heading">Your portfolio</h1>
-        <p>Stake, pool share, and claim or refund state read directly from the chain.</p>
+        <p>Preview how positions, exposure, claim state, and history will appear after launch.</p>
       </header>
-      {views == null ? <NoLocalChain /> : <PortfolioList markets={views} />}
+      <PortfolioPreview />
     </div>
   );
 }

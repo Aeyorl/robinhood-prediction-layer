@@ -1,0 +1,66 @@
+import type { CommunitySummary, RankedWallet } from "@/lib/analytics-api";
+
+const units = (value: number) => `${Math.round(value)}${"0".repeat(18)}`;
+
+export const demoCommunities: CommunitySummary[] = [
+  ["PONS", "Pons", 32, 7, 150, 67],
+  ["CASHCAT", "CashCat", 28, 6, 124, 58],
+  ["STONK", "Stonk", 40, 8, 198, 61],
+  ["USDG", "Global Dollar", 56, 9, 245, 64],
+  ["AI", "AI Community", 24, 5, 96, 54],
+].map(([symbol, name, wallets, marketCount, volume, yes], index) => ({
+  chainId: 4663,
+  tokenAddress: `0x${String(index + 1).repeat(40)}`,
+  symbol: String(symbol),
+  name: String(name),
+  decimals: 18,
+  logoUrl: null,
+  volumeUsdg: units(Number(volume)),
+  participantCount: Number(wallets),
+  marketCount: Number(marketCount),
+  resolvedMarkets: Math.max(2, Number(marketCount) - 3),
+  wins: 4,
+  losses: 2,
+  neutral: 0,
+  realizedPnlUsdg: units(18 + index * 7),
+  roiBps: 1240 + index * 180,
+  hitRateBps: 5700 + index * 120,
+  topCurrentStance: {
+    chainId: 4663,
+    address: `0x${String(index + 6).repeat(40)}`,
+    slug: "nvda-above-200-sep-30",
+    question: "Will NVDA close above $200 on Sep 30?",
+    status: "OPEN",
+    winningOutcome: null,
+    yesVolumeUsdg: units((Number(volume) * Number(yes)) / 100),
+    noVolumeUsdg: units((Number(volume) * (100 - Number(yes))) / 100),
+    volumeUsdg: units(Number(volume)),
+    participantCount: Number(wallets),
+    yesShareBps: Number(yes) * 100,
+    strongestSide: Number(yes) >= 50 ? "YES" : "NO",
+    shareBps: Math.max(Number(yes), 100 - Number(yes)) * 100,
+  },
+}));
+
+export const demoLeaderboard: RankedWallet[] = [
+  ["9f3a", 12459, 3742, 6120, 127, 2],
+  ["2c7d", 8276, 2481, 5960, 96, -1],
+  ["6b11", 6193, 1937, 5870, 84, 3],
+  ["1d24", 4982, 1621, 6120, 72, 1],
+  ["7a89", 4211, 1387, 5870, 65, -2],
+  ["8e44", 3743, 1234, 5790, 59, 4],
+  ["3f91", 3216, 1068, 5510, 53, -1],
+  ["5c77", 2876, 941, 5360, 48, 0],
+].map(([seed, pnl, roi, hit, resolved, streak], index) => ({
+  address: `0x${seed}${String(index + 1).repeat(36)}`,
+  volumeUsdg: units(Number(pnl) * 4),
+  realizedPnlUsdg: units(Number(pnl)),
+  roiBps: Number(roi),
+  hitRateBps: Number(hit),
+  resolvedMarkets: Number(resolved),
+  wins: Math.round((Number(resolved) * Number(hit)) / 10000),
+  losses: Math.round(Number(resolved) * (1 - Number(hit) / 10000)),
+  neutral: 0,
+  currentStreak: Number(streak),
+  largestWinUsdg: units(Math.round(Number(pnl) / 4)),
+}));

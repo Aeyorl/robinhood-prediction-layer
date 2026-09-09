@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function MarketsPage() {
   const { markets, memeDiscovery } = await loadPublicMarkets();
   return (
-    <div className="read-only-route">
+    <div className="light-route market-signals-route">
       <SampleMarketDirectory markets={markets} memeDiscovery={memeDiscovery} />
     </div>
   );

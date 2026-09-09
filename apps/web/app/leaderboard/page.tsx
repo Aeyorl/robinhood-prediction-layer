@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LeaderboardBoard } from "@/components/analytics";
 import { getLeaderboard } from "@/lib/analytics-api";
+import { demoLeaderboard } from "@/lib/demo-analytics";
 
 export const dynamic = "force-dynamic";
 const metrics = ["pnl", "roi", "hit_rate", "volume"] as const;
@@ -51,24 +52,12 @@ export default async function LeaderboardPage({
           </div>
         </div>
       </div>
-      {!data ? (
-        <>
-          <LeaderboardBoard entries={[]} />
-          <div className="leaderboard-empty leaderboard-empty-overlay">
-            Leaderboard data is unavailable while the indexer API is offline.
-          </div>
-        </>
-      ) : data.entries.length === 0 ? (
-        <>
-          <LeaderboardBoard entries={[]} />
-          <div className="leaderboard-empty leaderboard-empty-overlay">
-            <p>No wallets qualify for this ranking yet.</p>
-            <Link href="/markets">Make a prediction →</Link>
-          </div>
-        </>
-      ) : (
-        <LeaderboardBoard entries={data.entries} />
-      )}
+      {!data || data.entries.length === 0 ? (
+        <div className="demo-banner">
+          Demonstration rankings · no live wallet performance is shown
+        </div>
+      ) : null}
+      <LeaderboardBoard entries={data?.entries.length ? data.entries : demoLeaderboard} />
       {(metric === "roi" || metric === "hit_rate") && (
         <p className="leaderboard-method-note">
           Minimum {data?.minimumResolvedMarkets ?? 3} resolved markets required for this ranking.
