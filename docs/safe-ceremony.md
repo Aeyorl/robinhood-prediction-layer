@@ -38,9 +38,9 @@ A MetaMask signature proves control of the selected Safe owner address at signin
 ## V2 release-bound ceremony
 
 The corrected payload is `audit/safe-ceremony-eip712-v2.json`. It binds the
-signature to `prediction-layer-mainnet-audit-rc4` at full commit
-`9f11dccfa74cb57406ff796a3d771bd5a9d59366`, the cross-platform Git-blob
-manifest `audit/ARTIFACTS-rc4.sha256`, and the public V2 attestation text.
+signature to `prediction-layer-mainnet-audit-rc5` at full commit
+`8d134efe6e3c65e70d1509628d8b6932ee6d3bb8`, the cross-platform Git-blob
+manifest `audit/ARTIFACTS-rc5.sha256`, and the public V2 attestation text.
 The 20-byte Git object ID is explicitly left-padded to a schema-valid
 `bytes32`. The payload records the currently observed Safe nonce for context;
 this is a readiness signature and is not a Safe transaction signature.
@@ -48,7 +48,7 @@ this is a readiness signature and is not a Safe transaction signature.
 Regenerate the manifest reproducibly with:
 
 ```powershell
-node scripts/release-manifest.mjs prediction-layer-mainnet-audit-rc4 audit/ARTIFACTS-rc4.sha256
+node scripts/release-manifest.mjs prediction-layer-mainnet-audit-rc5 audit/ARTIFACTS-rc5.sha256
 ```
 
 At least two owners must separately use the local signer and return their

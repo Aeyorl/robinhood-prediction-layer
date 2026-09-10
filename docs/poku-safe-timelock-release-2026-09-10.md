@@ -4,11 +4,11 @@ Status: **prepared; owner signatures and mainnet deployment remain pending**.
 
 ## Release binding
 
-- Final contract audit tag: `prediction-layer-mainnet-audit-rc4`
-- Final contract audit commit: `9f11dccfa74cb57406ff796a3d771bd5a9d59366`
-- Cross-platform manifest: `audit/ARTIFACTS-rc4.sha256`
-- Manifest SHA-256: `65f795d6acd2b1675f46fff1d4acafe2074d4bd43bf2140f9356532b919b317f`
-- V2 typed-data hash: `0xb95eb425feb1566d259b20ad9cf859383de1ac6c67979162a1e43e0c0cd24778`
+- Final release tag: `prediction-layer-mainnet-audit-rc5`
+- Final release commit: `8d134efe6e3c65e70d1509628d8b6932ee6d3bb8`
+- Cross-platform manifest: `audit/ARTIFACTS-rc5.sha256`
+- Manifest SHA-256: `f9d5fc1dd7bcd255bdc4f7bc10ddfdc82361b32ac9cb210a3d1b28f08380bc79`
+- V2 typed-data hash: `0xb2314caed249d60ca133768e95135a5073769b6358cc2aa23edcc421c20cec2c`
 - Deployment authorization in signed payload: `false`
 
 The V1 RC1 evidence is retained as historical evidence and must not be cited as

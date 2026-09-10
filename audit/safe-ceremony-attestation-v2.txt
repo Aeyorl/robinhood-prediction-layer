@@ -3,10 +3,10 @@ POKU MAINNET SAFE CEREMONY ATTESTATION V2
 Chain ID: 4663
 Governance Safe: 0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39
 Safe threshold: 2 of 3
-Audit release tag: prediction-layer-mainnet-audit-rc4
-Audit candidate commit: 9f11dccfa74cb57406ff796a3d771bd5a9d59366
-Artifact manifest: audit/ARTIFACTS-rc4.sha256
-Artifact manifest SHA-256: 65f795d6acd2b1675f46fff1d4acafe2074d4bd43bf2140f9356532b919b317f
+Final release tag: prediction-layer-mainnet-audit-rc5
+Final release commit: 8d134efe6e3c65e70d1509628d8b6932ee6d3bb8
+Artifact manifest: audit/ARTIFACTS-rc5.sha256
+Artifact manifest SHA-256: f9d5fc1dd7bcd255bdc4f7bc10ddfdc82361b32ac9cb210a3d1b28f08380bc79
 Protocol timelock delay: 172800 seconds
 Deployment authorized: false
 
