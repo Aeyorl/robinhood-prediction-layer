@@ -2061,12 +2061,66 @@ a {
   color: #111;
 }
 .featured-sample-orbit {
+  --signal-x: 0px;
+  --signal-y: 0px;
+  --signal-rotate-x: 0deg;
+  --signal-rotate-y: 0deg;
   position: relative;
   min-height: 330px;
+  overflow: hidden;
+  perspective: 900px;
 }
-.featured-sample-orbit img {
+.featured-sample-orbit::before,
+.featured-sample-orbit::after {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: min(43vw, 470px);
+  aspect-ratio: 1;
+  content: "";
+  border: 1px solid rgb(61 87 241 / 18%);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.72);
+  animation: featured-signal-pulse 4.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.featured-sample-orbit::after {
+  border-color: rgb(128 159 0 / 16%);
+  animation-delay: 2.4s;
+}
+.featured-signal-visual {
+  position: absolute;
+  inset: -3%;
+  transform: translate3d(var(--signal-x), var(--signal-y), 0) rotateX(var(--signal-rotate-x))
+    rotateY(var(--signal-rotate-y));
+  transform-style: preserve-3d;
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation:
+    featured-signal-reveal 950ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    featured-signal-drift 10s ease-in-out 1s infinite alternate;
+  will-change: transform, opacity;
+}
+.featured-signal-image {
   object-fit: cover;
   mix-blend-mode: multiply;
+}
+.featured-signal-sweep {
+  position: absolute;
+  inset: -35%;
+  background: linear-gradient(
+    112deg,
+    transparent 38%,
+    rgb(255 255 255 / 0%) 44%,
+    rgb(255 255 255 / 46%) 50%,
+    rgb(255 255 255 / 0%) 56%,
+    transparent 62%
+  );
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  transform: translate3d(-60%, 0, 0);
+  animation: featured-signal-sweep 5.6s cubic-bezier(0.45, 0, 0.55, 1) 1.2s infinite;
+  will-change: transform;
 }
 .featured-sample-half {
   position: absolute;
@@ -2075,6 +2129,8 @@ a {
   display: grid;
   gap: 5px;
   font-family: ui-monospace, monospace;
+  opacity: 0;
+  animation: featured-signal-label-in 650ms cubic-bezier(0.16, 1, 0.3, 1) 420ms forwards;
 }
 .featured-sample-half strong {
   font-size: 28px;
@@ -2091,6 +2147,61 @@ a {
 .featured-sample-no {
   right: 5%;
   color: #809f00;
+  animation-delay: 540ms;
+}
+@keyframes featured-signal-reveal {
+  from {
+    opacity: 0;
+    clip-path: inset(18% 12% 18% 12% round 50%);
+    transform: translate3d(0, 18px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 0);
+  }
+}
+@keyframes featured-signal-drift {
+  from {
+    transform: translate3d(calc(var(--signal-x) - 3px), calc(var(--signal-y) + 2px), 0)
+      rotateX(var(--signal-rotate-x)) rotateY(var(--signal-rotate-y)) rotate(-0.35deg) scale(1);
+  }
+  to {
+    transform: translate3d(calc(var(--signal-x) + 3px), calc(var(--signal-y) - 2px), 0)
+      rotateX(var(--signal-rotate-x)) rotateY(var(--signal-rotate-y)) rotate(0.35deg) scale(1.015);
+  }
+}
+@keyframes featured-signal-pulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  35% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+@keyframes featured-signal-sweep {
+  0%,
+  56% {
+    transform: translate3d(-62%, 0, 0);
+  }
+  82%,
+  100% {
+    transform: translate3d(62%, 0, 0);
+  }
+}
+@keyframes featured-signal-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .market-sample-tape {
   margin-top: 12px;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MARKET_CATEGORIES,
   SAMPLE_MARKET_STATUSES,
@@ -11,6 +11,84 @@ import {
   type SampleMarketStatus,
 } from "@/lib/sample-markets";
 type MemeDiscoveryState = { status: "live" } | { status: "unavailable"; message: string };
+
+function AnimatedSignalOrbit({ market }: { market: SampleMarket }) {
+  const orbitRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<number | null>(null);
+  const [yesShare, setYesShare] = useState(0);
+  const [noShare, setNoShare] = useState(0);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setYesShare(market.yesShare);
+      setNoShare(market.noShare);
+      return;
+    }
+
+    const startedAt = performance.now();
+    const duration = 1100;
+    const count = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setYesShare(Math.round(market.yesShare * eased));
+      setNoShare(Math.round(market.noShare * eased));
+      if (progress < 1) frameRef.current = requestAnimationFrame(count);
+    };
+    frameRef.current = requestAnimationFrame(count);
+    return () => {
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    };
+  }, [market.noShare, market.yesShare]);
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+    orbitRef.current?.style.setProperty("--signal-x", `${x * 12}px`);
+    orbitRef.current?.style.setProperty("--signal-y", `${y * 10}px`);
+    orbitRef.current?.style.setProperty("--signal-rotate-x", `${y * -2}deg`);
+    orbitRef.current?.style.setProperty("--signal-rotate-y", `${x * 2}deg`);
+  };
+
+  const resetPointer = () => {
+    orbitRef.current?.style.setProperty("--signal-x", "0px");
+    orbitRef.current?.style.setProperty("--signal-y", "0px");
+    orbitRef.current?.style.setProperty("--signal-rotate-x", "0deg");
+    orbitRef.current?.style.setProperty("--signal-rotate-y", "0deg");
+  };
+
+  return (
+    <div
+      ref={orbitRef}
+      className="featured-sample-orbit"
+      aria-label={`YES ${market.yesShare}%, NO ${market.noShare}%`}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={resetPointer}
+    >
+      <div className="featured-signal-visual" aria-hidden="true">
+        <Image
+          className="featured-signal-image"
+          src="/ui/market-signal-orb.png"
+          alt=""
+          fill
+          priority
+          sizes="60vw"
+        />
+        <div className="featured-signal-sweep" />
+      </div>
+      <div className="featured-sample-half featured-sample-yes">
+        <strong>▲ YES {yesShare}%</strong>
+        <small>capital share</small>
+      </div>
+      <div className="featured-sample-half featured-sample-no">
+        <strong>⬡ NO {noShare}%</strong>
+        <small>capital share</small>
+      </div>
+    </div>
+  );
+}
 
 export function SampleMarketDirectory({
   markets,
@@ -120,26 +198,7 @@ export function SampleMarketDirectory({
                 </div>
               </dl>
             </div>
-            <div
-              className="featured-sample-orbit"
-              aria-label={`YES ${featured.yesShare}%, NO ${featured.noShare}%`}
-            >
-              <Image
-                src="/ui/market-signal-orb.png"
-                alt="Split YES and NO market signal"
-                fill
-                priority
-                sizes="60vw"
-              />
-              <div className="featured-sample-half featured-sample-yes">
-                <strong>▲ YES {featured.yesShare}%</strong>
-                <small>capital share</small>
-              </div>
-              <div className="featured-sample-half featured-sample-no">
-                <strong>⬡ NO {featured.noShare}%</strong>
-                <small>capital share</small>
-              </div>
-            </div>
+            <AnimatedSignalOrbit market={featured} />
           </Link>
           <div className="activity-tape market-sample-tape">
             <span className="tape-live">
