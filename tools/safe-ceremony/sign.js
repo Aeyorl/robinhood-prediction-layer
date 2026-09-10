@@ -44,7 +44,7 @@ connectButton.addEventListener("click", async () => {
 signButton.addEventListener("click", async () => {
   try {
     account = await requireApprovedOwner();
-    const typedData = await fetch("../../audit/safe-ceremony-eip712-v1.json", {
+    const typedData = await fetch("../../audit/safe-ceremony-eip712-v2.json", {
       cache: "no-store",
     }).then((response) => {
       if (!response.ok) throw new Error("Could not load the fixed ceremony payload.");
@@ -55,7 +55,7 @@ signButton.addEventListener("click", async () => {
       params: [account, JSON.stringify(typedData)],
     });
     evidence = {
-      format: "prediction-layer-metamask-ceremony-v1",
+      format: "poku-metamask-ceremony-v2",
       signedAt: new Date().toISOString(),
       signer: account,
       signature,

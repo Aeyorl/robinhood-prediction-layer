@@ -1,0 +1,19 @@
+POKU MAINNET SAFE CEREMONY ATTESTATION V2
+
+Chain ID: 4663
+Governance Safe: 0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39
+Safe threshold: 2 of 3
+Audit release tag: prediction-layer-mainnet-audit-rc4
+Audit candidate commit: 9f11dccfa74cb57406ff796a3d771bd5a9d59366
+Artifact manifest: audit/ARTIFACTS-rc4.sha256
+Artifact manifest SHA-256: 65f795d6acd2b1675f46fff1d4acafe2074d4bd43bf2140f9356532b919b317f
+Protocol timelock delay: 172800 seconds
+Deployment authorized: false
+
+I verified the chain, Safe, release tag, full commit, artifact-manifest hash and
+timelock delay shown above. This signature proves control of my listed Safe
+owner address at signing time. It does not authorize a deployment, funding
+transaction, governance action, or change to any launch approval gate.
+
+Recovery controls are recorded separately in the private ceremony record and
+are not asserted by this public signature.

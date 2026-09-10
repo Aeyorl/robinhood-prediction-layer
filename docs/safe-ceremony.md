@@ -34,3 +34,39 @@ At least two verified owner signatures are required. These attestations confirm 
 When an existing Safe owner is controlled by a regular MetaMask software wallet, use the local signer at `tools/safe-ceremony/index.html` to collect the same EIP-712 readiness attestation without exposing a private key. The downloaded JSON evidence is public signature material and can be checked with `cast wallet verify` as shown above.
 
 A MetaMask signature proves control of the selected Safe owner address at signing time. It does not prove hardware isolation, independent physical custody or offline recovery readiness, so it does not satisfy a release policy that explicitly requires hardware wallets. Record that exception accurately and obtain the required client/security approval before changing the hardware-custody gate.
+
+## V2 release-bound ceremony
+
+The corrected payload is `audit/safe-ceremony-eip712-v2.json`. It binds the
+signature to `prediction-layer-mainnet-audit-rc4` at full commit
+`9f11dccfa74cb57406ff796a3d771bd5a9d59366`, the cross-platform Git-blob
+manifest `audit/ARTIFACTS-rc4.sha256`, and the public V2 attestation text.
+The 20-byte Git object ID is explicitly left-padded to a schema-valid
+`bytes32`. The payload records the currently observed Safe nonce for context;
+this is a readiness signature and is not a Safe transaction signature.
+
+Regenerate the manifest reproducibly with:
+
+```powershell
+node scripts/release-manifest.mjs prediction-layer-mainnet-audit-rc4 audit/ARTIFACTS-rc4.sha256
+```
+
+At least two owners must separately use the local signer and return their
+downloaded public evidence files. Verify each recovered signer against the
+current onchain owner set before changing
+`audit/safe-ceremony-metamask-signatures-v2.json` from pending. Keep recovery
+contacts, seed-backup details and device-specific controls outside Git.
+
+After adding the two public signatures, run:
+
+```powershell
+node scripts/verify-safe-ceremony.mjs
+```
+
+The verifier rejects unknown owners, duplicate signers, invalid signatures and
+evidence below the Safe threshold.
+
+The shared MAG7 Safe is reused as Poku's governance signer set. Poku deploys a
+dedicated `ProtocolTimelock` controlled by that Safe. The existing MAG7
+timelock remains only Poku's immutable fee recipient, avoiding shared admin
+operation queues between the two products.

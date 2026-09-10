@@ -1,0 +1,6 @@
+{
+  "payload": "safe-ceremony-eip712-v2.json",
+  "status": "awaiting-two-owner-signatures",
+  "requiredForSafeThreshold": 2,
+  "signatures": []
+}
