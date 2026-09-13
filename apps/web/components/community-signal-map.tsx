@@ -1,17 +1,25 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { CommunityConstellation } from "@/components/community-constellation";
 import type { CommunitySummary } from "@/lib/analytics-api";
 import { formatBps, formatUsdg, shortAddress } from "@/components/analytics";
 
 const WINDOWS = ["7 days", "30 days", "All time"] as const;
+type AnalyticsWindow = (typeof WINDOWS)[number];
 
-export function CommunitySignalMap({ communities }: { communities: CommunitySummary[] }) {
-  const [selectedAddress, setSelectedAddress] = useState(communities[0]?.tokenAddress ?? "");
-  const [window, setWindow] = useState<(typeof WINDOWS)[number]>("7 days");
+export function CommunitySignalMap({
+  communitiesByWindow,
+}: {
+  communitiesByWindow: Record<AnalyticsWindow, CommunitySummary[]>;
+}) {
+  const [window, setWindow] = useState<AnalyticsWindow>("7 days");
+  const communities = communitiesByWindow[window];
+  const [selectedAddress, setSelectedAddress] = useState(
+    communitiesByWindow["7 days"][0]?.tokenAddress ?? "",
+  );
   const [query, setQuery] = useState("");
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -44,12 +52,10 @@ export function CommunitySignalMap({ communities }: { communities: CommunitySumm
         </div>
         <div className="community-map-layout community-map-empty">
           <section className="community-map" aria-label="Empty source-token community map">
-            <Image
-              src="/ui/community-constellation.png"
-              alt="Community activity constellation"
-              fill
-              priority
-              sizes="(max-width: 950px) 100vw, 62vw"
+            <CommunityConstellation
+              communities={[]}
+              selectedAddress=""
+              onSelect={() => undefined}
             />
             <div className="community-empty-overlay">
               <span className="section-kicker">Awaiting indexed activity</span>
@@ -111,30 +117,11 @@ export function CommunitySignalMap({ communities }: { communities: CommunitySumm
 
       <div className="community-map-layout">
         <section className="community-map" aria-label="Source-token communities">
-          <Image
-            src="/ui/community-constellation.png"
-            alt="Community activity constellation"
-            fill
-            priority
-            sizes="(max-width: 950px) 100vw, 62vw"
+          <CommunityConstellation
+            communities={visible.slice(0, 5)}
+            selectedAddress={selected.tokenAddress}
+            onSelect={setSelectedAddress}
           />
-          <div className="community-node-list">
-            {visible.slice(0, 5).map((community, index) => {
-              const nodeLabel = community.symbol ?? shortAddress(community.tokenAddress);
-              return (
-                <button
-                  key={community.tokenAddress}
-                  type="button"
-                  className={`community-node node-${index + 1} ${community.tokenAddress === selected.tokenAddress ? "active" : ""}`}
-                  onClick={() => setSelectedAddress(community.tokenAddress)}
-                  aria-pressed={community.tokenAddress === selected.tokenAddress}
-                >
-                  <strong>{nodeLabel.slice(0, 5)}</strong>
-                  <span>{community.participantCount} wallets</span>
-                </button>
-              );
-            })}
-          </div>
         </section>
 
         <aside className="community-detail">

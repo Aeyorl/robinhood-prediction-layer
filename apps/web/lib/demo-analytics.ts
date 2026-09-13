@@ -42,6 +42,33 @@ export const demoCommunities: CommunitySummary[] = [
   },
 }));
 
+function scaleDemoCommunities(walletMultiplier: number, volumeMultiplier: number) {
+  return demoCommunities.map((community) => ({
+    ...community,
+    participantCount: Math.round(community.participantCount * walletMultiplier),
+    volumeUsdg: (BigInt(community.volumeUsdg) * BigInt(Math.round(volumeMultiplier * 100)) / 100n).toString(),
+    topCurrentStance: community.topCurrentStance
+      ? {
+          ...community.topCurrentStance,
+          participantCount: Math.round(
+            community.topCurrentStance.participantCount * walletMultiplier,
+          ),
+          volumeUsdg: (
+            BigInt(community.topCurrentStance.volumeUsdg) *
+            BigInt(Math.round(volumeMultiplier * 100)) /
+            100n
+          ).toString(),
+        }
+      : null,
+  }));
+}
+
+export const demoCommunityWindows = {
+  "7 days": demoCommunities,
+  "30 days": scaleDemoCommunities(1.65, 2.1),
+  "All time": scaleDemoCommunities(3.2, 5.4),
+} satisfies Record<"7 days" | "30 days" | "All time", CommunitySummary[]>;
+
 export const demoLeaderboard: RankedWallet[] = [
   ["9f3a", 12459, 3742, 6120, 127, 2],
   ["2c7d", 8276, 2481, 5960, 96, -1],
