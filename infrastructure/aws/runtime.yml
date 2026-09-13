@@ -82,8 +82,10 @@ Resources:
               Value: uniswap
             - Name: PREDICTION_ENTRY_ROUTER_ADDRESS
               Value: !Ref PredictionEntryRouterAddress
+            - Name: PREDICTION_ENTRY_ROUTER_ADDRESS
+              Value: !Ref PredictionEntryRouterAddress
             - Name: USDG_ADDRESS
-              Value: 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168
+              Value: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
           Secrets:
             - Name: DATABASE_URL
               ValueFrom: !Sub "${DatabaseUrlSecretArn}:url::"
@@ -137,6 +139,8 @@ Resources:
               Value: !Ref StartBlock
             - Name: FACTORY_ADDRESS
               Value: !Ref MarketFactoryAddress
+            - Name: PREDICTION_ENTRY_ROUTER_ADDRESS
+              Value: !Ref PredictionEntryRouterAddress
             - Name: SAFE_CLOSING_PRICE_RESOLVER_ADDRESS
               Value: !Ref SafeClosingPriceResolverAddress
             - Name: HTTP_POLL_INTERVAL_MS
