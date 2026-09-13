@@ -1,0 +1,20 @@
+POKU MAINNET DEPLOYMENT AUTHORIZATION V3
+
+Chain ID: 4663
+Governance Safe: 0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39
+Safe threshold: 2 of 3
+Deployment release commit: f8e359f34cf1c46095c23766be92ec65388e9540
+Deployment manifest: audit/DEPLOYMENT-ARTIFACTS-v3.sha256
+Deployment manifest SHA-256: 95aa16420df18cd8830b1071f85e5aed9e9c6acb95bc80a6ff2aa65485e8f451
+Dry-run transaction count: 8
+Deployer: 0x913B8D346625736958664C77b0C8Efd3DA2a7bA2
+Required deployer nonce: 14
+Protocol timelock delay: 172800 seconds
+Deployment authorized: true
+
+I verified the chain, Safe, release commit, deployment-manifest hash, eight
+predicted CREATE transactions, deployer nonce and timelock delay shown above.
+I authorize the deployment workflow to broadcast only this bound package after
+its automated preflight passes. This authorization does not authorize market
+creation, deposits, swap-target allowlisting, user trading, or any later Safe
+or timelock transaction.

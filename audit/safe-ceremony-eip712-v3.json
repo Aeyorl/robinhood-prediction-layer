@@ -1,0 +1,31 @@
+{
+  "types": {
+    "EIP712Domain": [
+      { "name": "name", "type": "string" },
+      { "name": "version", "type": "string" },
+      { "name": "chainId", "type": "uint256" },
+      { "name": "verifyingContract", "type": "address" }
+    ],
+    "CeremonyAttestation": [
+      { "name": "auditCandidateCommit", "type": "bytes32" },
+      { "name": "artifactManifestSha256", "type": "bytes32" },
+      { "name": "ceremonyMessageSha256", "type": "bytes32" },
+      { "name": "safeNonce", "type": "uint256" },
+      { "name": "deploymentAuthorized", "type": "bool" }
+    ]
+  },
+  "primaryType": "CeremonyAttestation",
+  "domain": {
+    "name": "Poku Safe Ceremony",
+    "version": "3",
+    "chainId": 4663,
+    "verifyingContract": "0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39"
+  },
+  "message": {
+    "auditCandidateCommit": "0x000000000000000000000000f8e359f34cf1c46095c23766be92ec65388e9540",
+    "artifactManifestSha256": "0x95aa16420df18cd8830b1071f85e5aed9e9c6acb95bc80a6ff2aa65485e8f451",
+    "ceremonyMessageSha256": "0xf04bb578f36895044554648e309e1b6a301a038d2fcbeef563320782b13bad85",
+    "safeNonce": 6,
+    "deploymentAuthorized": true
+  }
+}
