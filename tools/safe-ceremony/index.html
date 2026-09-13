@@ -12,22 +12,25 @@
       <h1>MetaMask signer ceremony</h1>
       <p class="intro">
         Connect one approved Safe owner, verify the fixed release details, then sign the EIP-712
-        readiness attestation. This signature cannot move funds or authorize a deployment.
+        deployment authorization. This signature cannot move funds by itself.
       </p>
 
       <section class="details" aria-label="Ceremony details">
         <div><span>Chain</span><strong>Robinhood Chain · 4663</strong></div>
         <div><span>Safe</span><strong>0x5A205159…7A4ab6a39</strong></div>
         <div><span>Threshold</span><strong>2 of 3</strong></div>
-        <div><span>Final release</span><strong>RC5 · 8d134ef…e6d3bb8</strong></div>
-        <div><span>Manifest SHA-256</span><strong>f9d5fc1…380bc79</strong></div>
+        <div><span>Deployment release</span><strong>f8e359f…88e9540</strong></div>
+        <div><span>Manifest SHA-256</span><strong>95aa164…e8f451</strong></div>
+        <div><span>Dry-run transactions</span><strong>8 CREATE transactions</strong></div>
+        <div><span>Deployer nonce</span><strong>14</strong></div>
         <div><span>Safe nonce observed</span><strong>6</strong></div>
-        <div><span>Deployment authorized</span><strong class="no">NO</strong></div>
+        <div><span>Deployment authorized</span><strong>YES</strong></div>
       </section>
 
       <div class="notice">
         Never enter a seed phrase or private key here. MetaMask should ask only for a typed-data
-        signature. It does not authorize deployment.
+        signature. It authorizes only the exact V3 deployment package shown above; it does not
+        submit a transaction.
       </div>
 
       <button id="connect" type="button">Connect MetaMask</button>

@@ -44,7 +44,7 @@ connectButton.addEventListener("click", async () => {
 signButton.addEventListener("click", async () => {
   try {
     account = await requireApprovedOwner();
-    const typedData = await fetch("../../audit/safe-ceremony-eip712-v2.json", {
+    const typedData = await fetch("../../audit/safe-ceremony-eip712-v3.json", {
       cache: "no-store",
     }).then((response) => {
       if (!response.ok) throw new Error("Could not load the fixed ceremony payload.");
@@ -55,7 +55,7 @@ signButton.addEventListener("click", async () => {
       params: [account, JSON.stringify(typedData)],
     });
     evidence = {
-      format: "poku-metamask-ceremony-v2",
+      format: "poku-metamask-ceremony-v3",
       signedAt: new Date().toISOString(),
       signer: account,
       signature,
@@ -76,7 +76,7 @@ downloadButton.addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `prediction-layer-ceremony-${evidence.signer}.json`;
+  link.download = `poku-deployment-authorization-v3-${evidence.signer}.json`;
   link.click();
   URL.revokeObjectURL(url);
 });
