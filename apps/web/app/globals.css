@@ -657,10 +657,12 @@ a {
 }
 .wordmark {
   flex: 0 0 auto;
-  color: #090909;
-  font-size: 23px;
-  font-weight: 850;
-  letter-spacing: -0.055em;
+  display: flex;
+  align-items: center;
+}
+.wordmark img {
+  width: 190px;
+  height: auto;
 }
 .desktop-nav {
   height: 100%;
@@ -1563,15 +1565,16 @@ a {
   font-size: 11px;
 }
 .site-footer p:first-child {
+  display: flex;
+  align-items: center;
   color: #1e1d1b;
   font-weight: 700;
 }
 .footer-mark {
+  width: 24px;
+  height: 24px;
   margin-right: 8px;
-  color: #4b63ff;
-  font:
-    900 10px ui-monospace,
-    monospace;
+  object-fit: contain;
 }
 .site-footer nav {
   display: flex;
@@ -1808,7 +1811,9 @@ a {
   }
   .wordmark {
     margin-right: auto;
-    font-size: 18px;
+  }
+  .wordmark img {
+    width: 148px;
   }
   .desktop-nav,
   .header-search {

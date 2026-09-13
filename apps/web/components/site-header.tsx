@@ -1,6 +1,7 @@
 "use client";
 
 import { branding } from "@pl/config";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,7 +21,13 @@ export function SiteHeader() {
       <header className="site-header">
         <div className="site-header-inner">
           <Link href="/" className="wordmark" aria-label={`${branding.appName} home`}>
-            <strong>{branding.appName}</strong>
+            <Image
+              src="/brand/poku/poku-wordmark-color.png"
+              alt={branding.appName}
+              width={720}
+              height={208}
+              priority
+            />
           </Link>
           <nav aria-label="Primary navigation" className="desktop-nav">
             {navLinks.map((link) => (

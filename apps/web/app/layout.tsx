@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { branding } from "@pl/config";
@@ -9,6 +10,7 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  applicationName: branding.appName,
   title: {
     default: branding.appName,
     template: `%s — ${branding.appName}`,
@@ -28,9 +30,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <footer className="site-footer">
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
               <p>
-                <span className="footer-mark" aria-hidden="true">
-                  {branding.appName.charAt(0)}
-                </span>{" "}
+                <Image
+                  src="/icon.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="footer-mark"
+                  width={512}
+                  height={512}
+                />
                 Built on {branding.chainName}
               </p>
               <nav aria-label="Legal and documentation" className="flex flex-wrap gap-4">
