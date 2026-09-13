@@ -33,7 +33,7 @@ The tag identifies the exact candidate commit. `ARTIFACTS.sha256` binds the firs
 
 - This package is an internal pre-audit candidate, not an independent audit report.
 - Authenticated Data Streams report retrieval and production v11 stream IDs are not yet configured.
-- External audit/retest and counsel approvals are unsigned.
+- External audit/retest and counsel approvals are unsigned. (Update 2026-09-13: the external-audit launch gate was removed at the project owner's request; compliance approval is owner-provided. This scope document is retained as a historical internal-review record.)
 - Safe hardware custody/recovery attestations are incomplete.
 - No production contracts have been broadcast from this candidate.
 - No claim is made that the product is legally approved, audited, or ready to accept funds.

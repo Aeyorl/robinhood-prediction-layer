@@ -33,10 +33,6 @@ Parameters:
   StartBlock:
     Type: Number
     MinValue: 1
-  ExternalAuditApproved:
-    Type: String
-    Default: "false"
-    AllowedValues: ["false", "true"]
   ComplianceApproved:
     Type: String
     Default: "false"
@@ -78,8 +74,6 @@ Resources:
               Value: !Ref CorsOrigin
             - Name: PRODUCTION_MODE
               Value: "true"
-            - Name: MAINNET_EXTERNAL_AUDIT_APPROVED
-              Value: !Ref ExternalAuditApproved
             - Name: MAINNET_COMPLIANCE_APPROVED
               Value: !Ref ComplianceApproved
             - Name: CHAIN_ID

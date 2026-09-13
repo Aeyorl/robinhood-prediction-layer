@@ -4,7 +4,7 @@
 
 This repository review covered the Solidity market, oracle, fee, factory, and entry-router paths; API and worker trust boundaries; browser transaction construction; production configuration; deployment controls; dependencies; and operational documentation. The updated 2026-09-07 review and remediation record is in `mainnet-preaudit-2026-09-07.md`. Local unit, integration, fuzz and invariant checks provide useful pre-audit evidence, but this is not an independent credentialed audit and does not authorize handling mainnet funds.
 
-The code now has an atomic entry router, onchain funding attribution, a two-day Safe-controlled timelock deployment design, fail-closed production configuration, API rate limits, security headers, metrics, and a load-test harness. Mainnet remains blocked until the external audit and remediation, counsel/compliance approval, official production addresses and oracle parameters, Safe membership, monitoring destinations, and production load results are recorded.
+The code now has an atomic entry router, onchain funding attribution, a two-day Safe-controlled timelock deployment design, fail-closed production configuration, API rate limits, security headers, metrics, and a load-test harness. Mainnet remains blocked until the external audit and remediation, counsel/compliance approval, official production addresses and oracle parameters, Safe membership, monitoring destinations, and production load results are recorded. (Update 2026-09-13: the external-audit launch gate was removed at the project owner's request; compliance approval is owner-provided; core contracts were deployed to mainnet.)
 
 ## Scope and limitations
 
@@ -99,8 +99,8 @@ Core invariants are: user principal has no admin withdrawal path; claims/refunds
 
 ## Remediation roadmap
 
-1. External audit and tracked remediation.
-2. Counsel-approved compliance implementation and acceptance tests.
+1. External audit and tracked remediation. (2026-09-13: removed as a launch gate at the project owner's request; optional if a review is commissioned later.)
+2. Counsel-approved compliance implementation and acceptance tests. (2026-09-13: compliance approval is owner-provided.)
 3. Verify production RPC, collateral, swap router, feeds and sequencer parameters.
 4. Safe signer ceremony, timelock deployment, role/ownership verification and rehearsal.
 5. Staging load test, dashboards, paging and incident exercise.

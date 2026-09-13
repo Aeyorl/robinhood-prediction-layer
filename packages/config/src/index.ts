@@ -53,10 +53,6 @@ export const apiEnvSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
-  MAINNET_EXTERNAL_AUDIT_APPROVED: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((value) => value === "true"),
   MAINNET_COMPLIANCE_APPROVED: z
     .enum(["true", "false"])
     .default("false")
@@ -138,8 +134,6 @@ export function loadApiEnv(env: NodeJS.ProcessEnv = process.env): ApiEnv {
       errors.push("Uniswap routing must be configured");
     if (!parsed.PREDICTION_ENTRY_ROUTER_ADDRESS)
       errors.push("PREDICTION_ENTRY_ROUTER_ADDRESS is required");
-    if (!parsed.MAINNET_EXTERNAL_AUDIT_APPROVED)
-      errors.push("MAINNET_EXTERNAL_AUDIT_APPROVED is required");
     if (!parsed.MAINNET_COMPLIANCE_APPROVED) errors.push("MAINNET_COMPLIANCE_APPROVED is required");
     if (errors.length) throw new Error(`mainnet production gate failed: ${errors.join("; ")}`);
   }

@@ -8,4 +8,6 @@ Counsel must identify the permitted operator entity and jurisdictions; excluded 
 
 The approved policy must be versioned and effective-dated. Eligibility must be checked before quote and entry, fail closed when unavailable, and bind acceptance to wallet, policy version and timestamp with data minimisation. Provider secrets remain server-side. Admin overrides require a reason and audit log. Claims and refunds remain available unless counsel explicitly requires a lawful restriction that engineering validates separately.
 
-Approval evidence must name counsel, firm, jurisdictional scope, policy version, date and qualifications. `MAINNET_COMPLIANCE_APPROVED=true` may be set only after that evidence is stored in the release record.
+An independent counsel review remains the strongest form of evidence: it should name counsel, firm, jurisdictional scope, policy version, date and qualifications where such a review is performed.
+
+For this launch, the project owner has provided compliance approval directly. `MAINNET_COMPLIANCE_APPROVED=true` records that **owner-provided compliance approval** — no counsel, firm, legal document, signature or approval date is implied by the flag, and none should be invented. If a counsel review is completed later, its evidence supersedes and should be attached in the release record.

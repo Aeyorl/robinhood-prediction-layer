@@ -132,7 +132,7 @@ User can complete the funding-to-position flow with fewer confirmations without 
 
 ## Phase 8 — Production hardening
 
-- external audit,
+- internal launch checks (independent audit not represented; external-audit gate removed at owner request 2026-09-13),
 - remediation,
 - compliance implementation,
 - multisig/timelock,

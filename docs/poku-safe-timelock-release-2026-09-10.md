@@ -82,7 +82,9 @@ offline recovery readiness.
 ## Remaining ceremony actions
 
 1. Complete the private recovery-control record outside Git for each signer.
-2. Obtain the still-required external audit/retest and compliance approvals.
+2. Compliance approval is owner-provided (recorded 2026-09-13). An independent
+   external audit was not commissioned; the external-audit launch requirement was
+   removed at the project owner's request.
 3. Subscribe and confirm an on-call destination on
    `prediction-layer-production-alerts`.
 4. Approve the monitoring-stack update that adds application log-metric alarms.

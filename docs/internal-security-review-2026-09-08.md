@@ -3,7 +3,7 @@
 **Reviewed commit:** `8d1d78d50b1fd06c04cc03750e32287ceb3a14b5` (`origin/main`, tag parent of this review)
 **Candidate lineage:** `prediction-layer-mainnet-audit-rc4` (`9f11dcc`) plus ceremony-evidence commit `8d1d78d`
 **Reviewer:** engineering self-review (see §Limitations)
-**Classification:** internal. **This is not an independent external audit.** The same team that implemented the code performed this review; an independent credentialed audit and signed remediation/retest remain mandatory release gates (PL-01).
+**Classification:** internal. **This is not an independent external audit.** The same team that implemented the code performed this review. (Update 2026-09-13: the external-audit launch gate was removed at the project owner's request and is no longer a mandatory release gate.)
 
 ## 1. Scope
 
@@ -123,4 +123,4 @@ Properties verified by direct review and by the test suites:
 
 ## 7. Conclusion
 
-No new exploitable vulnerability was identified in the reviewed contracts or offchain trust boundaries at commit `8d1d78d`. The dependency advisories and the formatting/evidence tooling gaps found by this review were remediated in this review's changes (ISR-03, ISR-04). The blocking items before any mainnet deployment are: re-recorded, independently verifiable ceremony evidence bound to the final release candidate (ISR-01, ISR-02), and the external gates PL-01, PL-04, PL-11, PL-07. Mainnet remains **NO-GO**. `MAINNET_EXTERNAL_AUDIT_APPROVED` and `MAINNET_COMPLIANCE_APPROVED` remain false.
+No new exploitable vulnerability was identified in the reviewed contracts or offchain trust boundaries at commit `8d1d78d`. The dependency advisories and the formatting/evidence tooling gaps found by this review were remediated in this review's changes (ISR-03, ISR-04). The blocking items before any mainnet deployment are: re-recorded, independently verifiable ceremony evidence bound to the final release candidate (ISR-01, ISR-02), and the external gates PL-01, PL-04, PL-11, PL-07. Mainnet remains **NO-GO**. `MAINNET_EXTERNAL_AUDIT_APPROVED` and `MAINNET_COMPLIANCE_APPROVED` remain false. (Update 2026-09-13: the ceremony evidence was re-recorded and verified against the release candidate; the external-audit gate was removed at the owner's request; compliance approval is owner-provided; core contracts were deployed to mainnet on 2026-09-13.)

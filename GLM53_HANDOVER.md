@@ -99,10 +99,10 @@ The local environment was refreshed onto Anvil chain `46630` and is currently he
 
 ## PARTIALLY DONE / externally blocked
 
-1. **Compliance:** `docs/compliance-review-pack.md` is ready for qualified counsel. Counsel has not approved it, final jurisdiction rules are absent, and `MAINNET_COMPLIANCE_APPROVED` must remain false.
-2. **External audit:** no independent credentialed audit/remediation report exists. `MAINNET_EXTERNAL_AUDIT_APPROVED` must remain false.
+1. **Compliance:** `docs/compliance-review-pack.md` was prepared for qualified counsel. On 2026-09-13 the project owner provided compliance approval directly; `MAINNET_COMPLIANCE_APPROVED=true` records that owner-provided approval (no counsel, firm, legal document, signature or approval date is implied).
+2. **External audit:** no independent credentialed audit/remediation report exists. The external-audit launch requirement was removed at the project owner's request (2026-09-13); `MAINNET_EXTERNAL_AUDIT_APPROVED` no longer exists in configuration.
 3. **Production RPC:** official and public endpoints are verified, but the user's private Alchemy/other production HTTP and WSS endpoints are not supplied.
-4. **Safe ceremony/timelock:** contract and deployment script are ready; the existing Safe candidate needs ownership confirmation, signer-control attestation, fee recipient, audited swap target, production RPC, external audit, compliance clearance, and explicit deployment approval. Nothing was deployed to mainnet.
+4. **Safe ceremony/timelock:** contract and deployment script are ready; the existing Safe candidate needs ownership confirmation, signer-control attestation, fee recipient, audited swap target, production RPC and explicit deployment approval. Nothing was deployed to mainnet.
 5. **Monitoring:** generic webhook runner and evidence format exist. The actual paging webhook/log vendor, retention policy and staging environment are not supplied. Local evidence is not staging evidence.
 6. **Brand:** Robinhood usage is reviewed and compliant at the code/copy level. The owner selected `Wagerly` on 2026-09-07. Trademark counsel clearance remains pending; do not claim a trademark is clear from web searching.
 
@@ -114,9 +114,8 @@ Ask for these together, once:
 2. Production RPC HTTP and WebSocket secret locations (do not ask the user to paste secrets into source files).
 3. Fee-recipient address.
 4. Monitoring/paging webhook secret location and chosen log/metrics vendor.
-5. Counsel-approved Terms, Privacy Notice, Risk Disclosure, jurisdiction/eligibility policy, and named approval evidence.
-6. External audit report/remediation sign-off.
-7. Final-name direction or permission to produce a distinctiveness-tested shortlist.
+5. Owner-provided compliance approval, or counsel-reviewed Terms, Privacy Notice, Risk Disclosure and jurisdiction/eligibility policy if a counsel review is commissioned later.
+6. Final-name direction or permission to produce a distinctiveness-tested shortlist.
 
 ## Exact next actions
 

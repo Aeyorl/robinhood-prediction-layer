@@ -154,7 +154,7 @@ All `from` `0x913B8D346625736958664C77b0C8Efd3DA2a7bA2`. `to` is empty (CREATE).
 - Funding the deployer
 - A Safe transaction
 - GitHub `deploy-mainnet.yml`
-- Setting `MAINNET_EXTERNAL_AUDIT_APPROVED` or `MAINNET_COMPLIANCE_APPROVED`
+- Setting `MAINNET_COMPLIANCE_APPROVED`
 - Updating `packages/chain-config/src/addresses.ts`
 - Enabling trading
 
@@ -164,7 +164,7 @@ If the deployer nonce moves away from `14` before broadcast, this package is inv
 
 - Explicit human approval of **this** eight-CREATE package.
 - Deployer funding within `0.012 ETH` after that approval, not before.
-- GitHub `mainnet` environment variables `MAINNET_EXTERNAL_AUDIT_APPROVED` and `MAINNET_COMPLIANCE_APPROVED` are still `false`. The protected workflow's preflight will refuse to broadcast while they are false.
+- GitHub `mainnet` environment variable `MAINNET_COMPLIANCE_APPROVED` is still `false` in this package snapshot; it was subsequently set to `true` to record the owner-provided compliance approval (2026-09-13). The protected workflow's preflight will refuse to broadcast while it is false. No external-audit flag exists; the external-audit launch requirement was removed at the project owner's request.
 - GitHub secret **names** present: `DEPLOYER_PRIVATE_KEY`, `EXPECTED_SAFE_OWNERS`, `PRODUCTION_RPC_URL`. Values were not read.
 - GitHub `mainnet` environment currently has **no protection rules** and no deployment branch policy. Add required reviewers before anyone runs `deploy-mainnet.yml`.
 - AWS CLI session is expired; SNS paging and the drafted monitoring-stack update remain outstanding.

@@ -22,4 +22,4 @@ If no observation is published, or it is cancelled, anyone may call the market's
 
 ## Release boundary
 
-Run `pnpm oracle:rehearse` before a release and preserve the output with the release evidence. A successful internal rehearsal is not an external audit, counsel approval, a Safe signature ceremony or authorization to broadcast to mainnet.
+Run `pnpm oracle:rehearse` before a release and preserve the output with the release evidence. A successful internal rehearsal is not an independent audit, compliance approval, a Safe signature ceremony or authorization to broadcast to mainnet.
