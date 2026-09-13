@@ -1,6 +1,19 @@
 {
   "payload": "safe-ceremony-eip712-v3.json",
-  "status": "awaiting-signatures",
+  "status": "two-of-three-verified",
   "requiredForSafeThreshold": 2,
-  "signatures": []
+  "signatures": [
+    {
+      "owner": "0x8cA71B70C91BD8250073dfDD323b9219Bce6A165",
+      "signature": "0x6a7ad125ff5c5eccc1dfe943777f88b5a768fc08e8331f18b94845edc936a955518d0c3fd3e5e92518c49ca42e52271d54e489cc2febace6d90c8901b9fa349d1b",
+      "signedAt": "2026-09-13T18:54:12.486Z",
+      "walletType": "MetaMask software wallet"
+    },
+    {
+      "owner": "0x26032745BcB969B95B4610A9a48D33Bd4340812D",
+      "signature": "0x073143b753ff1cad22a22cf44e55de647aff9afd89ee2dc36634f6b20bb8b5892ac6dbd97364b33bf710754cc315688063b2ef7407fc8d1060da1d0698d4f8bf1c",
+      "signedAt": "2026-09-13T18:56:46.197Z",
+      "walletType": "MetaMask software wallet"
+    }
+  ]
 }
