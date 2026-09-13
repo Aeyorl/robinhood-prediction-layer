@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MARKET_CATEGORIES,
@@ -10,6 +9,7 @@ import {
   type SampleMarket,
   type SampleMarketStatus,
 } from "@/lib/sample-markets";
+import { SignalOrbShader } from "@/components/signal-orb-shader";
 type MemeDiscoveryState = { status: "live" } | { status: "unavailable"; message: string };
 
 function AnimatedSignalOrbit({ market }: { market: SampleMarket }) {
@@ -68,14 +68,8 @@ function AnimatedSignalOrbit({ market }: { market: SampleMarket }) {
       onPointerLeave={resetPointer}
     >
       <div className="featured-signal-visual" aria-hidden="true">
-        <Image
-          className="featured-signal-image"
-          src="/ui/market-signal-orb.png"
-          alt=""
-          fill
-          priority
-          sizes="60vw"
-        />
+        <div className="featured-signal-image" />
+        <SignalOrbShader yesShare={market.yesShare} />
         <div className="featured-signal-sweep" />
       </div>
       <div className="featured-sample-half featured-sample-yes">

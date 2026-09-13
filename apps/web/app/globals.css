@@ -2246,6 +2246,21 @@ a {
   position: relative;
   min-height: 330px;
 }
+.featured-signal-image {
+  position: absolute;
+  inset: 0;
+  background: url("/ui/market-signal-orb.png") center / cover no-repeat;
+  mix-blend-mode: multiply;
+}
+.signal-orb-shader {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
 .featured-signal-visual img {
   object-fit: cover;
   mix-blend-mode: multiply;
