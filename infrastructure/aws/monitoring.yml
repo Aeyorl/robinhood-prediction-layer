@@ -129,6 +129,340 @@ Resources:
       OKActions:
         - !Ref AlertTopic
 
+  WorkerReorgFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/worker
+      FilterPattern: '"reorg detected"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: WorkerReorgs
+          MetricValue: "1"
+
+  WorkerRollbackFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/worker
+      FilterPattern: '"projection rollback failed"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: WorkerRollbackFailures
+          MetricValue: "1"
+
+  WorkerRpcFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/worker
+      FilterPattern: '"ws error"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: WorkerRpcFailures
+          MetricValue: "1"
+
+  WorkerLagFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/worker
+      FilterPattern: '"cursor stays"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: WorkerIndexerLag
+          MetricValue: "1"
+
+  WorkerLagAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-worker-indexer-lag
+      AlarmDescription: Worker failed to advance the indexer cursor.
+      Namespace: PredictionLayer/Production
+      MetricName: WorkerIndexerLag
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  ApiQuoteFailureFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/api
+      FilterPattern: '"funding request failed"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: QuoteFailures
+          MetricValue: "1"
+
+  ApiHealthFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/api
+      FilterPattern: '"funding_unavailable"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: ApiHealthFailures
+          MetricValue: "1"
+
+  OracleCancelFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/worker
+      FilterPattern: '"[oracle-observation] cancelled"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: OracleObservationCancels
+          MetricValue: "1"
+
+  TimelockActivityFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /ecs/prediction-layer/production/worker
+      FilterPattern: '"[oracle-observation] proposed"'
+      MetricTransformations:
+        - MetricNamespace: PredictionLayer/Production
+          MetricName: TimelockOracleProposals
+          MetricValue: "1"
+
+  WorkerReorgAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-worker-reorg
+      AlarmDescription: Worker detected a chain reorg.
+      Namespace: PredictionLayer/Production
+      MetricName: WorkerReorgs
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  WorkerRollbackAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-worker-rollback-failed
+      AlarmDescription: Worker failed to roll back projections after a reorg.
+      Namespace: PredictionLayer/Production
+      MetricName: WorkerRollbackFailures
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  WorkerRpcAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-worker-rpc-failure
+      AlarmDescription: Worker WebSocket RPC failed.
+      Namespace: PredictionLayer/Production
+      MetricName: WorkerRpcFailures
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  QuoteFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-quote-failure
+      AlarmDescription: API funding quote requests are failing.
+      Namespace: PredictionLayer/Production
+      MetricName: QuoteFailures
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  ApiHealthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-api-health
+      AlarmDescription: API funding path is unavailable.
+      Namespace: PredictionLayer/Production
+      MetricName: ApiHealthFailures
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  OracleCancelAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-oracle-cancelled
+      AlarmDescription: A closing-price observation was cancelled.
+      Namespace: PredictionLayer/Production
+      MetricName: OracleObservationCancels
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  TimelockActivityAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-timelock-activity
+      AlarmDescription: A Safe/timelock closing-price observation was proposed.
+      Namespace: PredictionLayer/Production
+      MetricName: TimelockOracleProposals
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  ApiEcsCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-api-ecs-cpu-high
+      AlarmDescription: API service CPU has exceeded 70 percent for five minutes.
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: prediction-layer-production
+        - Name: ServiceName
+          Value: prediction-layer-production-api
+      MetricName: CPUUtilization
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 70
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  WorkerEcsCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-worker-ecs-cpu-high
+      AlarmDescription: Worker service CPU has exceeded 70 percent for five minutes.
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: prediction-layer-production
+        - Name: ServiceName
+          Value: prediction-layer-production-worker
+      MetricName: CPUUtilization
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 70
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  ApiEcsMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-api-ecs-memory-high
+      AlarmDescription: API service memory has exceeded 70 percent for five minutes.
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: prediction-layer-production
+        - Name: ServiceName
+          Value: prediction-layer-production-api
+      MetricName: MemoryUtilization
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 70
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  WorkerEcsMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-worker-ecs-memory-high
+      AlarmDescription: Worker service memory has exceeded 70 percent for five minutes.
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: prediction-layer-production
+        - Name: ServiceName
+          Value: prediction-layer-production-worker
+      MetricName: MemoryUtilization
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 70
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  ApiTaskCountAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-api-tasks-low
+      AlarmDescription: API service is running below one healthy task.
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: prediction-layer-production
+        - Name: ServiceName
+          Value: prediction-layer-production-api
+      MetricName: LiveTaskCount
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmActions:
+        - !Ref AlertTopic
+
+  WorkerTaskCountAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-worker-tasks-low
+      AlarmDescription: Worker service is running below one healthy task.
+      Namespace: AWS/ECS
+      Dimensions:
+        - Name: ClusterName
+          Value: prediction-layer-production
+        - Name: ServiceName
+          Value: prediction-layer-production-worker
+      MetricName: LiveTaskCount
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmActions:
+        - !Ref AlertTopic
+
   DataServicesDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
@@ -170,6 +504,47 @@ Resources:
                   [".", "DatabaseMemoryUsagePercentage", ".", ".", {"label": "Memory percent"}],
                   [".", "CurrConnections", ".", ".", {"label": "Connections", "yAxis": "right"}],
                   [".", "Evictions", ".", ".", {"label": "Evictions", "yAxis": "right"}]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "ECS service health",
+                "region": "${AWS::Region}",
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/ECS", "LiveTaskCount", "ClusterName", "prediction-layer-production", "ServiceName", "prediction-layer-production-api", {"label": "API running tasks"}],
+                  ["AWS/ECS", "LiveTaskCount", "ClusterName", "prediction-layer-production", "ServiceName", "prediction-layer-production-worker", {"label": "Worker running tasks"}],
+                  [".", "CPUUtilization", ".", ".", ".", ".", {"label": "API CPU percent", "yAxis": "right"}],
+                  [".", "CPUUtilization", ".", ".", ".", "prediction-layer-production-worker", {"label": "Worker CPU percent", "yAxis": "right"}]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Indexer and oracle events",
+                "region": "${AWS::Region}",
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["PredictionLayer/Production", "WorkerIndexerLag", {"label": "Cursor stalls"}],
+                  [".", "WorkerReorgs", {"label": "Reorgs"}],
+                  [".", "WorkerRpcFailures", {"label": "RPC failures"}],
+                  [".", "QuoteFailures", {"label": "Quote failures"}],
+                  [".", "ApiHealthFailures", {"label": "API health failures"}],
+                  [".", "TimelockOracleProposals", {"label": "Timelock proposals"}],
+                  [".", "OracleObservationCancels", {"label": "Oracle cancels"}]
                 ]
               }
             }
