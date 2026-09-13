@@ -14,9 +14,7 @@ export default async function CommunitiesPage() {
   const thirtyDay = thirtyDayResult.status === "fulfilled" ? thirtyDayResult.value : null;
   const allTime = allTimeResult.status === "fulfilled" ? allTimeResult.value : null;
   const communitiesByWindow = {
-    "7 days": sevenDay?.communities.length
-      ? sevenDay.communities
-      : demoCommunityWindows["7 days"],
+    "7 days": sevenDay?.communities.length ? sevenDay.communities : demoCommunityWindows["7 days"],
     "30 days": thirtyDay?.communities.length
       ? thirtyDay.communities
       : demoCommunityWindows["30 days"],

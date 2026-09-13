@@ -46,7 +46,10 @@ function scaleDemoCommunities(walletMultiplier: number, volumeMultiplier: number
   return demoCommunities.map((community) => ({
     ...community,
     participantCount: Math.round(community.participantCount * walletMultiplier),
-    volumeUsdg: (BigInt(community.volumeUsdg) * BigInt(Math.round(volumeMultiplier * 100)) / 100n).toString(),
+    volumeUsdg: (
+      (BigInt(community.volumeUsdg) * BigInt(Math.round(volumeMultiplier * 100))) /
+      100n
+    ).toString(),
     topCurrentStance: community.topCurrentStance
       ? {
           ...community.topCurrentStance,
@@ -54,8 +57,8 @@ function scaleDemoCommunities(walletMultiplier: number, volumeMultiplier: number
             community.topCurrentStance.participantCount * walletMultiplier,
           ),
           volumeUsdg: (
-            BigInt(community.topCurrentStance.volumeUsdg) *
-            BigInt(Math.round(volumeMultiplier * 100)) /
+            (BigInt(community.topCurrentStance.volumeUsdg) *
+              BigInt(Math.round(volumeMultiplier * 100))) /
             100n
           ).toString(),
         }

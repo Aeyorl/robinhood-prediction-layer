@@ -122,7 +122,13 @@ export function CommunityConstellation({
       context.lineWidth = 1;
       for (let ring = 1; ring <= 4; ring += 1) {
         context.beginPath();
-        context.arc(center.x, center.y, Math.min(width, height) * (0.12 + ring * 0.09), 0, Math.PI * 2);
+        context.arc(
+          center.x,
+          center.y,
+          Math.min(width, height) * (0.12 + ring * 0.09),
+          0,
+          Math.PI * 2,
+        );
         context.stroke();
       }
       context.fillStyle = "rgba(69, 66, 61, 0.12)";
@@ -159,7 +165,8 @@ export function CommunityConstellation({
         const hasSelection = Boolean(selected);
         const alpha = hasSelection && !selectedNode ? 0.25 : 1;
         const color = COLORS[index % COLORS.length] ?? COLORS[0]!;
-        const radius = (30 + Math.sqrt(Math.max(0, state.wallets) / maxWallets) * 22) * sizeScale * state.scale;
+        const radius =
+          (30 + Math.sqrt(Math.max(0, state.wallets) / maxWallets) * 22) * sizeScale * state.scale;
 
         context.save();
         context.globalAlpha = alpha;
@@ -231,7 +238,13 @@ export function CommunityConstellation({
       context.shadowBlur = 0;
       if (hubImage.complete && hubImage.naturalWidth > 0) {
         const markSize = hubRadius * 0.78;
-        context.drawImage(hubImage, center.x - markSize / 2, center.y - markSize / 2, markSize, markSize);
+        context.drawImage(
+          hubImage,
+          center.x - markSize / 2,
+          center.y - markSize / 2,
+          markSize,
+          markSize,
+        );
       }
       context.restore();
     };

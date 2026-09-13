@@ -175,17 +175,29 @@ export function LeaderboardBoard({ entries }: { entries: RankedWallet[] }) {
       currentX += (targetX - currentX) * 0.12;
       currentY += (targetY - currentY) * 0.12;
       podium.style.setProperty("--podium-bg-x", `${(currentX * 18).toFixed(2)}px`);
-      podium.style.setProperty("--podium-bg-y", `${(currentY * 18 + scrollDepth * 1.4).toFixed(2)}px`);
+      podium.style.setProperty(
+        "--podium-bg-y",
+        `${(currentY * 18 + scrollDepth * 1.4).toFixed(2)}px`,
+      );
       podium.style.setProperty("--podium-pillar-x", `${(currentX * 10).toFixed(2)}px`);
-      podium.style.setProperty("--podium-pillar-y", `${(currentY * 10 + scrollDepth * 0.8).toFixed(2)}px`);
+      podium.style.setProperty(
+        "--podium-pillar-y",
+        `${(currentY * 10 + scrollDepth * 0.8).toFixed(2)}px`,
+      );
       podium.style.setProperty("--podium-card-x", `${(currentX * 4).toFixed(2)}px`);
-      podium.style.setProperty("--podium-card-y", `${(currentY * 4 + scrollDepth * 0.3).toFixed(2)}px`);
+      podium.style.setProperty(
+        "--podium-card-y",
+        `${(currentY * 4 + scrollDepth * 0.3).toFixed(2)}px`,
+      );
       frame = requestAnimationFrame(write);
     };
 
     const updateScroll = () => {
       const rect = podium.getBoundingClientRect();
-      scrollDepth = Math.max(-1, Math.min(1, (window.innerHeight / 2 - (rect.top + rect.height / 2)) / window.innerHeight));
+      scrollDepth = Math.max(
+        -1,
+        Math.min(1, (window.innerHeight / 2 - (rect.top + rect.height / 2)) / window.innerHeight),
+      );
     };
     const onPointerMove = (event: PointerEvent) => {
       const rect = podium.getBoundingClientRect();
