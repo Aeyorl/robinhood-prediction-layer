@@ -16,3 +16,11 @@ Local evidence on 2026-09-05: 200 requests at concurrency 20, zero failures, p95
 - Data resources: RDS `prediction-layer-production`; cache `prediction-layer-production-001`
 - Paging status: pending a confirmed topic subscription
 - Application/RPC alarms: pending deployment of the API and worker behind the dedicated production RPC
+
+## AWS evidence — 2026-09-10
+
+- Foundation, data, monitoring and migration stacks are `IN_SYNC` in `eu-west-1`.
+- ECS services: none (desired count remains zero).
+- SNS topic still has zero subscriptions; paging is not satisfied.
+- Application log-metric alarms are prepared in `infrastructure/aws/monitoring.yml` and have not been applied to the live monitoring stack.
+- Full non-secret record: `docs/aws-operations-evidence-2026-09-10.md`.

@@ -11,29 +11,41 @@ if (!apiKey || !userSecret) {
   throw new Error("DATA_STREAMS_API_KEY and DATA_STREAMS_USER_SECRET are required");
 }
 
-const path =
-  "/api/v1/discovery?base_asset=AAPL,NVDA,TSLA&asset_class=Equities&status=live&network_type=mainnet&hidden=true";
-const timestamp = Date.now().toString();
-const bodyHash = createHash("sha256").update("").digest("hex");
-const signature = createHmac("sha256", userSecret)
-  .update(`GET ${path} ${bodyHash} ${apiKey} ${timestamp}`)
-  .digest("hex");
-
-const response = await fetch(`${endpoint}${path}`, {
-  headers: {
-    Authorization: apiKey,
-    "X-Authorization-Timestamp": timestamp,
-    "X-Authorization-Signature-SHA256": signature,
-  },
-  signal: AbortSignal.timeout(15_000),
-});
-
-if (!response.ok) {
-  throw new Error(`Data Streams discovery authentication failed with HTTP ${response.status}`);
+async function discover(path) {
+  const timestamp = Date.now().toString();
+  const bodyHash = createHash("sha256").update("").digest("hex");
+  const signature = createHmac("sha256", userSecret)
+    .update(`GET ${path} ${bodyHash} ${apiKey} ${timestamp}`)
+    .digest("hex");
+  const response = await fetch(`${endpoint}${path}`, {
+    headers: {
+      Authorization: apiKey,
+      "X-Authorization-Timestamp": timestamp,
+      "X-Authorization-Signature-SHA256": signature,
+    },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!response.ok) {
+    throw new Error(`Data Streams discovery authentication failed with HTTP ${response.status}`);
+  }
+  const payload = await response.json();
+  return Array.isArray(payload.feeds) ? payload.feeds : [];
 }
 
-const payload = await response.json();
-const feeds = Array.isArray(payload.feeds) ? payload.feeds : [];
+const livePath = "/api/v1/discovery?base_asset=AAPL,NVDA,TSLA&status=live&network_type=mainnet";
+const hiddenPath = `${livePath}&hidden=true`;
+const feedsById = new Map();
+for (const feed of await discover(livePath)) {
+  if (feed?.feedId) feedsById.set(feed.feedId, feed);
+}
+try {
+  for (const feed of await discover(hiddenPath)) {
+    if (feed?.feedId) feedsById.set(feed.feedId, feed);
+  }
+} catch {
+  // Hidden-stream lookup is additive. Live launch IDs must still verify.
+}
+const feeds = [...feedsById.values()];
 const selected = feeds
   .filter(
     (feed) =>

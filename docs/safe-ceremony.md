@@ -51,13 +51,15 @@ Regenerate the manifest reproducibly with:
 node scripts/release-manifest.mjs prediction-layer-mainnet-audit-rc5 audit/ARTIFACTS-rc5.sha256
 ```
 
-At least two owners must separately use the local signer and return their
-downloaded public evidence files. Verify each recovered signer against the
-current onchain owner set before changing
-`audit/safe-ceremony-metamask-signatures-v2.json` from pending. Keep recovery
-contacts, seed-backup details and device-specific controls outside Git.
+Two current owners signed the V2 payload with the local MetaMask tool on
+2026-09-10. Recovered signers `0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A` and
+`0x8cA71B70C91BD8250073dfDD323b9219Bce6A165` match the live owner set. Public
+evidence is `audit/safe-ceremony-metamask-signatures-v2.json` with status
+`two-of-three-verified`. `node scripts/verify-safe-ceremony.mjs` succeeded.
+These signatures do not authorize deployment. Keep recovery contacts,
+seed-backup details and device-specific controls outside Git.
 
-After adding the two public signatures, run:
+Re-verify after any owner-set or nonce change:
 
 ```powershell
 node scripts/verify-safe-ceremony.mjs

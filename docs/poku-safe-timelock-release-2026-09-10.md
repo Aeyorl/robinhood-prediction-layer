@@ -1,6 +1,6 @@
 # Poku Safe and timelock release preparation — 2026-09-10
 
-Status: **prepared; owner signatures and mainnet deployment remain pending**.
+Status: **V2 two-of-three signatures verified; private recovery, AWS runtime, and mainnet deployment remain pending**.
 
 ## Release binding
 
@@ -53,17 +53,42 @@ Result: **2 passed, 0 failed**. This is a deterministic local rehearsal; it is
 not a mainnet deployment or a substitute for the post-deployment onchain
 rehearsal.
 
+## V2 MetaMask signatures
+
+Two distinct current Safe owners signed `audit/safe-ceremony-eip712-v2.json`
+through the local MetaMask tool. Public evidence is in
+`audit/safe-ceremony-metamask-signatures-v2.json`. Status is
+`two-of-three-verified`.
+
+- Recovered owners: `0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A` and
+  `0x8cA71B70C91BD8250073dfDD323b9219Bce6A165`
+- Wallet type: MetaMask software wallet
+- Signed at: `2026-09-10T19:44:19.811Z` and `2026-09-10T19:43:50.506Z`
+- Live Safe re-read after signing: nonce `6`, threshold `2`, owner set unchanged
+- `node scripts/verify-safe-ceremony.mjs` output:
+
+```text
+Typed-data hash: 0xb2314caed249d60ca133768e95135a5073769b6358cc2aa23edcc421c20cec2c
+Verified: 0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A
+Verified: 0x8cA71B70C91BD8250073dfDD323b9219Bce6A165
+Ceremony threshold satisfied: 2 verified owners
+```
+
+These signatures prove control of the two listed owner addresses at signing
+time. They do not authorize deployment, funding, a Safe transaction, or a
+change to any launch gate. They do not prove hardware-wallet custody or
+offline recovery readiness.
+
 ## Remaining ceremony actions
 
-1. Two distinct current owners sign the V2 payload with the local MetaMask tool.
-2. Merge the public signature values into
-   `audit/safe-ceremony-metamask-signatures-v2.json`.
-3. Run `node scripts/verify-safe-ceremony.mjs` and preserve its output.
-4. Complete the private recovery-control record outside Git for each signer.
-5. Obtain the still-required external audit/retest and compliance approvals.
-6. Prepare the exact deployment transaction set and obtain explicit approval
+1. Complete the private recovery-control record outside Git for each signer.
+2. Obtain the still-required external audit/retest and compliance approvals.
+3. Subscribe and confirm an on-call destination on
+   `prediction-layer-production-alerts`.
+4. Approve the monitoring-stack update that adds application log-metric alarms.
+5. Prepare the exact deployment transaction set and obtain explicit approval
    before any mainnet broadcast.
-7. After deployment, verify bytecode, roles, owners and delay, then schedule and
+6. After deployment, verify bytecode, roles, owners and delay, then schedule and
    execute the harmless onchain rehearsal across the full 48-hour delay.
 
 No mainnet transaction was broadcast during this preparation.
