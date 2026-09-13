@@ -37,6 +37,29 @@ import { fetchTokenMetadata } from "./tokens.js";
 const CURSOR_KEY = "pl:worker:cursor";
 const RECENT_HASHES_DEPTH = 16;
 
+/** Never log an RPC URL or key — both embed credentials. */
+function redact(err: unknown): string {
+  const text = err instanceof Error ? err.message : String(err);
+  return text
+    .replace(/wss?:\/\/[^\s"']+/g, "wss://[redacted]")
+    .replace(/https?:\/\/[^\s"']+/g, "https://[redacted]")
+    .replace(/alch_[A-Za-z0-9]+/g, "[redacted-key]");
+}
+
+/** Retry transient RPC failures (e.g. provider 429 throttles) at startup. */
+async function withRetry<T>(label: string, attempt: () => Promise<T>): Promise<T> {
+  const delays = [1_000, 5_000, 15_000];
+  for (let i = 0; ; i++) {
+    try {
+      return await attempt();
+    } catch (err) {
+      if (i >= delays.length) throw err;
+      console.warn(`[worker] ${label} failed, retrying:`, redact(err));
+      await new Promise((resolve) => setTimeout(resolve, delays[i]));
+    }
+  }
+}
+
 interface IndexerDeps {
   chain: Chain;
   client: PublicClient;
@@ -85,16 +108,19 @@ async function monitorClosingPriceResolver(deps: IndexerDeps, blockNumber: bigin
   }
 }
 
-function makeClient(): { client: PublicClient; transport: "ws" | "http" } {
+async function makeClient(): Promise<{ client: PublicClient; transport: "ws" | "http" }> {
   try {
     const client = createPublicClient({
       chain: getChain(env.CHAIN_ID),
-      transport: webSocket(env.RPC_WS_URL, { retryCount: 3, retryDelay: 1_000 }),
+      transport: webSocket(env.RPC_WS_URL, { retryCount: 3, retryDelay: 1_000, timeout: 10_000 }),
       batch: { multicall: true },
     });
+    // webSocket() connects lazily — force a round-trip so a blocked endpoint
+    // falls back to HTTP polling instead of crashing the process later.
+    await client.getBlockNumber();
     return { client, transport: "ws" };
   } catch (err) {
-    console.warn("[worker] websocket unavailable, using http:", err);
+    console.warn("[worker] websocket unavailable, using http:", redact(err));
     return {
       client: createPublicClient({
         chain: getChain(env.CHAIN_ID),
@@ -252,10 +278,7 @@ async function indexBlock(deps: IndexerDeps, blockNumber: bigint): Promise<void>
       // token PENDING; the next block retries nothing but the next appearance
       // does — metadata is display-only, never load-bearing.
       await fetchTokenMetadata(deps.client, deps.db, deps.chainId, newTokens).catch((err) =>
-        console.warn(
-          "[worker] token metadata fetch failed:",
-          err instanceof Error ? err.message : err,
-        ),
+        console.warn("[worker] token metadata fetch failed:", redact(err)),
       );
     }
   }
@@ -271,7 +294,7 @@ async function run() {
     Address | undefined;
   const safeClosingPriceResolverAddress = env.SAFE_CLOSING_PRICE_RESOLVER_ADDRESS?.toLowerCase() as
     Address | undefined;
-  const { client, transport } = makeClient();
+  const { client, transport } = await makeClient();
   console.log(`[worker] starting on chain ${chain.id} via ${transport}`);
   console.log(`[worker] factory ${factoryAddress}`);
 
@@ -295,13 +318,12 @@ async function run() {
     await sql`select 1`;
   } catch (err) {
     db = null;
-    console.warn(
-      "[worker] postgres unavailable — projections skipped:",
-      err instanceof Error ? err.message : err,
-    );
+    console.warn("[worker] postgres unavailable — projections skipped:", redact(err));
   }
 
-  const marketAddresses = await loadKnownMarkets(client, factoryAddress, db, chain.id);
+  const marketAddresses = await withRetry("loadKnownMarkets", () =>
+    loadKnownMarkets(client, factoryAddress, db, chain.id),
+  );
   const deps: IndexerDeps = {
     chain,
     client,
@@ -317,7 +339,7 @@ async function run() {
   const ring = makeHashRing();
 
   let cursor = await loadCursor(redis);
-  const head = await client.getBlockNumber();
+  const head = await withRetry("getBlockNumber", () => client.getBlockNumber());
   if (cursor === 0n) {
     // Fresh start: backfill from the factory deployment block so no
     // MarketCreated is missed, falling back to a short window when the RPC
@@ -337,12 +359,14 @@ async function run() {
     const unwatch = client.watchBlockNumber({
       emitOnBegin: false,
       onBlockNumber: (blockNumber) => void onHead(deps, blockNumber, ring, () => unwatch()),
-      onError: (err) => console.error("[worker] ws error:", err.message),
+      onError: (err) => console.error("[worker] ws error:", redact(err)),
     });
   }
 
   // HTTP reconciliation fallback: always polls and fills gaps so the WS path
-  // and restarts never miss blocks.
+  // and restarts never miss blocks. One in-flight block at a time — provider
+  // 429 throttles must not stack parallel requests.
+  let indexing = false;
   setInterval(() => {
     void (async () => {
       const currentHead = await client.getBlockNumber().catch(() => null);
@@ -357,8 +381,21 @@ async function run() {
     ring_: ReturnType<typeof makeHashRing>,
     _unwatch: () => void,
   ) {
-    if (headNumber <= cursor) return;
+    if (indexing || headNumber <= cursor) return;
+    indexing = true;
+    try {
+      await indexHead(deps_, headNumber, ring_, _unwatch);
+    } finally {
+      indexing = false;
+    }
+  }
 
+  async function indexHead(
+    deps_: IndexerDeps,
+    headNumber: bigint,
+    ring_: ReturnType<typeof makeHashRing>,
+    _unwatch: () => void,
+  ) {
     const rewind = await detectReorg(deps_.client, headNumber, ring_);
     if (rewind > 0n) {
       const rewindBlock = headNumber - rewind;
@@ -372,7 +409,7 @@ async function run() {
           await rollbackProjections(deps_.sql, deps_.chain.id, rewindBlock);
           console.warn(`[worker] rolled back projections >= block ${rewindBlock}`);
         } catch (err) {
-          console.error("[worker] projection rollback failed:", err);
+          console.error("[worker] projection rollback failed:", redact(err));
           return; // keep the cursor; retry rollback on the next poll
         }
       }
@@ -387,10 +424,7 @@ async function run() {
       } catch (err) {
         // A blocked/failed projection must not advance the cursor — the next
         // poll retries from here.
-        console.error(
-          `[worker] block ${n} failed — cursor stays at ${cursor}:`,
-          err instanceof Error ? err.message : err,
-        );
+        console.error(`[worker] block ${n} failed — cursor stays at ${cursor}:`, redact(err));
         break;
       }
     }
@@ -409,6 +443,12 @@ async function run() {
 }
 
 void run().catch((err) => {
-  console.error("[worker] fatal:", err);
+  console.error("[worker] fatal:", redact(err));
   process.exit(1);
+});
+
+// Late async failures (e.g. a throttled subscription) must log without
+// killing the indexer — the loop reconciles any gap on the next poll.
+process.on("unhandledRejection", (reason) => {
+  console.error("[worker] unhandled rejection:", redact(reason));
 });
