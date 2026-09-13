@@ -2656,20 +2656,51 @@ a {
 }
 .leaderboard-podium {
   position: relative;
+  isolation: isolate;
   height: 440px;
   margin-top: 20px;
   overflow: hidden;
   border: 1px solid #c8c5be;
   background: #f8f6f1;
 }
-.leaderboard-podium > img {
+.leaderboard-podium::before,
+.leaderboard-podium::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.leaderboard-podium::before {
+  z-index: 0;
+  inset: -12%;
+  background-image: radial-gradient(circle, rgb(75 99 255 / 0.18) 1px, transparent 1.5px);
+  background-size: 13px 13px;
+  opacity: 0.45;
+  transform: translate(var(--podium-bg-x, 0px), var(--podium-bg-y, 0px));
+  transition: opacity 0.3s ease;
+}
+.leaderboard-podium::after {
+  z-index: 1;
+  top: 8%;
+  left: 50%;
+  width: min(42%, 380px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(75 99 255 / 0.3), transparent 68%);
+  transform: translateX(-50%);
+  animation: leaderboard-glow 4s ease-in-out infinite;
+}
+.leaderboard-podium-image {
+  z-index: 1;
   object-fit: cover;
   mix-blend-mode: multiply;
   opacity: 0.92;
+  transform: translate(var(--podium-pillar-x, 0px), var(--podium-pillar-y, 0px));
 }
 .leader-cards {
   position: absolute;
+  z-index: 2;
   inset: 0;
+  transform: translate(var(--podium-card-x, 0px), var(--podium-card-y, 0px));
 }
 .leader-card {
   position: absolute;
@@ -2687,7 +2718,7 @@ a {
     box-shadow 0.2s ease;
 }
 .leader-card:hover {
-  transform: translateY(-4px);
+  transform: translate(var(--podium-card-x, 0px), calc(var(--podium-card-y, 0px) - 4px));
   box-shadow: 0 20px 40px -32px #111;
 }
 .leader-card > span {
@@ -2807,6 +2838,33 @@ a {
   background: rgb(247 245 240 / 0.94);
   color: #111;
   text-align: center;
+}
+
+@keyframes leaderboard-glow {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translateX(-50%) scale(0.94);
+  }
+  50% {
+    opacity: 0.78;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-podium::before,
+  .leaderboard-podium-image,
+  .leader-cards {
+    transform: none !important;
+  }
+  .leaderboard-podium::before {
+    opacity: 0.18;
+  }
+  .leaderboard-podium::after {
+    animation-duration: 7s;
+    opacity: 0.28;
+  }
 }
 
 .portfolio-route {
