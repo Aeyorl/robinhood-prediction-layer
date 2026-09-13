@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -28,11 +27,31 @@ function useCountUp(target: number) {
 
 export function TwoSidedHero({ market }: { market: SampleMarket | null }) {
   const visualRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const yesTarget = market?.yesShare ?? 0;
   const noTarget = market?.noShare ?? 0;
   const hasShare = market != null;
   const yes = useCountUp(yesTarget);
   const no = useCountUp(noTarget);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPlayback = () => {
+      if (reducedMotion.matches) {
+        video.pause();
+        video.currentTime = 0;
+        return;
+      }
+      void video.play().catch(() => undefined);
+    };
+
+    syncPlayback();
+    reducedMotion.addEventListener("change", syncPlayback);
+    return () => reducedMotion.removeEventListener("change", syncPlayback);
+  }, []);
 
   useEffect(() => {
     const visual = visualRef.current;
@@ -86,25 +105,18 @@ export function TwoSidedHero({ market }: { market: SampleMarket | null }) {
 
       <div ref={visualRef} className="orbit-visual">
         <div className="orbit-art" aria-hidden="true">
-          <div className="orbit-orb orbit-orb-base">
-            <Image
-              src="/two-sided-orbit.png"
-              alt=""
-              fill
-              priority
-              sizes="(min-width: 900px) 55vw, 100vw"
-              className="object-contain"
-            />
-          </div>
-          <div className="orbit-orb orbit-orb-charge">
-            <Image
-              src="/two-sided-orbit.png"
-              alt=""
-              fill
-              sizes="(min-width: 900px) 55vw, 100vw"
-              className="object-contain"
-            />
-          </div>
+          <video
+            ref={videoRef}
+            className="orbit-video"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            poster="/two-sided-orbit.png"
+          >
+            <source src="/poku-orbit-loop.mp4" type="video/mp4" />
+          </video>
         </div>
         <div className="orbit-stat orbit-stat-yes">
           <span>YES</span>
