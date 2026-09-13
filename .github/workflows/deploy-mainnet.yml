@@ -45,9 +45,9 @@ jobs:
         run: pnpm --filter @pl/contracts test
       - name: Verify mainnet release evidence and onchain dependencies
         env:
-          MAINNET_EXTERNAL_AUDIT_APPROVED: ${{ vars.MAINNET_EXTERNAL_AUDIT_APPROVED }}
           MAINNET_COMPLIANCE_APPROVED: ${{ vars.MAINNET_COMPLIANCE_APPROVED }}
           RPC_HTTP_URL: ${{ secrets.PRODUCTION_RPC_URL }}
+          DEPLOYER_ADDRESS: ${{ vars.DEPLOYER_ADDRESS }}
           SAFE_ADDRESS: ${{ vars.SAFE_ADDRESS }}
           EXPECTED_SAFE_OWNERS: ${{ secrets.EXPECTED_SAFE_OWNERS }}
           EXPECTED_SAFE_THRESHOLD: ${{ vars.EXPECTED_SAFE_THRESHOLD }}
@@ -55,6 +55,7 @@ jobs:
           USDG_ADDRESS: ${{ vars.USDG_ADDRESS }}
           WETH_ADDRESS: ${{ vars.WETH_ADDRESS }}
           SWAP_TARGET: ${{ vars.SWAP_TARGET }}
+          DATA_STREAMS_VERIFIER: ${{ vars.DATA_STREAMS_VERIFIER }}
         run: pnpm mainnet:preflight
       - name: Broadcast protocol deployment
         env:
@@ -66,6 +67,7 @@ jobs:
           FEE_RECIPIENT: ${{ vars.FEE_RECIPIENT }}
           USDG_ADDRESS: ${{ vars.USDG_ADDRESS }}
           SWAP_TARGET: ${{ vars.SWAP_TARGET }}
+          DATA_STREAMS_VERIFIER: ${{ vars.DATA_STREAMS_VERIFIER }}
         working-directory: packages/contracts
         run: |
           actual_deployer="$(cast wallet address --private-key "$ETH_PRIVATE_KEY")"

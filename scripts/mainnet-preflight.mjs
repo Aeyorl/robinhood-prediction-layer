@@ -3,10 +3,13 @@ import process from "node:process";
 import { createPublicClient, getAddress, http, parseAbi } from "viem";
 
 const MAINNET_CHAIN_ID = 4663;
+const EXPECTED_DEPLOYER_NONCE = 14;
+const MIN_DEPLOYER_BALANCE_WEI = 3_000_000_000_000_000n;
 const CANONICAL = {
   USDG_ADDRESS: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
   WETH_ADDRESS: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
   SWAP_TARGET: "0x8876789976decbfcbbbe364623c63652db8c0904",
+  DATA_STREAMS_VERIFIER: "0xcE73c8ad08CBDEaCa6078BF0627C8fe0a9a536E7",
 };
 
 const safeAbi = parseAbi([
@@ -46,7 +49,6 @@ async function requireCode(client, name, value) {
 }
 
 async function main() {
-  approved("MAINNET_EXTERNAL_AUDIT_APPROVED");
   approved("MAINNET_COMPLIANCE_APPROVED");
 
   const rpcUrl = new URL(required("RPC_HTTP_URL"));
@@ -58,9 +60,9 @@ async function main() {
     SWAP_TARGET: address("SWAP_TARGET", CANONICAL.SWAP_TARGET),
     SAFE_ADDRESS: address("SAFE_ADDRESS", ""),
     FEE_RECIPIENT: address("FEE_RECIPIENT", ""),
+    DATA_STREAMS_VERIFIER: address("DATA_STREAMS_VERIFIER", ""),
+    DEPLOYER_ADDRESS: address("DEPLOYER_ADDRESS", ""),
   };
-  const optionalVerifier = process.env.DATA_STREAMS_VERIFIER?.trim();
-  if (optionalVerifier) addresses.DATA_STREAMS_VERIFIER = getAddress(optionalVerifier);
 
   for (const [name, expected] of Object.entries(CANONICAL)) {
     if (addresses[name] !== getAddress(expected)) {
@@ -80,9 +82,29 @@ async function main() {
 
   await Promise.all(
     Object.entries(addresses)
-      .filter(([name]) => name !== "FEE_RECIPIENT")
+      .filter(([name]) => name !== "FEE_RECIPIENT" && name !== "DEPLOYER_ADDRESS")
       .map(([name, value]) => requireCode(client, name, value)),
   );
+
+  const [deployerNonce, deployerBalance, deployerCode] = await Promise.all([
+    client.getTransactionCount({ address: addresses.DEPLOYER_ADDRESS }),
+    client.getBalance({ address: addresses.DEPLOYER_ADDRESS }),
+    client.getCode({ address: addresses.DEPLOYER_ADDRESS }),
+  ]);
+  if (deployerCode && deployerCode !== "0x") {
+    throw new Error("DEPLOYER_ADDRESS must be an EOA without deployed bytecode");
+  }
+  if (deployerNonce !== EXPECTED_DEPLOYER_NONCE) {
+    throw new Error(
+      `Deployer nonce ${deployerNonce} invalidates the reviewed package; expected ${EXPECTED_DEPLOYER_NONCE}`,
+    );
+  }
+  if (deployerBalance < MIN_DEPLOYER_BALANCE_WEI) {
+    throw new Error(
+      `Deployer balance ${deployerBalance} wei is below the 0.003 ETH deployment minimum`,
+    );
+  }
+  console.log(`[ok] Deployer: nonce ${deployerNonce}, funded for deployment`);
 
   const [owners, threshold] = await Promise.all([
     client.readContract({
