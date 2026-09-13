@@ -49,7 +49,7 @@ jobs:
         id: meta
         with:
           images: |
-            ghcr.io/aeyod7/prediction-layer-${{ matrix.service }}
+            ghcr.io/mag7-vault/prediction-layer-${{ matrix.service }}
             498287372410.dkr.ecr.eu-west-1.amazonaws.com/prediction-layer/${{ matrix.service }}
           tags: |
             type=sha,format=long
