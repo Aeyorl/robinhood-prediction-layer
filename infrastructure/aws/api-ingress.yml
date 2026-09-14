@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Prediction Layer public HTTPS ingress for the production API service.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Public subnets of the production VPC.
+  AppSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Application security group the API tasks use.
+  CertificateArn:
+    Type: String
+    Description: ACM certificate for api.usepoku.fun (must be ISSUED before the HTTPS listener is added).
+  AlarmTopicArn:
+    Type: String
+  HostedZoneDomain:
+    Type: String
+    Default: usepoku.fun
+
+Resources:
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public HTTPS ingress for the prediction layer production API load balancer
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP (redirects to HTTPS)
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 3001
+          ToPort: 3001
+          DestinationSecurityGroupId: !Ref AppSecurityGroupId
+          Description: Forward to API tasks only
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  ApiLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: prediction-layer-prod-api
+      Scheme: internet-facing
+      Type: application
+      IpAddressType: ipv4
+      Subnets: !Ref SubnetIds
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  ApiTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: prediction-layer-prod-api
+      VpcId: !Ref VpcId
+      Protocol: HTTP
+      Port: 3001
+      TargetType: ip
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+      Tags:
+        - Key: Product
+          Value: prediction-layer
+        - Key: Environment
+          Value: production
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApiLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ApiTargetGroup
+
+  # Added in the second deploy once the ACM certificate is ISSUED
+  # (requires the DNS validation record below to exist first).
+  # HttpsListener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     LoadBalancerArn: !Ref ApiLoadBalancer
+  #     Port: 443
+  #     Protocol: HTTPS
+  #     Certificates:
+  #       - CertificateArn: !Ref CertificateArn
+  #     SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+  #     DefaultActions:
+  #       - Type: forward
+  #         TargetGroupArn: !Ref ApiTargetGroup
+
+  # Enabled together with HttpsListener in the second deploy.
+  # HttpRedirectListenerRule:
+  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #   Properties:
+  #     ListenerArn: !Ref HttpListener
+  #     Priority: 1
+  #     Conditions:
+  #       - Field: path-pattern
+  #         PathPatternConfig:
+  #           Values: ["/*"]
+  #     Actions:
+  #       - Type: redirect
+  #         RedirectConfig:
+  #           Protocol: HTTPS
+  #           Port: "443"
+  #           Host: "#{host}"
+  #           Path: "/#{path}"
+  #           Query: "#{query}"
+  #           StatusCode: HTTP_301
+
+  UnhealthyHostAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-api-unhealthy-hosts
+      AlarmDescription: ALB health checks report zero healthy API targets.
+      Namespace: AWS/ApplicationELB
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt ApiLoadBalancer.LoadBalancerFullName
+        - Name: TargetGroup
+          Value: !GetAtt ApiTargetGroup.TargetGroupFullName
+      MetricName: HealthyHostCount
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmActions:
+        - !Ref AlarmTopicArn
+
+  Api5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: prediction-layer-production-api-5xx
+      AlarmDescription: Load balancer is returning 5xx responses for the API.
+      Namespace: AWS/ApplicationELB
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt ApiLoadBalancer.LoadBalancerFullName
+      MetricName: HTTPCode_Target_5XX_Count
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopicArn
+
+Outputs:
+  LoadBalancerDnsName:
+    Description: CNAME target for api.usepoku.fun
+    Value: !GetAtt ApiLoadBalancer.DNSName
+  LoadBalancerCanonicalZoneId:
+    Value: !GetAtt ApiLoadBalancer.CanonicalHostedZoneID
+  TargetGroupArn:
+    Value: !Ref ApiTargetGroup
+  CertificateValidationStatusNote:
+    Description: DNS validation record must exist in Vercel DNS before this certificate is issued.
+    Value: !Ref CertificateArn
