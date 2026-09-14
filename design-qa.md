@@ -5,6 +5,7 @@
 - Source visual truth: `C:\Users\aeyon\.codex\generated_images\01a0709f-b672-7cc2-bd0e-7e4db3341eba\exec-bac82460-5b67-4288-8e23-ce62a75e637c.png` (1487 x 1058).
 - Desktop implementation: `design-qa/atlas-home-desktop.png` (1440 x 1024 CSS px, device scale factor 1).
 - Mobile implementation: `design-qa/atlas-home-mobile.png` (390 x 844 CSS px, device scale factor 1).
+- Deployed implementation: `design-qa/atlas-home-live.png` (1440 x 1024 CSS px, device scale factor 1) captured from `https://www.usepoku.fun/` after the GitHub-triggered deployment.
 - Combined comparison: `design-qa/atlas-comparison.png` (source and implementation normalized to 720 x 512 each for visual comparison).
 - State: public homepage, featured NVDA preview, PONS atlas node selected, light theme, read-only controls.
 
@@ -21,6 +22,7 @@ Focused review covered the atlas canvas and node controls at desktop and the sta
 - `pnpm --filter @pl/web run build` passed.
 - Browser QA passed: animation frame changes, AAPL node selection, desktop containment, mobile no-overflow, reduced-motion media state, and no console errors.
 - HTTP smoke checks returned 200 for `/`, `/markets`, `/communities`, `/leaderboard`, and `/portfolio`.
+- Public deployment verification: `https://www.usepoku.fun/` returned HTTP 200 and rendered the new “Map the signal” homepage after commit `bbf0da3`.
 
 ## Findings and history
 
