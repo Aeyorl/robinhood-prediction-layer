@@ -1,50 +1,38 @@
-# Design QA
+# Market Atlas visual QA
 
-## Comparison target
+## Source and implementation
 
-- Markets: `C:\Users\aeyon\AppData\Local\Temp\codex-clipboard-26e1ee22-7c74-45b2-86fa-8b71c4aaa598.png`
-- Communities: `C:\Users\aeyon\AppData\Local\Temp\codex-clipboard-ef00323d-e2d5-42a7-bf7c-cc51e3115178.png`
-- Leaderboard: `C:\Users\aeyon\AppData\Local\Temp\codex-clipboard-9995db09-4399-43ba-ae0c-b19eba1effbe.png`
-- Portfolio: `C:\Users\aeyon\AppData\Local\Temp\codex-clipboard-c3df0244-cc70-4e31-bf1e-812be1e56fe3.png`
-- Implementation routes: `/markets`, `/communities`, `/leaderboard`, `/portfolio`
-- Source pixels: 1487 x 1058 each. Implementation captures: 1265 x 710 at device scale factor 1.
-- Captures: Codex in-app Browser; the API did not expose persistent screenshot paths.
-- State: read-only discovery with explicit demonstration fallbacks when chain or indexer data is unavailable.
+- Source visual truth: `C:\Users\aeyon\.codex\generated_images\01a0709f-b672-7cc2-bd0e-7e4db3341eba\exec-bac82460-5b67-4288-8e23-ce62a75e637c.png` (1487 x 1058).
+- Desktop implementation: `design-qa/atlas-home-desktop.png` (1440 x 1024 CSS px, device scale factor 1).
+- Mobile implementation: `design-qa/atlas-home-mobile.png` (390 x 844 CSS px, device scale factor 1).
+- Combined comparison: `design-qa/atlas-comparison.png` (source and implementation normalized to 720 x 512 each for visual comparison).
+- State: public homepage, featured NVDA preview, PONS atlas node selected, light theme, read-only controls.
 
-## Full-view comparison evidence
+## Comparison
 
-- Markets preserves the monumental heading, featured split signal, compact state tape, filters, and three-column card grid in the homepage ivory palette.
-- Communities preserves the constellation plus selected-community detail sheet and keeps the controls usable with labelled demonstration data.
-- Leaderboard preserves the three-position podium, metric/window controls, and ranking table in the homepage light palette.
-- Portfolio preserves the summary ledger, two-sided exposure bar, tabs, and position rows while stating that no wallet or live-position data is displayed.
+The implementation preserves the source hierarchy: Poku header, condensed two-line editorial headline, left-side explanation and actions, right-side blue/lime split orb with surrounding nodes, status row, category rail, and three market cards. The atlas is now a real responsive Canvas2D renderer rather than a static image/video: connection lines and inward particles animate, the split orb breathes, and the selected PONS node intensifies its glow. The generated source uses a 58/42 concept state; the implementation correctly uses the current featured preview's 63/37 data.
 
-## Required fidelity surfaces
+Focused review covered the atlas canvas and node controls at desktop and the stacked hero at 390 px. The canvas remains clipped inside `.market-atlas` at both widths, and the mobile page has no horizontal overflow.
 
-- Fonts and typography: condensed Impact/Arial Narrow display headings, system grotesk body copy, and monospace data labels match the approved hierarchy.
-- Spacing and layout rhythm: all four pages retain the reference's wide desktop bands, tight rules, primary visual proportions, and compact data density.
-- Colors and tokens: ivory `#f5f3ee`, black, cobalt `#4b63ff`, and acid-lime `#bafa28` match the homepage.
-- Image quality: existing purpose-made market signal, community constellation, and leaderboard podium raster assets are used at their intended scale.
-- Copy and content: Poku branding, capital-share language, demonstration labels, and the disabled trading state prevent fake live-market, wallet, or performance claims.
+## Validation
 
-## Findings
+- `pnpm --filter @pl/web run lint` passed.
+- `pnpm --filter @pl/web run typecheck` passed.
+- `pnpm --filter @pl/web run build` passed.
+- Browser QA passed: animation frame changes, AAPL node selection, desktop containment, mobile no-overflow, reduced-motion media state, and no console errors.
+- HTTP smoke checks returned 200 for `/`, `/markets`, `/communities`, `/leaderboard`, and `/portfolio`.
 
-- No actionable P0, P1, or P2 findings remain.
-- [P3] Poku replaces the older Prediction Layer wordmark in the references.
-- [P3] Connect Wallet is intentionally replaced with the disabled `Trading not open` control.
+## Findings and history
 
-## Comparison history
+No actionable P0, P1, or P2 visual findings remain. The source is a static concept frame, so the implementation intentionally replaces its implied motion with a live canvas while retaining the composition and palette. The status text and market figures remain honest preview states; trading and wallet actions remain disabled.
 
-1. Markets used an unrelated dark card directory; Communities and Portfolio collapsed into outage boxes; Leaderboard hid its ranking content behind an outage overlay.
-2. Restored each approved composition and synchronized all four routes to the homepage light palette.
-3. Added clearly labelled demonstration fallbacks so layouts remain useful without representing sample information as live chain or wallet data.
-4. Browser captures confirmed correct desktop composition and no visible horizontal overflow.
+## Implementation checklist
 
-## Primary interactions tested
-
-- Market search, category, status, and sort controls.
-- Community search, time filters, and node selection.
-- Leaderboard metric and time-window links.
-- Portfolio tabs remain visual preview controls; no wallet transaction is constructed.
-- Type-check, lint, production build, and browser rendering.
+- [x] Market Atlas hero replaces the previous video hero.
+- [x] Responsive desktop and mobile containment.
+- [x] Interactive node selection and accessible labels.
+- [x] Inward funding-flow particles and breathing split orb.
+- [x] Reduced-motion static render path.
+- [x] Market categories and alpine visual treatment added to the discovery section.
 
 final result: passed

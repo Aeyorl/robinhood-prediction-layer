@@ -18,7 +18,7 @@ export default async function HomePage() {
       <section className="live-market-section" aria-labelledby="live-markets-title">
         <div className="live-heading">
           <h2 id="live-markets-title">
-            Discovery markets{" "}
+            Explore the atlas{" "}
             <span>
               <i />
               {markets.length} previews
@@ -28,11 +28,21 @@ export default async function HomePage() {
             View all markets <b aria-hidden="true">→</b>
           </Link>
         </div>
+        <nav className="home-market-categories" aria-label="Market categories">
+          <Link href="/markets" className="active">
+            Stocks
+          </Link>
+          <Link href="/markets?category=MEMECOINS">Memecoins</Link>
+          <Link href="/markets?q=earnings">Earnings</Link>
+          <Link href="/markets?q=price">Price targets</Link>
+        </nav>
         {cards.length ? (
-          <div className="light-market-grid">
-            {cards.map((market) => (
-              <LightSampleMarketCard key={market.slug} market={market} />
-            ))}
+          <div className="atlas-market-stage">
+            <div className="light-market-grid">
+              {cards.map((market) => (
+                <LightSampleMarketCard key={market.slug} market={market} />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="light-empty-market">Market previews are temporarily unavailable.</div>

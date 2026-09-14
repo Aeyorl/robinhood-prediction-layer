@@ -1904,6 +1904,389 @@ a {
   }
 }
 
+/* Poku Market Atlas landing page */
+.atlas-hero {
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: minmax(440px, 0.86fr) minmax(600px, 1.14fr);
+  align-items: stretch;
+  border-bottom: 1px solid #d3d0c9;
+}
+.atlas-copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 28px 24px 20px;
+}
+.atlas-eyebrow {
+  font:
+    750 10px/1 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+.atlas-copy h1 {
+  max-width: 670px;
+  margin-top: 18px;
+  color: #070707;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(64px, 5.7vw, 96px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+  text-transform: uppercase;
+}
+.atlas-copy > p {
+  max-width: 520px;
+  margin-top: 18px;
+  color: #5e5a55;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.atlas-status {
+  display: grid;
+  grid-template-columns: 0.95fr 1.22fr 1.05fr;
+  margin-top: auto;
+  padding-top: 28px;
+}
+.atlas-status > p {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 14px;
+}
+.atlas-status > p + p {
+  padding-left: 16px;
+  border-left: 1px solid #d2cfc8;
+}
+.atlas-status i {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #79bd14;
+  box-shadow: 0 0 0 5px rgb(121 189 20 / 0.08);
+}
+.atlas-status > p > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.atlas-status strong,
+.atlas-status small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.atlas-status strong {
+  color: #282724;
+  font-size: 9px;
+  line-height: 1.25;
+}
+.atlas-status small {
+  color: #77726c;
+  font-size: 8px;
+  line-height: 1.25;
+}
+.atlas-status-index {
+  flex: 0 0 auto;
+  color: #4b63ff;
+  font:
+    750 10px ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+}
+.market-atlas {
+  position: relative;
+  min-width: 0;
+  min-height: 520px;
+  overflow: hidden;
+  contain: layout paint;
+}
+.market-atlas-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.atlas-share {
+  position: absolute;
+  z-index: 2;
+  top: 46%;
+  display: grid;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.atlas-share span {
+  font:
+    800 10px ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+}
+.atlas-share strong {
+  font:
+    500 clamp(47px, 4.2vw, 70px)/0.95 Impact,
+    Haettenschweiler,
+    "Arial Narrow Bold",
+    sans-serif;
+}
+.atlas-share small {
+  margin-top: 8px;
+  color: #5e5a55;
+  font-size: 10px;
+}
+.atlas-share-yes {
+  left: 4%;
+  color: #4b63ff;
+}
+.atlas-share-no {
+  right: 3.5%;
+  color: #88ab16;
+  text-align: right;
+}
+.atlas-node {
+  position: absolute;
+  z-index: 4;
+  width: 64px;
+  min-height: 72px;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  color: #1d1c1a;
+  text-align: center;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.atlas-node > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(42 42 42 / 0.18);
+  border-radius: 50%;
+  background: rgb(250 249 246 / 0.88);
+  box-shadow:
+    0 10px 25px rgb(29 28 25 / 0.08),
+    inset 0 0 0 6px rgb(255 255 255 / 0.36);
+  font:
+    800 10px ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+}
+.atlas-node > strong {
+  font:
+    750 9px ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+}
+.atlas-node-blue > span {
+  border-color: rgb(75 99 255 / 0.45);
+  color: #314be0;
+}
+.atlas-node-lime > span {
+  border-color: rgb(141 181 0 / 0.4);
+  color: #6e9000;
+}
+.atlas-node:hover,
+.atlas-node:focus-visible,
+.atlas-node.selected {
+  transform: translate(-50%, -50%) scale(1.09);
+}
+.atlas-node.selected > span {
+  border-color: #4b63ff;
+  background: #eef0ff;
+  box-shadow:
+    0 0 0 8px rgb(75 99 255 / 0.1),
+    0 0 34px rgb(75 99 255 / 0.25),
+    inset 0 0 0 6px rgb(255 255 255 / 0.4);
+}
+.atlas-side-copy {
+  position: absolute;
+  right: 1.5%;
+  bottom: 7%;
+  color: #5f5b55;
+  font:
+    650 8px/1.55 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.home-market-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.home-market-categories a {
+  min-height: 31px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border: 1px solid #d4d1ca;
+  border-radius: 999px;
+  color: #282623;
+  background: rgb(255 255 255 / 0.28);
+  font-size: 10px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.home-market-categories a:hover {
+  transform: translateY(-1px);
+  border-color: #111;
+}
+.home-market-categories a.active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+.atlas-market-stage {
+  position: relative;
+  padding: 0 0 25px;
+}
+.atlas-market-stage::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 20% -50px -95px;
+  background: url("/ui/poku-atlas-alpine.png") center bottom / cover no-repeat;
+  opacity: 0.72;
+  pointer-events: none;
+}
+.atlas-market-stage .light-market-grid {
+  position: relative;
+  z-index: 1;
+}
+.atlas-market-stage .light-market-card {
+  min-height: 275px;
+  background: rgb(250 249 246 / 0.76);
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 1180px) {
+  .atlas-hero {
+    grid-template-columns: minmax(390px, 0.88fr) minmax(520px, 1.12fr);
+  }
+  .atlas-copy h1 {
+    font-size: clamp(58px, 6.1vw, 78px);
+  }
+  .atlas-status {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+  .atlas-status > p + p {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 950px) {
+  .atlas-hero {
+    grid-template-columns: 1fr;
+  }
+  .atlas-copy {
+    min-height: 480px;
+    padding: 52px 8px 28px;
+  }
+  .atlas-copy h1 {
+    max-width: 760px;
+    font-size: clamp(65px, 10vw, 92px);
+  }
+  .atlas-status {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin-top: 36px;
+  }
+  .atlas-status > p + p {
+    padding-left: 13px;
+    border-left: 1px solid #d2cfc8;
+  }
+  .market-atlas {
+    min-height: 540px;
+  }
+}
+
+@media (max-width: 680px) {
+  .light-home {
+    padding-inline: 18px;
+  }
+  .atlas-copy {
+    min-height: auto;
+    padding-top: 40px;
+  }
+  .atlas-copy h1 {
+    font-size: clamp(52px, 17vw, 76px);
+  }
+  .atlas-copy > p br {
+    display: none;
+  }
+  .atlas-status {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+  .atlas-status > p + p {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .market-atlas {
+    min-height: 440px;
+    margin-inline: -18px;
+  }
+  .atlas-share {
+    top: 49%;
+  }
+  .atlas-share strong {
+    font-size: 42px;
+  }
+  .atlas-share-yes {
+    left: 2%;
+  }
+  .atlas-share-no {
+    right: 2%;
+  }
+  .atlas-node {
+    width: 54px;
+  }
+  .atlas-node > span {
+    width: 40px;
+    height: 40px;
+  }
+  .atlas-side-copy {
+    display: none;
+  }
+  .live-market-section {
+    padding-top: 24px;
+  }
+  .home-market-categories {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 3px;
+  }
+  .home-market-categories a {
+    flex: 0 0 auto;
+  }
+  .atlas-market-stage::before {
+    inset-inline: -18px;
+  }
+}
+
 /* Selected section redesigns */
 .section-kicker {
   display: inline-flex;
