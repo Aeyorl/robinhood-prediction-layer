@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import { stockSampleMarkets, type SampleMarket } from "@/lib/sample-markets";
+import type { SampleMarket } from "@/lib/sample-markets";
 
 const ROBINHOOD_CHAIN_ID = "robinhood";
 const MIN_MARKET_CAP_USD = 30_000_000;
@@ -120,7 +120,7 @@ async function refresh(): Promise<PublicMarkets> {
     );
     if (memes.length === 0) {
       return {
-        markets: stockSampleMarkets,
+        markets: [],
         memeDiscovery: {
           status: "unavailable",
           message: fulfilledResults.length
@@ -129,10 +129,10 @@ async function refresh(): Promise<PublicMarkets> {
         },
       };
     }
-    return { markets: [...stockSampleMarkets, ...memes], memeDiscovery: { status: "live" } };
+    return { markets: memes, memeDiscovery: { status: "live" } };
   } catch {
     return {
-      markets: stockSampleMarkets,
+      markets: [],
       memeDiscovery: {
         status: "unavailable",
         message:

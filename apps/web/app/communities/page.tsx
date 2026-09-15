@@ -1,6 +1,5 @@
 import { CommunitySignalMap } from "@/components/community-signal-map";
 import { getCommunities } from "@/lib/analytics-api";
-import { demoCommunityWindows } from "@/lib/demo-analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -14,13 +13,9 @@ export default async function CommunitiesPage() {
   const thirtyDay = thirtyDayResult.status === "fulfilled" ? thirtyDayResult.value : null;
   const allTime = allTimeResult.status === "fulfilled" ? allTimeResult.value : null;
   const communitiesByWindow = {
-    "7 days": sevenDay?.communities.length ? sevenDay.communities : demoCommunityWindows["7 days"],
-    "30 days": thirtyDay?.communities.length
-      ? thirtyDay.communities
-      : demoCommunityWindows["30 days"],
-    "All time": allTime?.communities.length
-      ? allTime.communities
-      : demoCommunityWindows["All time"],
+    "7 days": sevenDay?.communities ?? [],
+    "30 days": thirtyDay?.communities.length ? thirtyDay.communities : [],
+    "All time": allTime?.communities.length ? allTime.communities : [],
   };
   const isDemo = !sevenDay?.communities.length;
   return (

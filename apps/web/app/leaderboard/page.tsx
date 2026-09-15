@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { LeaderboardBoard } from "@/components/analytics";
 import { getLeaderboard } from "@/lib/analytics-api";
-import { demoLeaderboard } from "@/lib/demo-analytics";
 
 export const dynamic = "force-dynamic";
 const metrics = ["pnl", "roi", "hit_rate", "volume"] as const;
@@ -58,10 +57,12 @@ export default async function LeaderboardPage({
       </div>
       {!data || data.entries.length === 0 ? (
         <div className="demo-banner">
-          Demonstration rankings · no live wallet performance is shown
+          {data
+            ? "No resolved wallet activity yet."
+            : "Leaderboard data is temporarily unavailable."}
         </div>
       ) : null}
-      <LeaderboardBoard entries={data?.entries.length ? data.entries : demoLeaderboard} />
+      <LeaderboardBoard entries={data?.entries ?? []} />
       {(metric === "roi" || metric === "hit_rate") && (
         <p className="leaderboard-method-note">
           Minimum {data?.minimumResolvedMarkets ?? 3} resolved markets required for this ranking.

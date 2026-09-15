@@ -45,34 +45,12 @@ export default async function HomePage() {
             </div>
           </div>
         ) : (
-          <div className="light-empty-market">Market previews are temporarily unavailable.</div>
+          <div className="light-empty-market">Verified market data is not available yet.</div>
         )}
       </section>
 
-      {cards.length ? (
-        <div className="activity-tape" aria-label="Sample market signals">
-          <span className="tape-live">
-            Sample signals <i />
-          </span>
-          {cards.concat(cards.slice(0, 1)).map((market, index) => (
-            <Link key={`${market.slug}-${index}`} href={`/market/${market.slug}`}>
-              <b>{market.symbol}</b>
-              <span>{market.status.replace("_", " ")}</span>
-              <span className="yes-copy">▲ YES {market.yesShare}%</span>
-              <span className="no-copy">○ NO {market.noShare}%</span>
-            </Link>
-          ))}
-          <Link href="/markets" className="tape-view">
-            View all →
-          </Link>
-        </div>
-      ) : null}
-
       {memeDiscovery.status === "unavailable" ? (
-        <div className="light-empty-market homepage-feed-note">
-          Robinhood Chain memecoin discovery is temporarily unavailable. Stock previews remain
-          visible.
-        </div>
+        <div className="light-empty-market homepage-feed-note">{memeDiscovery.message}</div>
       ) : null}
 
       <section className="trust-row" aria-label="Product foundations">
