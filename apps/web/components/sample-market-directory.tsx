@@ -9,7 +9,6 @@ import {
   type SampleMarket,
   type SampleMarketStatus,
 } from "@/lib/sample-markets";
-import { SignalOrbShader } from "@/components/signal-orb-shader";
 type MemeDiscoveryState = { status: "live" } | { status: "unavailable"; message: string };
 
 function AnimatedSignalOrbit({ market }: { market: SampleMarket }) {
@@ -69,7 +68,6 @@ function AnimatedSignalOrbit({ market }: { market: SampleMarket }) {
     >
       <div className="featured-signal-visual" aria-hidden="true">
         <div className="featured-signal-image" />
-        <SignalOrbShader yesShare={market.yesShare} />
         <div className="featured-signal-sweep" />
       </div>
       <div className="featured-sample-half featured-sample-yes">
