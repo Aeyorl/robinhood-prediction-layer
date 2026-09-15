@@ -60,7 +60,7 @@ function numberOrZero(value: number | null | undefined) {
 }
 
 function qualifies(pair: Pair, candidate: (typeof candidates)[number]) {
-  const marketCap = Math.max(numberOrZero(pair.marketCap), numberOrZero(pair.fdv));
+  const marketCap = numberOrZero(pair.marketCap);
   return (
     pair.chainId === ROBINHOOD_CHAIN_ID &&
     pair.baseToken.address.toLowerCase() === candidate.address.toLowerCase() &&
@@ -70,7 +70,7 @@ function qualifies(pair: Pair, candidate: (typeof candidates)[number]) {
 }
 
 function toMarket(candidate: (typeof candidates)[number], pair: Pair): SampleMarket {
-  const marketCap = Math.max(numberOrZero(pair.marketCap), numberOrZero(pair.fdv));
+  const marketCap = numberOrZero(pair.marketCap);
   return {
     slug: `${candidate.symbol.toLowerCase()}-above-${candidate.strike.replace(/[^0-9]/g, "")}-oct-31`,
     category: "MEMECOINS",

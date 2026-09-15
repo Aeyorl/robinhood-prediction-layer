@@ -31,4 +31,4 @@ The market address, salts, operation IDs, and calldata are intentionally omitted
 
 ## Launch gates
 
-Data Streams discovery succeeded previously, but report retrieval returned `401 feeds not authorized`; entitlement must be fixed or the reviewed Safe closing-price evidence path must be selected. The production API/indexer, monitoring, resolution, claim, cancellation and refund paths must pass a capped canary. Public trading stays disabled until those checks pass. This document is not legal approval, an audit, or authorization to accept user funds.
+Data Streams discovery succeeded previously, but report retrieval returned `401 feeds not authorized`; entitlement must be fixed or the reviewed Safe closing-price evidence path must be selected. DexScreener is used for Robinhood-chain memecoin discovery only; it is not the settlement oracle for this stock market. The production API/indexer, monitoring, resolution, claim, cancellation and refund paths must pass a capped canary. Public trading stays disabled until those checks pass. This document is not legal approval, an audit, or authorization to accept user funds.

@@ -91,7 +91,7 @@ export function SampleMarketDirectory({
   markets: readonly SampleMarket[];
   memeDiscovery: MemeDiscoveryState;
 }) {
-  const [category, setCategory] = useState<"ALL" | MarketCategory>("ALL");
+  const [category, setCategory] = useState<"ALL" | MarketCategory>("MEMECOINS");
   const [status, setStatus] = useState<"ALL" | SampleMarketStatus>("ALL");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"VOLUME" | "YES" | "CLOSE">("VOLUME");
