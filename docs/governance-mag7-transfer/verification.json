@@ -1,0 +1,25 @@
+{
+  "blockNumber": "63539586",
+  "checkedAt": "2026-09-15T09:06:52.523Z",
+  "safe": "0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39",
+  "threshold": "2",
+  "current": "0x96aC6E8964bdDA7604520B868d60B49FfA9e6ad4",
+  "destination": "0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8",
+  "delaySeconds": 172800,
+  "contracts": {
+    "OracleRegistry": "0x0628a09AFF40FE8590026e498dA7a216C83C6c94",
+    "ChainlinkPriceResolver": "0x49f460112E9D2b378D7AC9dEa9Bb368f2Dc5af9a",
+    "DataStreamsRwaResolver": "0x516bbeE20Ee4e0Fe440Ea6b9531581e6C0f558f8",
+    "SafeClosingPriceResolver": "0x5f25Ad22C84BfCEb146468cC74c73b5C9Bb3BAa5",
+    "FeeVault": "0x72792B5916dCbf5f0Ae8DB67B748fb5f5c37b89f",
+    "MarketFactory": "0x62A301F2A0356a16fC1BB02991CfB9cFDb00152C",
+    "PredictionEntryRouter": "0x02c12517564d727CdD2f16736F7486EF31352195"
+  },
+  "operationId": "0x103fa5b7eb208b4768e80ad2d1bd39d2c1b1f11c5f5b5ea39fb7a801ebc3903f",
+  "salt": "0x96f5172631c237217efa048d9bf83e7fddb367d638a71b4b150cd86a5e865e7a",
+  "timestamp": "0",
+  "ownershipCallsSimulated": true,
+  "scheduleSimulated": true,
+  "executionSimulated": false,
+  "broadcast": false
+}
