@@ -26,11 +26,11 @@ export default async function CommunitiesPage() {
   return (
     <div className="light-route community-route">
       <header className="community-page-heading">
-        <span className="section-kicker">Verified funding attribution · 7 days</span>
+        <span className="section-kicker">Poku atlas / Communities</span>
         <h1 className="block-heading">
-          Community
+          Follow the
           <br />
-          signal map
+          collective signal.
         </h1>
         <p>Activity grouped by the token participants used to fund a position.</p>
       </header>

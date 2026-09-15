@@ -23,8 +23,12 @@ export default async function LeaderboardPage({
     <div className="light-route leaderboard-route">
       <div className="leaderboard-heading">
         <header>
-          <span className="section-kicker">Verified source-funded entries</span>
-          <h1 className="block-heading">Top predictors</h1>
+          <span className="section-kicker">Poku atlas / Leaderboard</span>
+          <h1 className="block-heading">
+            A record of
+            <br />
+            perspective.
+          </h1>
           <p>Reproducible resolved-market performance.</p>
         </header>
         <div className="leaderboard-controls">

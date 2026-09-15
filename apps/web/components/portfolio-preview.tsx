@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 const rows = [
   ["NVDA above $200", "▲ YES", "OPEN", "100.00", "63%", "Sep 30"],
@@ -7,6 +10,7 @@ const rows = [
 ] as const;
 
 export function PortfolioPreview() {
+  const [tab, setTab] = useState("Sample positions");
   return (
     <div className="portfolio-ledger demo-surface">
       <div className="demo-banner">Demonstration portfolio · no wallet data or live positions</div>
@@ -51,43 +55,63 @@ export function PortfolioPreview() {
         </div>
       </section>
       <div className="portfolio-tabs">
-        <button className="active">Sample positions</button>
-        <button>Claimable</button>
-        <button>History</button>
+        {["Sample positions", "Claimable", "History"].map((item) => (
+          <button
+            key={item}
+            type="button"
+            aria-pressed={tab === item}
+            className={tab === item ? "active" : ""}
+            onClick={() => setTab(item)}
+          >
+            {item}
+          </button>
+        ))}
         <span>Trading not open</span>
       </div>
       <div className="portfolio-position-list">
-        {rows.map(([market, side, status, stake, share, close]) => (
-          <div className="portfolio-position-row" key={market}>
-            <div className="position-market-cell">
-              <span className={`position-side-mark ${side.includes("NO") ? "no" : "yes"}`}>
-                {side}
-              </span>
-              <div>
-                <Link href="/markets">{market}</Link>
-                <small>Sample market</small>
+        {tab !== "Sample positions" ? (
+          <div className="atlas-ledger-empty">
+            <h2>{tab === "Claimable" ? "No claims available" : "Your history starts here"}</h2>
+            <p>
+              {tab === "Claimable"
+                ? "Preview amounts above are illustrative. There are no live claims to collect."
+                : "Completed positions will appear here after trading opens."}
+            </p>
+            <Link href="/markets">Explore markets →</Link>
+          </div>
+        ) : (
+          rows.map(([market, side, status, stake, share, close]) => (
+            <div className="portfolio-position-row" key={market}>
+              <div className="position-market-cell">
+                <span className={`position-side-mark ${side.includes("NO") ? "no" : "yes"}`}>
+                  {side}
+                </span>
+                <div>
+                  <Link href="/markets">{market}</Link>
+                  <small>Sample market</small>
+                </div>
+              </div>
+              <div className="position-data-cell">
+                <small>Position</small>
+                <strong>{side}</strong>
+                <span>{status}</span>
+              </div>
+              <div className="position-data-cell">
+                <small>Stake</small>
+                <strong>{stake}</strong>
+                <span>USDG</span>
+              </div>
+              <div className="position-data-cell">
+                <small>Capital share</small>
+                <strong>{share}</strong>
+                <span>illustrative</span>
+              </div>
+              <div className="position-action-cell">
+                <span>Closes {close}</span>
               </div>
             </div>
-            <div className="position-data-cell">
-              <small>Position</small>
-              <strong>{side}</strong>
-              <span>{status}</span>
-            </div>
-            <div className="position-data-cell">
-              <small>Stake</small>
-              <strong>{stake}</strong>
-              <span>USDG</span>
-            </div>
-            <div className="position-data-cell">
-              <small>Capital share</small>
-              <strong>{share}</strong>
-              <span>illustrative</span>
-            </div>
-            <div className="position-action-cell">
-              <span>Closes {close}</span>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

@@ -6,8 +6,12 @@ export default async function PortfolioPage() {
   return (
     <div className="light-route portfolio-route">
       <header className="portfolio-heading">
-        <span className="section-kicker">Portfolio preview</span>
-        <h1 className="block-heading">Your portfolio</h1>
+        <span className="section-kicker">Poku atlas / Portfolio preview</span>
+        <h1 className="block-heading">
+          Your positions.
+          <br />
+          Both perspectives.
+        </h1>
         <p>Preview how positions, exposure, claim state, and history will appear after launch.</p>
       </header>
       <PortfolioPreview />

@@ -1904,6 +1904,158 @@ a {
   }
 }
 
+/* Shared Market Atlas workspace: discovery, community, rankings and positions. */
+.market-signals-route,
+.community-route,
+.leaderboard-route,
+.portfolio-route {
+  background: #f5f3ee url("/ui/poku-atlas-alpine.png") center bottom / 100% auto no-repeat;
+  padding-bottom: 130px;
+}
+.market-signals-heading,
+.community-page-heading,
+.leaderboard-heading,
+.portfolio-heading {
+  padding-bottom: 32px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #d2cfc8;
+}
+.market-signals-heading .block-heading,
+.community-page-heading .block-heading,
+.leaderboard-heading .block-heading,
+.portfolio-heading .block-heading {
+  margin-top: 18px;
+  font-size: clamp(48px, 5.6vw, 86px);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+}
+.section-kicker {
+  letter-spacing: 0.18em;
+}
+.market-signal-toolbar,
+.community-toolbar,
+.leaderboard-controls {
+  gap: 8px;
+}
+.market-signal-toolbar input,
+.market-signal-toolbar select,
+.community-toolbar input {
+  min-height: 44px;
+  border-radius: 10px;
+  background: #faf9f6;
+}
+.featured-sample-signal {
+  overflow: hidden;
+  border-radius: 20px;
+  background: #faf9f6;
+}
+.signal-market-grid .light-market-card {
+  background: rgb(250 249 246 / 0.93);
+  border-radius: 16px;
+  padding: 24px;
+}
+.community-map-layout {
+  gap: 20px;
+  border: 0;
+  background: transparent;
+}
+.community-map {
+  border: 1px solid #d2cfc8;
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgb(250 249 246 / 0.7);
+}
+.community-detail {
+  border: 1px solid #d2cfc8;
+  border-radius: 24px;
+  background: #faf9f6;
+  padding: 28px;
+}
+.community-toolbar {
+  margin-bottom: 18px;
+}
+.community-source-note,
+.leaderboard-footer-row {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgb(250 249 246 / 0.9);
+}
+.leaderboard-podium {
+  border-radius: 24px 24px 0 0;
+  overflow: hidden;
+}
+.leader-card {
+  border-radius: 14px;
+  background: rgb(250 249 246 / 0.96);
+  box-shadow: 0 12px 28px rgb(30 30 30 / 0.08);
+}
+.leaderboard-controls a {
+  border-radius: 8px;
+}
+.portfolio-summary {
+  gap: 10px;
+  border: 0;
+  background: transparent;
+}
+.portfolio-wallet-state,
+.portfolio-summary dl {
+  background: #faf9f6;
+  border: 1px solid #d2cfc8;
+  border-radius: 16px;
+}
+.portfolio-summary dd {
+  font-size: clamp(24px, 2.6vw, 38px);
+}
+.portfolio-exposure {
+  border-radius: 16px;
+  padding: 26px;
+  background: #faf9f6;
+  margin-top: 20px;
+}
+.portfolio-position-list {
+  background: rgb(250 249 246 / 0.96);
+}
+.portfolio-position-row {
+  padding: 22px;
+}
+.position-market-cell > div {
+  display: grid;
+  gap: 6px;
+}
+.atlas-ledger-empty {
+  padding: 64px 24px;
+  text-align: center;
+}
+.atlas-ledger-empty h2 {
+  font-size: 25px;
+  font-weight: 650;
+}
+.atlas-ledger-empty p {
+  margin: 12px auto 22px;
+  max-width: 440px;
+  color: #625e58;
+}
+.atlas-ledger-empty a {
+  color: #314be0;
+}
+@media (max-width: 950px) {
+  .community-map-layout {
+    gap: 14px;
+  }
+  .market-signals-heading .block-heading,
+  .community-page-heading .block-heading,
+  .leaderboard-heading .block-heading,
+  .portfolio-heading .block-heading {
+    font-size: clamp(42px, 9vw, 64px);
+  }
+  .portfolio-summary {
+    grid-template-columns: 1fr;
+  }
+  .community-detail {
+    padding: 22px;
+  }
+}
+
 /* Poku Market Atlas landing page */
 .atlas-hero {
   min-height: 520px;
@@ -3578,6 +3730,13 @@ a {
   }
   .market-signal-toolbar {
     grid-template-columns: 1fr;
+  }
+  .featured-sample-signal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .featured-sample-orbit {
+    min-width: 0;
+    min-height: 300px;
   }
   .featured-signal {
     grid-template-columns: 1fr;

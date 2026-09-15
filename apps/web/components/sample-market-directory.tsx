@@ -121,7 +121,12 @@ export function SampleMarketDirectory({
     <div className="market-signals-directory">
       <header className="market-signals-heading">
         <div>
-          <h1 className="block-heading">Market signals</h1>
+          <span className="section-kicker">Poku atlas / Markets</span>
+          <h1 className="block-heading">
+            Explore every
+            <br />
+            perspective.
+          </h1>
           <p>
             <i /> {markets.length} discovery markets · demonstration capital share
           </p>

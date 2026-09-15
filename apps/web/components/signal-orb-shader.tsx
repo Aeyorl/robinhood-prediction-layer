@@ -11,7 +11,7 @@ void main() { uv = position * 0.5 + 0.5; gl_Position = vec4(position, 0.0, 1.0);
 `;
 
 const fragmentSource = `
-precision mediump float;
+precision highp float;
 uniform float uTime;
 uniform float uShare;
 uniform vec2 uResolution;
@@ -33,12 +33,12 @@ void main() {
   vec3 lime = vec3(0.70, 0.86, 0.08);
   vec3 color = side < 0.0 ? blue : lime;
 
-  float ring = smoothstep(0.008, 0.0, abs(r - (0.40 + 0.018 * sin(uTime * 1.7))));
-  float ping = smoothstep(0.018, 0.0, abs(fract(r * 5.0 - uTime * 0.16) - 0.5)) * 0.22;
+  float ring = 1.0 - smoothstep(0.0, 0.008, abs(r - (0.40 + 0.018 * sin(uTime * 1.7))));
+  float ping = (1.0 - smoothstep(0.0, 0.018, abs(fract(r * 5.0 - uTime * 0.16) - 0.5))) * 0.22;
   vec2 grid = floor((p + 0.52) * 34.0);
-  float dotField = step(0.82, hash(grid + floor(uTime * 0.03))) * smoothstep(0.48, 0.05, r) * 0.16;
-  float alpha = mask * (edge * 0.78 + ring * 0.30 + ping + dotField);
-  gl_FragColor = vec4(color, alpha);
+  float dotField = step(0.82, hash(grid + floor(uTime * 0.03))) * (1.0 - smoothstep(0.05, 0.48, r)) * 0.16;
+  float alpha = clamp(mask * (edge * 0.78 + ring * 0.30 + ping + dotField), 0.0, 1.0);
+  gl_FragColor = vec4(color * alpha, alpha);
 }
 `;
 

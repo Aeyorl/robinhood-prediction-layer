@@ -38,3 +38,11 @@ No actionable P0, P1, or P2 visual findings remain. The source is a static conce
 - [x] Market categories and alpine visual treatment added to the discovery section.
 
 final result: passed
+
+## Atlas category pages - September 15, 2026
+
+Extended the selected homepage palette, alpine backdrop, condensed headings, and panel treatment to Markets, Communities, Leaderboard, and Portfolio. Existing constellation and podium renderers are retained; this is a coordinated styling update, not a reproduction of new per-page artwork.
+
+Portfolio tabs now switch between sample positions and honest claim/history empty states. Corrected premultiplied shader output and reversed smoothstep ranges in the market orb. The featured market stacks on mobile to prevent squeezing its orb.
+
+Verified desktop screenshots at 1440px and mobile screenshots at 390px for all four routes, stored in `design-qa/*-atlas*.png`. Four browser tests passed: market search, community time-window selection, leaderboard metric navigation, portfolio tabs, no horizontal overflow, and no page errors. Web lint, typecheck, and production build passed. Reduced-motion behavior was retained but was not separately retested in this category-page pass. Trading remains disabled and demonstration labels remain visible.
