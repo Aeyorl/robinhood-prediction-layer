@@ -34,10 +34,6 @@ export default function TermsPage() {
           ))}
         </div>
       </Section>
-      <Card className="border-amber-400/30 bg-amber-400/5 text-sm leading-6 text-amber-100">
-        Mainnet remains disabled until qualified counsel approves the complete Terms, Privacy
-        Notice, Risk Disclosure, eligibility policy, and consent records.
-      </Card>
     </div>
   );
 }
