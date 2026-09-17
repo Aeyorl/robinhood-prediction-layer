@@ -1,11 +1,12 @@
 "use client";
 
-import { branding } from "@pl/config";
 import { useState } from "react";
 
 export function ContractAddressBar() {
   const [copied, setCopied] = useState(false);
-  const address = branding.publicContractAddress;
+  const address = process.env.NEXT_PUBLIC_POKU_CONTRACT_ADDRESS;
+
+  if (!address) return null;
 
   async function copyAddress() {
     try {
