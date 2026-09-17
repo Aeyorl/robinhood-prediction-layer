@@ -1,22 +1,22 @@
-# First capped market package — NVDA closing price (refreshed proposal)
+# First market package — NVDA closing price (refreshed proposal)
 
 Status: **draft for review; no Safe transaction has been signed, scheduled or broadcast.** This replaces the expired September 14 proposal. The proposal deliberately uses a future window so governance can complete before opening.
 
 ## Proposed terms
 
-| Field         | Proposed value                                                                                              |
-| ------------- | ----------------------------------------------------------------------------------------------------------- |
-| Question      | Will Nvidia (NVDA) close above **180.00 USD** at the US regular-market close on Monday, September 21, 2026? |
-| Chain / asset | Robinhood Chain (4663); NVDA Stock Token `0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC`                       |
-| Comparator    | `PRICE_ABOVE_AT_TIME`; equality cancels and refunds                                                         |
-| Strike        | `180000000`, `strikeDecimals=6`                                                                             |
-| Open          | `2026-09-21T08:00:00Z`                                                                                      |
-| Lock          | `2026-09-21T19:55:00Z`                                                                                      |
-| Resolution    | `2026-09-21T20:00:00Z`                                                                                      |
-| Grace period  | 6 hours                                                                                                     |
-| Resolver      | SafeClosingPriceResolver `0x5f25Ad22C84BfCEb146468cC74c73b5C9Bb3BAa5`                                       |
-| Collateral    | USDG `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168`                                                           |
-| Fee / cap     | 1% profit fee; 1–10 USDG per user per side; 20 USDG total canary cap                                        |
+| Field              | Proposed value                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Question           | Will Nvidia (NVDA) close above **180.00 USD** at the US regular-market close on Monday, September 21, 2026? |
+| Chain / asset      | Robinhood Chain (4663); NVDA Stock Token `0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC`                       |
+| Comparator         | `PRICE_ABOVE_AT_TIME`; equality cancels and refunds                                                         |
+| Strike             | `180000000`, `strikeDecimals=6`                                                                             |
+| Open               | `2026-09-21T08:00:00Z`                                                                                      |
+| Lock               | `2026-09-21T19:55:00Z`                                                                                      |
+| Resolution         | `2026-09-21T20:00:00Z`                                                                                      |
+| Grace period       | 6 hours                                                                                                     |
+| Resolver           | SafeClosingPriceResolver `0x5f25Ad22C84BfCEb146468cC74c73b5C9Bb3BAa5`                                       |
+| Collateral         | USDG `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168`                                                           |
+| Fee / entry limits | 1% profit fee; 1–10 USDG per user per side; no total pool cap                                               |
 
 The strike and schedule are still **proposed**. Before signing, obtain a current NVDA reference price and corporate-action check, confirm the regular-hours Data Streams feed entitlement, and decide whether 180.00 remains an appropriate binary threshold. If any term changes, regenerate every encoded field and the operation ID; never reuse the expired calldata.
 
