@@ -5,6 +5,7 @@ import Link from "next/link";
 import { branding } from "@pl/config";
 
 import { SiteHeader } from "@/components/site-header";
+import { ContractAddressBar } from "@/components/contract-address-bar";
 import { Providers } from "./providers";
 
 import "./globals.css";
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="mx-auto w-full max-w-[1600px] px-4 pb-32 pt-5 sm:px-7 md:pb-24 md:pt-7">
             {children}
           </main>
+          <ContractAddressBar />
           <footer className="site-footer">
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
               <p>

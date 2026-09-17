@@ -11,6 +11,8 @@ export const branding = {
   appName: "Poku",
   /** Robinhood Chain must always be spelled in full in external copy. */
   chainName: "Robinhood Chain",
+  /** Public Poku contract address shown in the site shell. */
+  publicContractAddress: "0xc5A55329Da819bd7b1F2190b978D6546C0851b902",
 } as const;
 
 /** Chain IDs this product supports: 4663 mainnet, 46630 testnet. */

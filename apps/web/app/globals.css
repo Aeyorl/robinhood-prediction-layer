@@ -1556,6 +1556,46 @@ a {
   color: #6e6b66;
   font-size: 11px;
 }
+.contract-address-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(1600px, calc(100% - 56px));
+  margin: 0 auto;
+  padding: 14px 0;
+  color: #6e6b66;
+  font-size: 11px;
+}
+.contract-address-label {
+  color: #5367e8;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.contract-address-bar code {
+  overflow: hidden;
+  color: #1e1d1b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.contract-address-bar button,
+.contract-address-bar a {
+  color: #5367e8;
+  font-weight: 700;
+}
+.contract-address-bar button:hover,
+.contract-address-bar a:hover {
+  color: #111;
+}
+@media (max-width: 640px) {
+  .contract-address-bar {
+    width: calc(100% - 32px);
+    gap: 9px;
+  }
+  .contract-address-bar code {
+    max-width: 50vw;
+  }
+}
 .site-footer p:first-child {
   display: flex;
   align-items: center;
