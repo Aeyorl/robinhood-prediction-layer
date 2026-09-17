@@ -20,6 +20,11 @@
   "timestamp": "0",
   "ownershipCallsSimulated": true,
   "scheduleSimulated": true,
-  "executionSimulated": false,
-  "broadcast": false
+  "executionSimulated": true,
+  "broadcast": true,
+  "executionTransactionHash": "0x59d1918af9b912931dfc7560ae0b7d52ba09ba7114c52deafbdcb44969e55c06",
+  "executionBlockNumber": "65381577",
+  "executionStatus": "success",
+  "operationDone": true,
+  "verifiedOwner": "0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8"
 }
