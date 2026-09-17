@@ -4,9 +4,10 @@ import { useState } from "react";
 
 export function ContractAddressBar() {
   const [copied, setCopied] = useState(false);
-  const address = process.env.NEXT_PUBLIC_POKU_CONTRACT_ADDRESS;
+  const configuredAddress = process.env.NEXT_PUBLIC_POKU_CONTRACT_ADDRESS;
 
-  if (!address) return null;
+  if (!configuredAddress) return null;
+  const address = configuredAddress;
 
   async function copyAddress() {
     try {
