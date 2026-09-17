@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-09-17T14:02:41.475Z",
+  "blockNumber": "65423390",
+  "chainId": 4663,
+  "safe": "0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39",
+  "timelock": "0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8",
+  "resolver": "0x5f25Ad22C84BfCEb146468cC74c73b5C9Bb3BAa5",
+  "factory": "0x62A301F2A0356a16fC1BB02991CfB9cFDb00152C",
+  "feeVault": "0x72792B5916dCbf5f0Ae8DB67B748fb5f5c37b89f",
+  "collateral": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+  "pons": "0x39dBED3a2bd333467115dE45665cC57F813C4571",
+  "assetKey": "0xea23bb189b0fcbc2e068ddd880c53d0e91318d627456daabdc97fbf032d4587c",
+  "operationId": "0xec003fc0e2277511469503ea0be4acc203fdb75f460137fa445ec18cc583ba45",
+  "salt": "0x47983f635f62d3f7d7194dfebe42bba2fab870d6859eb3fe3a7e68b7735889cc",
+  "currentTimestamp": "0",
+  "delaySeconds": "172800",
+  "terms": {
+    "question": "Will PONS be above $0.65 at 20:00 UTC on September 23, 2026?",
+    "strike": "650000",
+    "strikeDecimals": 6,
+    "openTime": "1789862400",
+    "lockTime": "1790193600",
+    "resolutionTime": "1790193600",
+    "gracePeriod": "345600",
+    "feeBps": 100,
+    "minEntry": "1000000",
+    "maxEntry": "0",
+    "metadataUri": "https://www.usepoku.fun/market/pons-above-065-sep-23-2026"
+  },
+  "resolverConfig": {
+    "decimals": 6,
+    "challengePeriod": "3600",
+    "maxObservationDelay": "259200",
+    "paused": false
+  },
+  "scheduleSimulated": true,
+  "broadcast": false
+}

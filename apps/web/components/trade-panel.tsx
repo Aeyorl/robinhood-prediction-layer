@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { binaryPoolMarketAbi, computePayout, mockErc20Abi } from "@pl/sdk";
 import { Button, Card, Spinner, StatusBadge } from "@pl/ui";
 import { formatUnits, parseUnits } from "viem";
-import { useAccount, useChainId, usePublicClient, useWriteContract } from "wagmi";
+import { useAccount, useChainId, usePublicClient, useSwitchChain, useWriteContract } from "wagmi";
 
 import { useNow } from "@/components/countdown";
 import { PayWithToken } from "@/components/pay-with-token";
@@ -41,6 +41,7 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
   const { address, isConnected } = useAccount();
   const walletChainId = useChainId();
   const publicClient = usePublicClient();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   // Inner panel only renders after hydration, so a real wall-clock fallback is safe.
   const now = useNow(1_000) ?? Date.now();
 
@@ -318,9 +319,20 @@ function TradePanelInner({ market, isLocal }: { market: MarketView; isLocal: boo
         <p className="text-sm text-slate-400">Connect an EVM wallet on Robinhood Chain to enter.</p>
       )}
       {isConnected && onWrongChain && (
-        <p className="text-sm text-amber-400">
-          Wrong network — switch to Robinhood Chain (chain id 46630) with the button above.
-        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-amber-400">
+            Wrong network — switch to Robinhood Chain (chain id {market.chainId}).
+          </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="w-full"
+            disabled={isSwitchingChain}
+            onClick={() => switchChain({ chainId: market.chainId as 4663 | 46630 })}
+          >
+            {isSwitchingChain ? "Switching…" : "Switch network"}
+          </Button>
+        </div>
       )}
       {isConnected && !onWrongChain && market.status !== "OPEN" && (
         <p className="text-sm text-amber-400">

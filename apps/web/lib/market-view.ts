@@ -15,7 +15,9 @@ export type MarketStatus = (typeof MARKET_STATUS)[number];
 export type MarketSide = (typeof MARKET_SIDE)[number];
 export type MarketComparator = "PRICE_ABOVE_AT_TIME" | "PRICE_BELOW_AT_TIME";
 
-export const COLLATERAL_DECIMALS = 18;
+/** Canonical mainnet USDG uses 6 decimals; the local/test mock uses 18. */
+export const COLLATERAL_DECIMALS =
+  Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 46630) === 4663 ? 6 : 18;
 
 export interface MarketView {
   /** Chain the market lives on (matches ACTIVE_CHAIN_ID). */
