@@ -1562,30 +1562,33 @@ a {
   gap: 14px;
   width: min(1600px, calc(100% - 56px));
   margin: 0 auto;
-  padding: 14px 0;
-  color: #6e6b66;
+  padding: 14px 16px;
+  border: 1px solid rgba(139, 157, 255, 0.28);
+  border-radius: 10px;
+  background: #0b1020;
+  color: #d7defd;
   font-size: 11px;
 }
 .contract-address-label {
-  color: #5367e8;
+  color: #aebaff;
   font-weight: 800;
   letter-spacing: 0.14em;
 }
 .contract-address-bar code {
   overflow: hidden;
-  color: #1e1d1b;
+  color: #f8faff;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .contract-address-bar button,
 .contract-address-bar a {
-  color: #5367e8;
+  color: #b7c3ff;
   font-weight: 700;
 }
 .contract-address-bar button:hover,
 .contract-address-bar a:hover {
-  color: #111;
+  color: #ffffff;
 }
 @media (max-width: 640px) {
   .contract-address-bar {
