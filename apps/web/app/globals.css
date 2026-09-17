@@ -1575,6 +1575,16 @@ a {
 .site-footer a:hover {
   color: #111;
 }
+.footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.footer-social-link svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
 .footer-disclaimer {
   margin-left: auto;
   text-align: right;
