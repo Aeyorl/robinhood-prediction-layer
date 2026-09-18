@@ -1,6 +1,6 @@
 {
-  "checkedAt": "2026-09-17T14:02:41.475Z",
-  "blockNumber": "65423390",
+  "checkedAt": "2026-09-18T09:54:36.523Z",
+  "blockNumber": "66133606",
   "chainId": 4663,
   "safe": "0x5A205159348BBe6c4A5a264B59fC8Df7A4ab6a39",
   "timelock": "0xBC8A2ac01AeEb849A15825e9FA12ebFBe83Dd8d8",
@@ -12,7 +12,7 @@
   "assetKey": "0xea23bb189b0fcbc2e068ddd880c53d0e91318d627456daabdc97fbf032d4587c",
   "operationId": "0xec003fc0e2277511469503ea0be4acc203fdb75f460137fa445ec18cc583ba45",
   "salt": "0x47983f635f62d3f7d7194dfebe42bba2fab870d6859eb3fe3a7e68b7735889cc",
-  "currentTimestamp": "0",
+  "currentTimestamp": "1789898045",
   "delaySeconds": "172800",
   "terms": {
     "question": "Will PONS be above $0.65 at 20:00 UTC on September 23, 2026?",
@@ -33,6 +33,6 @@
     "maxObservationDelay": "259200",
     "paused": false
   },
-  "scheduleSimulated": true,
+  "scheduleSimulated": false,
   "broadcast": false
 }
