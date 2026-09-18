@@ -24,24 +24,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Providers>
+          <ContractAddressBar variant="top" />
           <SiteHeader />
           <main className="mx-auto w-full max-w-[1600px] px-4 pb-32 pt-5 sm:px-7 md:pb-24 md:pt-7">
             {children}
           </main>
-          <ContractAddressBar />
+          <ContractAddressBar variant="bar" />
           <footer className="site-footer">
             <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-              <p>
-                <Image
-                  src="/icon.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="footer-mark"
-                  width={512}
-                  height={512}
-                />
-                Built on {branding.chainName}
-              </p>
+              <div className="footer-left">
+                <p>
+                  <Image
+                    src="/icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="footer-mark"
+                    width={512}
+                    height={512}
+                  />
+                  Built on {branding.chainName}
+                </p>
+                <div className="footer-ca-badge" aria-label="Contract address">
+                  <span className="footer-ca-label">CA:</span>
+                  <a
+                    href={`https://robinhoodchain.blockscout.com/address/${branding.publicContractAddress}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="footer-ca-code"
+                    title={branding.publicContractAddress}
+                  >
+                    {branding.publicContractAddress}
+                  </a>
+                </div>
+              </div>
               <nav aria-label="Legal and documentation" className="flex flex-wrap gap-4">
                 <Link href="/docs" className="hover:text-slate-300">
                   User guide

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ContractAddressBar } from "@/components/contract-address-bar";
 import { LightSampleMarketCard } from "@/components/sample-market-directory";
 import { TwoSidedHero } from "@/components/two-sided-hero";
 import { loadPublicMarkets } from "@/lib/server/dexscreener";
@@ -52,6 +53,8 @@ export default async function HomePage() {
       {memeDiscovery.status === "unavailable" ? (
         <div className="light-empty-market homepage-feed-note">{memeDiscovery.message}</div>
       ) : null}
+
+      <ContractAddressBar variant="card" />
 
       <section className="trust-row" aria-label="Product foundations">
         <div>

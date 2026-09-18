@@ -11,6 +11,8 @@ export const branding = {
   appName: "Poku",
   /** Robinhood Chain must always be spelled in full in external copy. */
   chainName: "Robinhood Chain",
+  /** Public Poku contract address shown across the site. */
+  publicContractAddress: "0x99f207cb270191ecf700c16b5c6fe116e007e0b8",
 } as const;
 
 /** Chain IDs this product supports: 4663 mainnet, 46630 testnet. */
@@ -33,7 +35,10 @@ export const webEnvSchema = z.object({
   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: z.string().optional(),
   NEXT_PUBLIC_RPC_MAINNET: z.url().optional(),
   NEXT_PUBLIC_RPC_TESTNET: z.url().optional(),
-  NEXT_PUBLIC_POKU_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+  NEXT_PUBLIC_POKU_CONTRACT_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .default("0x99f207cb270191ecf700c16b5c6fe116e007e0b8"),
 });
 export type WebEnv = z.infer<typeof webEnvSchema>;
 
