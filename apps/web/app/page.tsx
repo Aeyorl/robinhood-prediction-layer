@@ -71,15 +71,15 @@ export default async function HomePage() {
         <div>
           <span className="trust-number">03</span>
           <p>
-            <strong>Read-only discovery</strong>
-            <small>No deposits or approvals are requested.</small>
+            <strong>Decentralized routing</strong>
+            <small>Swap and enter with any wallet token.</small>
           </p>
         </div>
         <div>
           <span className="trust-number">04</span>
           <p>
-            <strong>Trading not open</strong>
-            <small>Launch checks must finish first.</small>
+            <strong>Trading open</strong>
+            <small>Live on Robinhood Chain.</small>
           </p>
         </div>
       </section>
@@ -97,8 +97,8 @@ export default async function HomePage() {
         </div>
         <div>
           <span>03</span>
-          <h2>Review the terms.</h2>
-          <p>Trading opens only after onchain deployment and final launch checks.</p>
+          <h2>Take your position.</h2>
+          <p>Enter with canonical USDG or route any token already in your wallet.</p>
         </div>
         <Link href="/docs" className="black-action">
           Read the user guide →

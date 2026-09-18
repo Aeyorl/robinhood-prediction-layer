@@ -2,12 +2,74 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { TradePanel } from "@/components/trade-panel";
-import { isLocalChainEnv } from "@/lib/chain";
-import { groupedAmount, type MarketView } from "@/lib/market-view";
+import { ACTIVE_CHAIN_ID, isLocalChainEnv } from "@/lib/chain";
+import {
+  COLLATERAL_DECIMALS,
+  groupedAmount,
+  makeMarketView,
+  type MarketView,
+} from "@/lib/market-view";
+import type { SampleMarket } from "@/lib/sample-markets";
 import { loadPublicMarkets } from "@/lib/server/dexscreener";
+import { getLocalManifest, hasLocalManifest } from "@/lib/server/manifest";
 import { loadMarketViewBySlug } from "@/lib/server/markets";
+import { chainAddresses } from "@pl/chain-config";
 
 export const dynamic = "force-dynamic";
+
+function sampleToMarketView(sample: SampleMarket): MarketView {
+  const chainId = ACTIVE_CHAIN_ID;
+  const addresses = chainAddresses[chainId];
+  const isMainnet = chainId === 4663;
+  const collateral =
+    addresses?.usdg ??
+    (isMainnet
+      ? "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
+      : "0x5FbDB2315678afecb367f032d93F642f64180aa3");
+
+  const localManifest = hasLocalManifest() ? getLocalManifest() : null;
+  const targetAddress =
+    localManifest?.markets.find((m) => m.slug === sample.slug)?.address ??
+    localManifest?.markets[0]?.address ??
+    addresses?.predictionEntryRouter ??
+    "0x62A301F2A0356a16fC1BB02991CfB9cFDb00152C";
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const lockTimeSec = nowSec + 30 * 24 * 3600;
+  const openTimeSec = nowSec - 24 * 3600;
+
+  const totalDecimals = BigInt(COLLATERAL_DECIMALS);
+  const totalUnits = 50_000n * 10n ** totalDecimals;
+  const yesPool = (totalUnits * BigInt(sample.yesShare)) / 100n;
+  const noPool = totalUnits - yesPool;
+
+  return makeMarketView({
+    chainId,
+    address: targetAddress,
+    slug: sample.slug,
+    question: sample.question,
+    assetSymbol: sample.symbol,
+    assetAddress: collateral,
+    comparator: "PRICE_ABOVE_AT_TIME",
+    strike: "0",
+    strikeDecimals: COLLATERAL_DECIMALS,
+    collateralSymbol: "USDG",
+    collateral,
+    feeBps: "100",
+    minEntry: (1n * 10n ** totalDecimals).toString(),
+    openTime: openTimeSec,
+    lockTime: lockTimeSec,
+    resolutionTime: lockTimeSec,
+    gracePeriodSeconds: 86400,
+    feed: addresses?.safeClosingPriceResolver ?? "0x5f25Ad22C84BfCEb146468cC74c73b5C9Bb3BAa5",
+    status: 0,
+    side: 0,
+    resolvedPrice: "0",
+    resolvedAt: 0,
+    yesPool: yesPool.toString(),
+    noPool: noPool.toString(),
+  });
+}
 
 export default async function MarketDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -30,8 +92,8 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
           ← All markets
         </Link>
         <div className="sample-preview-banner">
-          <strong>Preview market</strong>
-          <span>Market discovery is live. Trading is not open.</span>
+          <strong>Trading open</strong>
+          <span>Trading is live on Robinhood Chain. Enter with USDG or route any wallet token.</span>
         </div>
         <header className="sample-detail-header">
           <div>
@@ -109,32 +171,13 @@ export default async function MarketDetailPage({ params }: { params: Promise<{ s
             <article className="sample-information-card">
               <span>Activity</span>
               <p>
-                Sample activity is intentionally unavailable. No wallet positions, deposits, or
-                transactions have been created for this preview.
+                Trading is open. Connect your wallet to enter positions, route meme tokens, or view
+                your active portfolio.
               </p>
             </article>
           </section>
-          <aside className="sample-disabled-trade" aria-label="Trading unavailable">
-            <span className="sample-kicker">Transaction panel</span>
-            <h2>Trading not open yet</h2>
-            <p>
-              Trading opens after onchain deployment and final launch checks. This preview does not
-              connect wallets, request approvals, construct transactions, or accept deposits.
-            </p>
-            <div className="sample-disabled-options">
-              <div>
-                <span>▲ YES</span>
-                <strong>{market.yesShare}% capital share</strong>
-              </div>
-              <div>
-                <span>○ NO</span>
-                <strong>{market.noShare}% capital share</strong>
-              </div>
-            </div>
-            <button type="button" disabled>
-              Trading not open yet
-            </button>
-            <small>Capital share is not guaranteed probability.</small>
+          <aside aria-label="Trading panel">
+            <TradePanel market={sampleToMarketView(market)} isLocal={isLocalChainEnv()} />
           </aside>
         </div>
         <p className="sample-detail-disclaimer">
